@@ -1,0 +1,42 @@
+name: gestimou_mobile
+description: Gérance Immo Service - Application mobile pour résidents et gestionnaires.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  shared_preferences: ^2.2.0
+  provider: ^6.0.0
+  intl: ^0.18.0
+  file_picker: ^8.0.0
+  http_parser: ^4.1.0
+  cupertino_icons: ^1.0.2
+  flutter_local_notifications: ^19.0.0
+  flutter_svg: ^2.0.10+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+    - assets/icones/
+    - assets/residences/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_icon_light_version.png"
+  adaptive_icon_foreground: "assets/app_icon_light_version.png"
+  adaptive_icon_background: "#F6F3EC"
+  adaptive_icon_foreground_inset: 36
+  remove_alpha_ios: true
