@@ -42,7 +42,11 @@ class _AppEntryState extends State<AppEntry> {
     final prefs = await SharedPreferences.getInstance();
     await auth.restoreSession();
     final onboardingDone = prefs.getBool('onboarding_done') ?? false;
-    if (!onboardingDone && !auth.isAuthenticated) {
+    // AIDE AU TEST — a retirer avant la mise en production.
+    // Sur le web, ?onboarding=1 force l'affichage de l'onboarding meme s'il a
+    // deja ete vu, pour pouvoir le revoir a chaque rafraichissement.
+    final forced = Uri.base.queryParameters['onboarding'] == '1';
+    if (forced || (!onboardingDone && !auth.isAuthenticated)) {
       _showOnboarding = true;
     }
     if (mounted) setState(() => _ready = true);

@@ -269,40 +269,61 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-/// Filigrane du logo en haut de l'ecran, a 6 % d'opacite.
-/// Le Figma le pose differemment selon le theme : -12,82 degres en clair,
-/// -24,56 degres en sombre, avec des tailles distinctes.
+/// Filigrane du logo dans l'angle superieur, a 6 % d'opacite.
+///
+/// Geometrie reprise telle quelle du Figma. En clair : boite de 293,254 x
+/// 246,49 posee a -128 / -56,7, contenant une image de 256,511 x 194,426
+/// tournee de -12,82 degres. En sombre : 296,328 x 265,163 a -122 / -69,
+/// image de 243,406 x 180,316 tournee de -24,56 degres.
+///
+/// Le point cle : l'image est rendue 1,48 fois plus haute que sa fenetre et
+/// alignee en haut. Elle deborde donc par le bas et seul le monogramme reste
+/// visible, sans le texte de la marque. C'est ce cadrage qui donne l'angle
+/// dessine dans la maquette.
+///
+/// L'asset vient du Figma : le symbole n'a pas change avec le nouveau nom, et
+/// comme le texte est de toute facon hors cadre, c'est lui qui donne le rendu
+/// exact de la maquette.
 class _Watermark extends StatelessWidget {
   final bool isDark;
   const _Watermark({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
+    final boxW = isDark ? 296.328 : 293.254;
+    final boxH = isDark ? 265.163 : 246.49;
+    final imgW = isDark ? 243.406 : 256.511;
+    final imgH = isDark ? 180.316 : 194.426;
+    final scale = isDark ? 1.5228 : 1.4829;
+
     return PositionedDirectional(
       start: isDark ? -122 : -128,
       top: isDark ? -69 : -56.7,
       child: IgnorePointer(
-        child: Transform.rotate(
-          angle: (isDark ? -24.56 : -12.82) * math.pi / 180,
-          child: Opacity(
-            opacity: 0.06,
-            // Dans le Figma l'image deborde de sa boite vers le bas : seule la
-            // partie haute reste visible, c'est-a-dire le monogramme, sans le
-            // texte de la marque. On reproduit ce cadrage plutot que d'afficher
-            // le logo entier.
-            child: SizedBox(
-              width: isDark ? 243.406 : 256.511,
-              height: isDark ? 180.316 : 194.426,
-              child: ClipRect(
-                child: OverflowBox(
-                  maxHeight: double.infinity,
-                  alignment: Alignment.topCenter,
-                  child: Image.asset(
-                    isDark
-                        ? 'assets/brand/gis_logo_vertical_dark.png'
-                        : 'assets/brand/gis_logo_vertical_light.png',
-                    width: isDark ? 243.406 : 256.511,
-                    fit: BoxFit.fitWidth,
+        child: SizedBox(
+          width: boxW,
+          height: boxH,
+          child: Center(
+            child: Transform.rotate(
+              angle: (isDark ? -24.56 : -12.82) * math.pi / 180,
+              child: Opacity(
+                opacity: 0.06,
+                child: SizedBox(
+                  width: imgW,
+                  height: imgH,
+                  child: ClipRect(
+                    child: OverflowBox(
+                      maxHeight: double.infinity,
+                      alignment: Alignment.topCenter,
+                      child: Image.asset(
+                        isDark
+                            ? 'assets/figma/watermark_dark.png'
+                            : 'assets/figma/watermark_light.png',
+                        width: imgW,
+                        height: imgH * scale,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
                   ),
                 ),
               ),

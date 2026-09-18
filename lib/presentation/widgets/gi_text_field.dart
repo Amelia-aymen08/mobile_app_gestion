@@ -115,6 +115,10 @@ class _GiTextFieldState extends State<GiTextField> {
                   decoration: InputDecoration(
                     hintText: widget.hint,
                     hintStyle: FigText.field.copyWith(color: c.fieldHint),
+                    // Le theme global de l'app remplit les champs en blanc.
+                    // Sans cette coupure, ce blanc se peint a l'interieur du
+                    // conteneur creme et dessine un rectangle clair.
+                    filled: false,
                     // Le padding vient du conteneur : sans cette remise a zero,
                     // Flutter ajoute le sien et le champ depasse la hauteur
                     // du Figma.
