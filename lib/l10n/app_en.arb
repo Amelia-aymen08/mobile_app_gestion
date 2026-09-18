@@ -166,5 +166,8 @@
   "yourProperties": "Your properties ({count})",
   "switchAction": "Switch",
   "unitLabel": "Unit",
-  "noPropertyYet": "No property is linked to your account yet."
+  "noPropertyYet": "No property is linked to your account yet.",
+  "selectResidenceTitle": "Select Your Residence",
+  "selectResidenceSubtitle": "Choose the residence you want to access",
+  "continueAction": "Continue"
 }

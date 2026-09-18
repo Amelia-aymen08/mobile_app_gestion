@@ -569,4 +569,13 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get noPropertyYet => 'لا يوجد أي عقار مرتبط بحسابك بعد.';
+
+  @override
+  String get selectResidenceTitle => 'اختر إقامتك';
+
+  @override
+  String get selectResidenceSubtitle => 'اختر الإقامة التي تريد الوصول إليها';
+
+  @override
+  String get continueAction => 'متابعة';
 }

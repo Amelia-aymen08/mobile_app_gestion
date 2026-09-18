@@ -93,51 +93,83 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final base = _api.baseUrl.replaceAll(RegExp(r'/api/?$'), '');
     return '$base/${raw.startsWith('/') ? raw.substring(1) : raw}';
   }
-
   // ─── Build ────────────────────────────────────────────────
   /// Bien mis en avant. Le Figma fait de cet ecran un selecteur : une carte
   /// porte la selection, le bouton du bas la confirme.
   late int _selected = widget.initialIndex;
 
+  /// Prenom du resident, repris de la session. Le Figma ne l'affiche pas,
+  /// mais l'ecran sert a choisir « sa » residence : nommer la personne rend
+  /// le choix personnel plutot qu'administratif.
+  String get _firstName {
+    final full = (context.read<AuthProvider>().user?['name'] ?? '')
+        .toString()
+        .trim();
+    if (full.isEmpty) return '';
+    return full.split(RegExp(r'\s+')).first;
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
     final t = AppL10n.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final name = _firstName;
 
     return Scaffold(
       backgroundColor: c.scaffold,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            // Bandeau du Figma : logo vertical de 87 x 98 centre. La pastille
+            // de retour n'existe pas dans la maquette, mais sans elle on ne
+            // peut plus revenir a l'accueil : elle est posee a gauche, a la
+            // place qu'elle occupe sur l'ecran « Changer de residence ».
             Padding(
-              padding: EdgeInsets.fromLTRB(
-                  FigSpace.pagePadding,
-                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
-                  FigSpace.pagePadding,
-                  0),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: GiPressable(
-                  onTap: () => Navigator.pop(context),
-                  pressedScale: 0.88,
-                  child: Container(
-                    width: FigSize.chipMd,
-                    height: FigSize.chipMd,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.headerChipBg,
-                      border: Border.all(color: c.headerChipBorder),
-                      borderRadius: BorderRadius.circular(FigRadius.chip),
+              padding: const EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding, 22, FigSpace.pagePadding, 0),
+              child: SizedBox(
+                height: 98,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Image.asset(
+                      isDark
+                          ? 'assets/brand/gis_logo_vertical_dark.png'
+                          : 'assets/brand/gis_logo_vertical_light.png',
+                      height: 98,
+                      fit: BoxFit.contain,
                     ),
-                    child: Transform.flip(
-                      flipX: Directionality.of(context) == TextDirection.rtl,
-                      child: SvgPicture.asset(
-                        'assets/figma/icons/back_14.svg',
-                        colorFilter:
-                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                    PositionedDirectional(
+                      start: 0,
+                      top: 0,
+                      child: GiPressable(
+                        onTap: () => Navigator.pop(context),
+                        pressedScale: 0.88,
+                        child: Container(
+                          width: FigSize.chipMd,
+                          height: FigSize.chipMd,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: c.headerChipBg,
+                            border: Border.all(color: c.headerChipBorder),
+                            borderRadius:
+                                BorderRadius.circular(FigRadius.chip),
+                          ),
+                          child: Transform.flip(
+                            flipX: Directionality.of(context) ==
+                                TextDirection.rtl,
+                            child: SvgPicture.asset(
+                              'assets/figma/icons/back_14.svg',
+                              colorFilter: ColorFilter.mode(
+                                  c.textBody, BlendMode.srcIn),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -147,14 +179,25 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
               width: 295,
               child: Column(
                 children: [
-                  Text(t.changeResidence,
+                  if (name.isNotEmpty) ...[
+                    Text(t.greeting(name),
+                        textAlign: TextAlign.center,
+                        style: FigText.button
+                            .copyWith(height: 1.2, color: FigBrand.amber)),
+                    const SizedBox(height: FigSpace.sm),
+                  ],
+                  Text(t.selectResidenceTitle,
                       textAlign: TextAlign.center,
-                      style: FigText.greeting.copyWith(color: c.textBody)),
+                      style: FigText.greeting
+                          .copyWith(height: 1.2, color: c.textBody)),
                   const SizedBox(height: 9),
-                  Text(t.switchResidenceSubtitle,
-                      textAlign: TextAlign.center,
-                      style:
-                          FigText.field.copyWith(height: 1.2, color: c.textMuted)),
+                  SizedBox(
+                    width: 248,
+                    child: Text(t.selectResidenceSubtitle,
+                        textAlign: TextAlign.center,
+                        style: FigText.field
+                            .copyWith(height: 1.2, color: c.textMuted)),
+                  ),
                 ],
               ),
             ),
@@ -163,44 +206,80 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: FigBrand.amber))
-                  : RefreshIndicator(
-                      color: FigBrand.amber,
-                      backgroundColor: c.card,
-                      onRefresh: _fetchAll,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(
-                            FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
-                        children: [
-                          Text(t.yourProperties(_properties.length),
-                              style:
-                                  FigText.field.copyWith(color: c.textMuted)),
-                          const SizedBox(height: FigSpace.lg),
-                          if (_properties.isEmpty)
-                            GiEmptyState(
-                              illustration:
-                                  'assets/figma/empty/payments.svg',
-                              title: t.myProperties,
-                              message: _error ?? t.noPropertyYet,
-                            )
-                          else
-                            for (var i = 0; i < _properties.length; i++) ...[
-                              if (i > 0) const SizedBox(height: FigSpace.lg),
-                              _residenceCard(c, t, _properties[i] as Map, i),
+                  : Stack(
+                      children: [
+                        RefreshIndicator(
+                          color: FigBrand.amber,
+                          backgroundColor: c.card,
+                          onRefresh: _fetchAll,
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(
+                                FigSpace.pagePadding,
+                                0,
+                                FigSpace.pagePadding,
+                                // Le bouton flotte au-dessus de la liste :
+                                // on reserve sa hauteur pour que la derniere
+                                // carte reste atteignable.
+                                104),
+                            children: [
+                              Text(t.yourProperties(_properties.length),
+                                  style: FigText.field
+                                      .copyWith(height: 1.2, color: c.textMuted)),
+                              const SizedBox(height: FigSpace.lg),
+                              if (_properties.isEmpty)
+                                GiEmptyState(
+                                  illustration:
+                                      'assets/figma/empty/payments.svg',
+                                  title: t.myProperties,
+                                  message: _error ?? t.noPropertyYet,
+                                )
+                              else
+                                for (var i = 0; i < _properties.length; i++) ...[
+                                  if (i > 0) const SizedBox(height: FigSpace.lg),
+                                  _residenceCard(c, t, _properties[i] as Map, i),
+                                ],
                             ],
-                        ],
-                      ),
+                          ),
+                        ),
+                        // Voile sous le bouton : la carte passe dessous sans
+                        // venir buter sur le libelle.
+                        PositionedDirectional(
+                          start: 0,
+                          end: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: Container(
+                              height: 104,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    c.scaffold.withValues(alpha: 0),
+                                    c.scaffold.withValues(alpha: 0.85),
+                                    c.scaffold,
+                                  ],
+                                  stops: const [0, 0.45, 1],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        PositionedDirectional(
+                          start: FigSpace.pagePadding,
+                          end: FigSpace.pagePadding,
+                          bottom: FigSpace.xxl,
+                          child: GiPrimaryButton(
+                            label: t.continueAction,
+                            onPressed: _properties.isEmpty
+                                ? null
+                                : () => Navigator.pop(context, _selected),
+                          ),
+                        ),
+                      ],
                     ),
             ),
-            if (_properties.length > 1)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
-                    FigSpace.pagePadding, FigSpace.xxl),
-                child: GiPrimaryButton(
-                  label: t.switchAction,
-                  onPressed: () => Navigator.pop(context, _selected),
-                ),
-              ),
           ],
         ),
       ),
@@ -208,8 +287,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   }
 
   /// Carte de residence, reprise de l'accueil et rendue selectionnable.
-  /// Selectionnee : fond ambre a 20 %, trait ambre plein et coche.
-  /// Sinon : surface de carte, trait ambre discret et case vide.
+  /// Selectionnee : fond ambre a 20 %, trait ambre plein et coche ambre.
+  /// Sinon : surface de carte, trait ambre a 20 % et case grise.
   Widget _residenceCard(GiColors c, AppL10n t, Map property, int index) {
     final isSelected = index == _selected;
     final residence = property['Residence'] is Map
@@ -237,7 +316,9 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
               : c.card,
           borderRadius: BorderRadius.circular(FigRadius.card),
           border: Border.all(
-              color: isSelected ? FigBrand.amber : c.heroBorder),
+              color: isSelected
+                  ? FigBrand.amber
+                  : FigBrand.amber.withValues(alpha: 0.20)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -297,26 +378,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                               ],
                             ),
                           ),
-                          // Indicateur de selection : coche pleine quand la
-                          // carte est choisie, case vide sinon.
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: isSelected
-                                ? const Icon(Icons.check_circle_rounded,
-                                    key: ValueKey(true),
-                                    size: 20,
-                                    color: FigBrand.amber)
-                                : Container(
-                                    key: const ValueKey(false),
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: c.innerBorder,
-                                      borderRadius:
-                                          BorderRadius.circular(4),
-                                    ),
-                                  ),
-                          ),
+                          _selectionBox(c, isSelected),
                         ],
                       ),
                       const SizedBox(height: FigSpace.lg),
@@ -331,8 +393,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                             child: Text(address,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style:
-                                    FigText.body.copyWith(color: c.textBody)),
+                                style: FigText.body.copyWith(color: c.textBody)),
                           ),
                         ],
                       ),
@@ -343,6 +404,31 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Marqueur de selection du Figma : carre de 20 au rayon 4. Choisi, il
+  /// passe en ambre et porte la coche ; sinon il reste une case grise.
+  Widget _selectionBox(GiColors c, bool isSelected) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      width: 20,
+      height: 20,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: isSelected ? FigBrand.amber : c.innerBorder,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutBack,
+        scale: isSelected ? 1 : 0,
+        child: SvgPicture.asset(
+          'assets/figma/icons/check_14.svg',
+          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
         ),
       ),
     );
@@ -362,23 +448,30 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
               Text(value.isEmpty ? '—' : value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: FigText.statValue.copyWith(color: c.textBody)),
+                  style: FigText.statValue.copyWith(color: c.textMuted)),
             ],
           ),
         );
 
     final divider = Container(width: 1, height: 37, color: c.innerBorder);
+    // Le fond du bandeau se fond dans la carte a gauche et se ferme a droite,
+    // pour que les valeurs restent lisibles par-dessus la photo.
+    final fill = isSelected
+        ? Color.alphaBlend(FigBrand.amber.withValues(alpha: 0.20), c.card)
+        : c.card;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(FigRadius.card),
         border: Border.all(
-            color: isSelected ? c.heroBorder : c.innerBorder),
+            color: isSelected
+                ? FigBrand.amber.withValues(alpha: 0.20)
+                : c.innerBorder),
         gradient: LinearGradient(
           begin: AlignmentDirectional.centerStart,
           end: AlignmentDirectional.centerEnd,
-          colors: [c.card.withValues(alpha: 0), c.card],
+          colors: [fill.withValues(alpha: 0), fill],
         ),
       ),
       child: SizedBox(

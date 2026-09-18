@@ -40,8 +40,9 @@ class _AppEntryState extends State<AppEntry> {
   Future<void> _init() async {
     // Duree minimale d'affichage du splash : sans elle, une session deja
     // restauree le fait disparaitre avant que son animation ne se voie.
+    // 2,8 s laisse l'animation se jouer en entier et le logo se poser.
     final minimumSplash =
-        Future<void>.delayed(const Duration(milliseconds: 1500));
+        Future<void>.delayed(const Duration(milliseconds: 2800));
     final auth = context.read<AuthProvider>();
     final prefs = await SharedPreferences.getInstance();
     await auth.restoreSession();
@@ -49,7 +50,9 @@ class _AppEntryState extends State<AppEntry> {
     // AIDE AU TEST — a retirer avant la mise en production.
     // Sur le web, ?onboarding=1 force l'affichage de l'onboarding meme s'il a
     // deja ete vu, pour pouvoir le revoir a chaque rafraichissement.
-    final forced = Uri.base.queryParameters['onboarding'] == '1';
+    // On regarde l'URL entiere : selon la strategie de routage du web, le
+    // parametre peut se retrouver apres le # et non dans queryParameters.
+    final forced = Uri.base.toString().contains('onboarding=1');
     if (forced || (!onboardingDone && !auth.isAuthenticated)) {
       _showOnboarding = true;
     }

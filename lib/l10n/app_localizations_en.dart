@@ -563,4 +563,14 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get noPropertyYet => 'No property is linked to your account yet.';
+
+  @override
+  String get selectResidenceTitle => 'Select Your Residence';
+
+  @override
+  String get selectResidenceSubtitle =>
+      'Choose the residence you want to access';
+
+  @override
+  String get continueAction => 'Continue';
 }

@@ -1100,6 +1100,24 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Aucun bien n\'est encore rattaché à votre compte.'**
   String get noPropertyYet;
+
+  /// No description provided for @selectResidenceTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionnez votre résidence'**
+  String get selectResidenceTitle;
+
+  /// No description provided for @selectResidenceSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez la résidence à laquelle accéder'**
+  String get selectResidenceSubtitle;
+
+  /// No description provided for @continueAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get continueAction;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

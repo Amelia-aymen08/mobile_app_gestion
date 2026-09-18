@@ -564,4 +564,14 @@ class AppL10nFr extends AppL10n {
   @override
   String get noPropertyYet =>
       'Aucun bien n\'est encore rattaché à votre compte.';
+
+  @override
+  String get selectResidenceTitle => 'Sélectionnez votre résidence';
+
+  @override
+  String get selectResidenceSubtitle =>
+      'Choisissez la résidence à laquelle accéder';
+
+  @override
+  String get continueAction => 'Continuer';
 }

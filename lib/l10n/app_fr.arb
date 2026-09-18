@@ -261,5 +261,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "selectResidenceTitle": "Sélectionnez votre résidence",
+  "selectResidenceSubtitle": "Choisissez la résidence à laquelle accéder",
+  "continueAction": "Continuer"
 }

@@ -166,5 +166,8 @@
   "yourProperties": "ممتلكاتك ({count})",
   "switchAction": "تغيير",
   "unitLabel": "الشقة",
-  "noPropertyYet": "لا يوجد أي عقار مرتبط بحسابك بعد."
+  "noPropertyYet": "لا يوجد أي عقار مرتبط بحسابك بعد.",
+  "selectResidenceTitle": "اختر إقامتك",
+  "selectResidenceSubtitle": "اختر الإقامة التي تريد الوصول إليها",
+  "continueAction": "متابعة"
 }
