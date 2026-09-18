@@ -473,8 +473,18 @@ class _ReportDetailScreen extends StatelessWidget {
     final category = (ticket['category'] ?? '').toString();
     final priority = (ticket['priority'] ?? '').toString();
     final description = (ticket['description'] ?? '').toString();
-    final attachment = (ticket['attachmentUrl'] ?? '').toString();
-    final photos = attachment.isEmpty ? <String>[] : <String>[attachment];
+    // L'API renvoie aujourd'hui une seule piece jointe, `attachmentUrl`. La
+    // maquette en prevoit plusieurs. On lit donc aussi `attachments[]`, le
+    // champ propose a l'equipe back-end : le jour ou il arrive, la galerie se
+    // remplit sans toucher a cet ecran. En attendant, c'est la piece unique
+    // qui s'affiche.
+    final photos = <String>[
+      ...?(ticket['attachments'] as List?)
+          ?.map((e) => e is Map ? (e['url'] ?? '').toString() : e.toString())
+          .where((e) => e.isNotEmpty),
+      if (ticket['attachments'] == null)
+        ...[(ticket['attachmentUrl'] ?? '').toString()].where((e) => e.isNotEmpty),
+    ];
 
     return Scaffold(
       backgroundColor: c.scaffold,
