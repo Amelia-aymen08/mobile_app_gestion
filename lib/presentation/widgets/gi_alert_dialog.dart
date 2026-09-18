@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -116,7 +117,7 @@ class _GiAlert extends StatelessWidget {
                 // L'illustration deborde en haut : sans marge, la carte
                 // toucherait le bord de l'ecran sur les petits appareils.
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 84, 20, 20),
                   child: _card(context, c, artScale),
                 ),
               ),
@@ -188,36 +189,11 @@ class _GiAlert extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: -45,
-              child: Transform.scale(
-                scale: artScale,
-                child: Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    // L'anneau reprend la couleur de la carte : c'est lui qui
-                    // detache l'illustration du fond de l'ecran.
-                    border: Border.all(color: c.scaffold, width: 5),
-                  ),
-                  child: ClipOval(
-                    // Le Figma agrandit l'image a 176 % dans son cercle et la
-                    // decale : c'est ce qui donne le cadrage serre sur le
-                    // sujet. Transform.scale est necessaire ici — le parametre
-                    // `scale` de Image.asset change la taille logique de
-                    // l'image, pas le cadrage, et reste sans effet sous un
-                    // BoxFit.cover dans une boite fixe.
-                    child: Transform.scale(
-                      scale: 1.758,
-                      alignment: const Alignment(-0.12, 0.10),
-                      child: Image.asset(
-                        'assets/figma/alert_illustration.png',
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // Le Figma pose le cercle de 88 a -45. Le halo l'entoure dans
+              // une boite de 140, soit 26 de marge de chaque cote : on remonte
+              // d'autant pour que le cercle retombe exactement a -45.
+              top: -45 - 26,
+              child: _AlertArt(entrance: artScale, ring: c.scaffold),
             ),
           ],
         ),
@@ -259,6 +235,100 @@ class _GiAlert extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Illustration de l'alerte — cercle de 88 du Figma, cercle d'un anneau de 5
+/// a la couleur de la carte.
+///
+/// Deux mouvements se superposent. A l'ouverture, l'illustration arrive avec
+/// le ressort pilote par la transition du dialogue. Ensuite, une onde part du
+/// cercle en s'elargissant et en s'effacant, pendant que la bille respire
+/// legerement. L'onde attire l'oeil sans agiter la carte : elle reste derriere
+/// l'illustration et ne deplace aucun element.
+class _AlertArt extends StatefulWidget {
+  /// Echelle d'entree, pilotee par l'animation de route du dialogue.
+  final double entrance;
+  final Color ring;
+
+  const _AlertArt({required this.entrance, required this.ring});
+
+  @override
+  State<_AlertArt> createState() => _AlertArtState();
+}
+
+class _AlertArtState extends State<_AlertArt>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _loop = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1900),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _loop.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+    return AnimatedBuilder(
+      animation: _loop,
+      builder: (context, _) {
+        final t = reduceMotion ? 0.0 : _loop.value;
+
+        // L'onde : part de la taille du cercle et s'efface en s'elargissant.
+        final wave = Curves.easeOut.transform(t);
+        // La respiration : un aller-retour complet par cycle, sans a-coup au
+        // bouclage puisque le sinus revient exactement a son point de depart.
+        final breath = reduceMotion ? 0.0 : math.sin(t * 2 * math.pi);
+
+        return SizedBox(
+          width: 140,
+          height: 140,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Transform.scale(
+                scale: 0.63 + 0.37 * wave,
+                child: Opacity(
+                  opacity: (1 - wave) * 0.30,
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: FigAlert.error,
+                    ),
+                  ),
+                ),
+              ),
+              Transform.scale(
+                scale: widget.entrance * (1 + 0.025 * breath),
+                child: Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: widget.ring, width: 5),
+                  ),
+                  child: ClipOval(
+                    // L'asset est desormais recadre au plus juste sur la
+                    // bille : un simple cover suffit, sans agrandissement.
+                    child: Image.asset(
+                      'assets/figma/alert_illustration.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
