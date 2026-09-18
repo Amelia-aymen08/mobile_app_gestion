@@ -231,5 +231,19 @@
   "remove": "Retirer",
   "statusOpen": "Ouvert",
   "statusInProgress": "En cours",
-  "statusResolved": "Terminé"
+  "statusResolved": "Terminé",
+  "reportDetails": "Détail du signalement",
+  "reportedOn": "Signalé le",
+  "photosCount": "Photos ({count})",
+  "addMore": "Ajouter",
+  "reportChat": "Conversation",
+  "editLabel": "Modifier",
+  "noPhotos": "Aucune photo",
+  "@photosCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

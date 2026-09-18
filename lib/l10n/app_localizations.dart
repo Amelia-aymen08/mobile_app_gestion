@@ -1004,6 +1004,48 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Terminé'**
   String get statusResolved;
+
+  /// No description provided for @reportDetails.
+  ///
+  /// In fr, this message translates to:
+  /// **'Détail du signalement'**
+  String get reportDetails;
+
+  /// No description provided for @reportedOn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalé le'**
+  String get reportedOn;
+
+  /// No description provided for @photosCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photos ({count})'**
+  String photosCount(int count);
+
+  /// No description provided for @addMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter'**
+  String get addMore;
+
+  /// No description provided for @reportChat.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conversation'**
+  String get reportChat;
+
+  /// No description provided for @editLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier'**
+  String get editLabel;
+
+  /// No description provided for @noPhotos.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune photo'**
+  String get noPhotos;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

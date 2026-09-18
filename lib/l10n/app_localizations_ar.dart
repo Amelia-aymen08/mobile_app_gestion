@@ -517,4 +517,27 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get statusResolved => 'منتهٍ';
+
+  @override
+  String get reportDetails => 'تفاصيل البلاغ';
+
+  @override
+  String get reportedOn => 'تاريخ البلاغ';
+
+  @override
+  String photosCount(int count) {
+    return 'الصور ($count)';
+  }
+
+  @override
+  String get addMore => 'إضافة';
+
+  @override
+  String get reportChat => 'المحادثة';
+
+  @override
+  String get editLabel => 'تعديل';
+
+  @override
+  String get noPhotos => 'لا توجد صور';
 }

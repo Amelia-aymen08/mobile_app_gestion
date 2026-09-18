@@ -511,4 +511,27 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get statusResolved => 'Terminé';
+
+  @override
+  String get reportDetails => 'Détail du signalement';
+
+  @override
+  String get reportedOn => 'Signalé le';
+
+  @override
+  String photosCount(int count) {
+    return 'Photos ($count)';
+  }
+
+  @override
+  String get addMore => 'Ajouter';
+
+  @override
+  String get reportChat => 'Conversation';
+
+  @override
+  String get editLabel => 'Modifier';
+
+  @override
+  String get noPhotos => 'Aucune photo';
 }

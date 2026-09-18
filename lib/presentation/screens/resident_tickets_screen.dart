@@ -14,7 +14,6 @@ import 'package:provider/provider.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
 import 'package:intl/intl.dart' hide TextDirection;
 import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
 import '../../data/api_service.dart';
 import 'resident_create_ticket_screen.dart';
 import 'chat_screen.dart';
@@ -444,7 +443,10 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
 /// Bleu des pastilles de categorie, propre aux cartes de signalement.
 const _reportBlue = Color(0xFF0088FF);
 
-// ─── Report detail ──────────────────────────────────────────────────────────
+/// Detail d'un signalement — frame Figma "Report Details LT" (0:4827).
+///
+/// Trois cartes : l'etat et le contenu, les caracteristiques ligne a ligne,
+/// puis la galerie de photos. Le bouton de conversation ferme l'ecran.
 class _ReportDetailScreen extends StatelessWidget {
   final Map<String, dynamic> ticket;
   final Color statusColor;
@@ -464,135 +466,55 @@ class _ReportDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+
     final status = (ticket['status'] ?? '').toString();
-    final desc = (ticket['description'] ?? '').toString();
     final category = (ticket['category'] ?? '').toString();
     final priority = (ticket['priority'] ?? '').toString();
-    final location = (ticket['location'] ?? '').toString();
-    final rejection = (ticket['rejectionReason'] ?? '').toString();
-    final attachmentUrl = (ticket['attachmentUrl'] ?? '').toString();
+    final description = (ticket['description'] ?? '').toString();
+    final attachment = (ticket['attachmentUrl'] ?? '').toString();
+    final photos = attachment.isEmpty ? <String>[] : <String>[attachment];
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Column(
           children: [
-            Row(
-              children: [
-                _iconBtn(Icons.arrow_back_rounded, dark, fg, () => Navigator.pop(context)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Détail du signalement',
-                          style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
-                      if (dateLabel.isNotEmpty)
-                        Text(dateLabel, style: TextStyle(color: muted, fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                  FigSpace.pagePadding,
+                  0),
+              child: _header(context, c, t),
             ),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: FigSpace.xxl),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                    FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                        child: Text(status,
-                            style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
-                      ),
-                      const Spacer(),
-                      if (ref.isNotEmpty) Text(ref, style: TextStyle(color: muted, fontSize: 12)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(title, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
-                  if (desc.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(desc, style: TextStyle(color: muted, fontSize: 14, height: 1.5)),
-                  ],
+                  _contentCard(c, t, status, description),
+                  const SizedBox(height: FigSpace.lg),
+                  _factsCard(c, t, category, priority),
+                  const SizedBox(height: FigSpace.lg),
+                  _photosCard(c, t, photos),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: Column(
-                children: [
-                  if (dateTimeLabel.isNotEmpty) _row('Signalé le', dateTimeLabel, fg, muted, dark),
-                  if (category.isNotEmpty) _row('Catégorie', category, fg, muted, dark),
-                  if (priority.isNotEmpty) _row('Priorité', priority, fg, muted, dark),
-                  if (location.isNotEmpty) _row('Lieu', location, fg, muted, dark, last: true),
-                ],
-              ),
-            ),
-            if (attachmentUrl.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Text('Pièce jointe', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(attachmentUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                          height: 100,
-                          color: dark ? darkCard : Colors.white,
-                          alignment: Alignment.center,
-                          child: Icon(Icons.insert_drive_file_outlined, color: muted),
-                        )),
-              ),
-            ],
-            if (rejection.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.block_rounded, color: Color(0xFFDC2626), size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('Motif de rejet : $rejection',
-                          style: const TextStyle(
-                              color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w600)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                label: const Text('Report Chat'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+                  FigSpace.pagePadding, FigSpace.xxl),
+              child: GiPrimaryButton(
+                label: t.reportChat,
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => ChatScreen(
-                      ticketId: (ticket['id'] ?? '').toString(),
-                      title: 'Report Chat',
-                      subtitle: title,
+                      ticketId: ticket['id'].toString(),
+                      title: title,
+                      subtitle: ref,
                     ),
                   ),
                 ),
@@ -604,24 +526,279 @@ class _ReportDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String value, Color fg, Color muted, bool dark, {bool last = false}) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          border: last
-              ? null
-              : Border(bottom: BorderSide(color: dark ? darkBorder : const Color(0xFFF0EBDD))),
+  Widget _header(BuildContext context, GiColors c, AppL10n t) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GiPressable(
+          onTap: () => Navigator.pop(context),
+          pressedScale: 0.88,
+          child: Container(
+            width: FigSize.chipMd,
+            height: FigSize.chipMd,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: c.headerChipBg,
+              border: Border.all(color: c.headerChipBorder),
+              borderRadius: BorderRadius.circular(FigRadius.chip),
+            ),
+            child: Transform.flip(
+              flipX: Directionality.of(context) == TextDirection.rtl,
+              child: SvgPicture.asset(
+                'assets/figma/icons/back_14.svg',
+                colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn),
+              ),
+            ),
+          ),
         ),
-        child: Row(
-          children: [
-            Text(label, style: TextStyle(color: muted, fontSize: 13)),
-            const Spacer(),
-            Text(value, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w700)),
-          ],
+        const SizedBox(width: FigSpace.xl),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(t.reportDetails,
+                  style:
+                      FigText.titleMd.copyWith(fontSize: 18, color: c.textBody)),
+              const SizedBox(height: 2),
+              Text(dateLabel,
+                  style: FigText.label.copyWith(color: c.textMuted)),
+            ],
+          ),
         ),
-      );
+        const SizedBox(width: FigSpace.lg),
+        // Bouton « Modifier » du Figma : pastille ambre pleine, rayon 6.
+        GiPressable(
+          pressedScale: 0.92,
+          onTap: () {},
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: FigBrand.amber,
+              borderRadius: BorderRadius.circular(FigRadius.pill),
+            ),
+            child: Text(t.editLabel,
+                style: FigText.bodyActive
+                    .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _iconBtn(IconData icon, bool dark, Color fg, VoidCallback onTap) => Container(
-        decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
-        child: IconButton(icon: Icon(icon, color: fg), onPressed: onTap),
-      );
+  Widget _contentCard(
+      GiColors c, AppL10n t, String status, String description) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: FigAccent.chipFill(statusColor),
+                  border: Border.all(color: FigAccent.chipBorder(statusColor)),
+                  borderRadius: BorderRadius.circular(FigRadius.pill),
+                ),
+                child: Text(status,
+                    style: FigText.caption.copyWith(color: statusColor)),
+              ),
+              const Spacer(),
+              Text(ref, style: FigText.label.copyWith(color: c.textFaint)),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xl),
+          Text(title,
+              style:
+                  FigText.statValue.copyWith(height: 1.2, color: c.textBody)),
+          if (description.isNotEmpty) ...[
+            const SizedBox(height: FigSpace.md),
+            Text(description,
+                style: FigText.body.copyWith(height: 1.4, color: c.textMuted)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Caracteristiques ligne a ligne, separees par un trait comme le Figma :
+  /// libelle a gauche en 13, valeur a droite en 16.
+  Widget _factsCard(GiColors c, AppL10n t, String category, String priority) {
+    Widget row(String label, Widget value, {bool last = false}) => Container(
+          padding: EdgeInsets.only(bottom: last ? 0 : FigSpace.lg),
+          margin: EdgeInsets.only(bottom: last ? 0 : FigSpace.lg),
+          decoration: last
+              ? null
+              : BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(color: c.innerBorder)),
+                ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(label,
+                    style: FigText.body.copyWith(color: c.textMuted)),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              value,
+            ],
+          ),
+        );
+
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          row(
+            t.reportedOn,
+            Text(dateTimeLabel,
+                style: FigText.field.copyWith(color: c.textBody)),
+          ),
+          if (category.isNotEmpty)
+            row(
+              t.category,
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: FigAccent.chipFill(_reportBlue),
+                    border:
+                        Border.all(color: FigAccent.chipBorder(_reportBlue)),
+                    borderRadius: BorderRadius.circular(FigRadius.pill),
+                  ),
+                  child: Text(category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.caption.copyWith(color: _reportBlue)),
+                ),
+              ),
+            ),
+          row(
+            t.priorityLabel,
+            Text(priority.isEmpty ? '—' : priority,
+                style: FigText.field.copyWith(color: c.textBody)),
+            last: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Galerie : vignettes de 95,667 x 102 au rayon 8, puis la tuile d'ajout
+  /// en trait discontinu.
+  ///
+  /// L'API ne renvoie qu'une seule piece jointe (`attachmentUrl`). La
+  /// maquette en prevoit jusqu'a cinq : la grille est donc prete, elle se
+  /// remplira quand le back-end servira une liste.
+  Widget _photosCard(GiColors c, AppL10n t, List<String> photos) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(t.photosCount(photos.length),
+              style: FigText.titleMd.copyWith(color: c.textBody)),
+          const SizedBox(height: FigSpace.xl),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Trois colonnes avec 8 d'ecart, comme la maquette.
+              final w = (constraints.maxWidth - FigSpace.md * 2) / 3;
+              return Wrap(
+                spacing: FigSpace.md,
+                runSpacing: FigSpace.md,
+                children: [
+                  for (final url in photos)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
+                      child: SizedBox(
+                        width: w,
+                        height: 102,
+                        child: Image.network(url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                ColoredBox(color: c.innerBorder)),
+                      ),
+                    ),
+                  _AddPhotoTile(width: w, label: t.addMore, color: c.textBody),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+/// Tuile d'ajout de photo : cadre en trait discontinu, icone puis libelle.
+class _AddPhotoTile extends StatelessWidget {
+  final double width;
+  final String label;
+  final Color color;
+
+  const _AddPhotoTile({
+    required this.width,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GiPressable(
+      pressedScale: 0.95,
+      onTap: () {},
+      child: CustomPaint(
+        painter: _DashedBorderPainter(
+            color: color, radius: FigRadius.chip),
+        child: SizedBox(
+          width: width,
+          height: 102,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_photo_alternate_outlined, size: 16, color: color),
+              const SizedBox(height: FigSpace.sm),
+              Text(label,
+                  style: FigText.fieldLabel.copyWith(color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cadre en trait discontinu. Flutter n'en propose pas : Border.all ne sait
+/// tracer qu'un trait plein, d'ou ce trace manuel.
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+  const _DashedBorderPainter({required this.color, required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final rect = RRect.fromRectAndRadius(
+        Offset.zero & size, Radius.circular(radius));
+    final path = Path()..addRRect(rect);
+
+    const dash = 4.0, gap = 4.0;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final next = (distance + dash).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, next), paint);
+        distance = next + gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) => old.color != color;
+}
+
