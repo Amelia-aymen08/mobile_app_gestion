@@ -414,7 +414,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   Widget _heroCard(GiColors c, AppL10n t, Map property) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final residence = property['Residence'] is Map
         ? Map<String, dynamic>.from(property['Residence'] as Map)
         : <String, dynamic>{};
@@ -442,53 +441,43 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             // La photo occupe la droite de la carte et se fond vers la
             // gauche : dans le Figma elle est masquee par un degrade qui la
             // ramene a la couleur de la carte.
-            // Fondu de la photo vers la carte, releve sur le Figma.
-            // Le degrade couvre 225 de large — de x=110 au bord droit de la
-            // carte — et non la seule largeur de la photo. Le voile atteint la
-            // couleur de la carte a 85,86 % du parcours et s'arrete a 27,7 %
-            // du bord droit sans jamais devenir totalement transparent : il y
-            // reste 16 %, ce qui fond la photo dans la carte au lieu de la
-            // poser dessus.
-            PositionedDirectional(
-              end: 0,
-              top: 0,
-              bottom: 0,
-              width: 225,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ShaderMask(
-                    blendMode: BlendMode.dstIn,
-                    shaderCallback: (rect) => LinearGradient(
-                      begin: AlignmentDirectional.centerStart,
-                      end: AlignmentDirectional.centerEnd,
-                      colors: const [Colors.transparent, Colors.white],
-                      // 1 - 0,8586 puis 1 - 0,277 en theme clair ;
-                      // 1 - 0,8585 puis 1 - 0,0771 en theme sombre.
-                      stops: isDark
-                          ? const [0.1415, 0.9229]
-                          : const [0.1414, 0.7230],
-                      // AlignmentDirectional ne peut se resoudre sans le sens
-                      // de lecture : sans ce parametre createShader echoue et
-                      // le ShaderMask ne peint plus rien du tout.
-                    ).createShader(rect,
-                        textDirection: Directionality.of(context)),
-                    child: asset != null
-                        ? Image.asset(asset, fit: BoxFit.cover)
-                        : (url != null
-                            ? Image.network(url,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    ColoredBox(color: c.card))
-                            : ColoredBox(color: c.card)),
-                  ),
-                  // Le voile residuel de 16 % du Figma.
-                  IgnorePointer(
-                    child: ColoredBox(
-                      color: c.card.withValues(alpha: 0.16),
-                    ),
-                  ),
-                ],
+            // Fondu de la photo vers la carte.
+            //
+            // Le Figma faisait monter la photo jusqu'a l'opacite pleine sur le
+            // dernier tiers, ce qui creait une frontiere nette entre la carte
+            // et l'image. On s'en ecarte volontairement : la photo couvre
+            // desormais toute la largeur de la carte, sa montee est etalee sur
+            // quatre paliers, et elle plafonne a 78 % d'opacite. Elle reste
+            // donc teintee par la carte jusqu'au bord droit, au lieu de la
+            // remplacer.
+            Positioned.fill(
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (rect) => LinearGradient(
+                  begin: AlignmentDirectional.centerStart,
+                  end: AlignmentDirectional.centerEnd,
+                  colors: [
+                    Colors.white.withValues(alpha: 0),
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.45),
+                    Colors.white.withValues(alpha: 0.78),
+                  ],
+                  stops: const [0.12, 0.42, 0.72, 1.0],
+                  // AlignmentDirectional ne peut se resoudre sans le sens de
+                  // lecture : sans ce parametre createShader echoue et le
+                  // ShaderMask ne peint plus rien du tout.
+                ).createShader(rect,
+                    textDirection: Directionality.of(context)),
+                child: asset != null
+                    ? Image.asset(asset,
+                        fit: BoxFit.cover, alignment: Alignment.centerRight)
+                    : (url != null
+                        ? Image.network(url,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.centerRight,
+                            errorBuilder: (_, __, ___) =>
+                                ColoredBox(color: c.card))
+                        : ColoredBox(color: c.card)),
               ),
             ),
             Padding(
