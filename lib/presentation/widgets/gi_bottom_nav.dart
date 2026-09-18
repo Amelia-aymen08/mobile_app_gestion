@@ -124,28 +124,37 @@ class _GiNavTab extends StatelessWidget {
                   offset: Offset(0, -3 * pop),
                   child: Transform.scale(
                     scale: 1 + 0.16 * pop,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Pas de width/height : chaque SVG du Figma porte sa
-                        // taille exacte dans son attribut racine. On se
-                        // contente de l'agrandir d'un facteur commun, ce qui
-                        // preserve les proportions tres differentes de ces
-                        // icones — « Plus » fait 24 x 4,8, « Accueil » 22 x 22.
-                        Transform.scale(
-                          scale: _iconBoost,
-                          child: SvgPicture.asset(
-                            item.asset,
-                            colorFilter:
-                                ColorFilter.mode(color, BlendMode.srcIn),
+                    // Boite de gabarit fixe : les icones ont des hauteurs tres
+                    // differentes — « Plus » fait 4,8 de haut contre 22 pour
+                    // « Accueil ». Sans elle, les libelles ne s'alignent pas et
+                    // la pastille de compteur se place par rapport a l'icone,
+                    // donc trop haut sur « Plus ».
+                    child: SizedBox(
+                      width: 28,
+                      height: 26,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        alignment: Alignment.center,
+                        children: [
+                          // Pas de width/height : chaque SVG du Figma porte sa
+                          // taille exacte dans son attribut racine. On se
+                          // contente de l'agrandir d'un facteur commun, ce qui
+                          // preserve leurs proportions.
+                          Transform.scale(
+                            scale: _iconBoost,
+                            child: SvgPicture.asset(
+                              item.asset,
+                              colorFilter:
+                                  ColorFilter.mode(color, BlendMode.srcIn),
+                            ),
                           ),
-                        ),
-                        if (item.badge > 0)
-                          PositionedDirectional(
-                            // Reste dans la barre : au-dela, le ClipRRect qui
-                            // porte le flou rogne la pastille.
-                            top: -6,
-                            end: -4,
+                          if (item.badge > 0)
+                            PositionedDirectional(
+                              // Ancree sur la boite de gabarit, pas sur
+                              // l'icone : la pastille se pose au meme endroit
+                              // quel que soit l'onglet.
+                              top: -4,
+                              end: -6,
                             child: Container(
                               constraints: const BoxConstraints(minWidth: 16),
                               height: 16,
@@ -165,7 +174,8 @@ class _GiNavTab extends StatelessWidget {
                               ),
                             ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

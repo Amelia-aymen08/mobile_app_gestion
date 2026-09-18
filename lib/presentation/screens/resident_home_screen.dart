@@ -468,7 +468,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                       stops: isDark
                           ? const [0.1415, 0.9229]
                           : const [0.1414, 0.7230],
-                    ).createShader(rect),
+                      // AlignmentDirectional ne peut se resoudre sans le sens
+                      // de lecture : sans ce parametre createShader echoue et
+                      // le ShaderMask ne peint plus rien du tout.
+                    ).createShader(rect,
+                        textDirection: Directionality.of(context)),
                     child: asset != null
                         ? Image.asset(asset, fit: BoxFit.cover)
                         : (url != null

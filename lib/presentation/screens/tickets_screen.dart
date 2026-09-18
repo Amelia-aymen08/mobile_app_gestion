@@ -267,6 +267,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
                       : (v) => setState(() => residenceId = v),
                 ),
                 TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   controller: titleController,
                   decoration: const InputDecoration(labelText: 'Titre'),
                 ),
@@ -278,6 +280,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   maxLength: 100,
                 ),
                 TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   controller: locationController,
                   decoration: const InputDecoration(
                       labelText: 'Lieu (ex: Cuisine, Couloir)'),
@@ -472,6 +476,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(26, 8, 26, 10),
           child: TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
               onChanged: (value) => setState(() => _ticketQuery = value),
               decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search, size: 18),

@@ -184,6 +184,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     required String? Function(String?) validator,
   }) {
     return TextFormField(
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
       controller: controller,
       obscureText: obscure,
       style: TextStyle(color: fg),

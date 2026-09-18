@@ -147,6 +147,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
 
                         // Email (read-only display)
                         TextFormField(
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                           initialValue: email,
                           readOnly: true,
                           decoration: const InputDecoration(hintText: 'E-mail'),
@@ -156,6 +158,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
 
                         // Phone (read-only display)
                         TextFormField(
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                           initialValue: phone.isNotEmpty ? phone : null,
                           readOnly: true,
                           decoration: const InputDecoration(
@@ -166,6 +170,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
 
                         // New password
                         TextFormField(
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                           controller: _pwdController,
                           obscureText: _obscurePwd,
                           decoration: InputDecoration(
@@ -192,6 +198,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
 
                         // Confirm password
                         TextFormField(
+          textInputAction: TextInputAction.next,
+          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                           controller: _confirmController,
                           obscureText: _obscureConf,
                           decoration: InputDecoration(

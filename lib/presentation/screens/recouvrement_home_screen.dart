@@ -579,6 +579,8 @@ class _RecouvrementHomeScreenState extends State<RecouvrementHomeScreen> {
               children: [
                 // ── Search bar ────────────────────────────────
                 TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Rechercher (lot, propriétaire, résidence…)',

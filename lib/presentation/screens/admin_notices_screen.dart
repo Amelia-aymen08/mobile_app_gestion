@@ -80,6 +80,8 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                               color: brandNavy)),
                       const SizedBox(height: 18),
                       TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                           controller: title,
                           decoration:
                               const InputDecoration(labelText: 'Titre')),
@@ -159,6 +161,8 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                       padding: const EdgeInsets.fromLTRB(26, 16, 26, 110),
                       children: [
                         TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
                             controller: _search,
                             decoration: const InputDecoration(
                                 prefixIcon: Icon(Icons.search, size: 18),

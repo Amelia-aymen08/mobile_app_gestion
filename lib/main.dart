@@ -57,6 +57,18 @@ class GeranceImmoServiceApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          // Un appui hors d'un champ referme le clavier, sur tous les ecrans.
+          // Pose ici plutot que dans chaque page : tout ecran ajoute plus tard
+          // en herite sans rien avoir a faire.
+          //
+          // `translucent` laisse passer les appuis vers les widgets en dessous,
+          // qui gagnent l'arbitrage des gestes : les boutons continuent donc de
+          // repondre normalement.
+          builder: (context, child) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child,
+          ),
           home: const AppEntry(),
         ),
       ),

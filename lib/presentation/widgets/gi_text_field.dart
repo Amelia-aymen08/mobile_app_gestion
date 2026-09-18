@@ -60,6 +60,20 @@ class _GiTextFieldState extends State<GiTextField> {
 
   void _onFocusChanged() => setState(() {});
 
+  /// Comportement de la touche de validation du clavier.
+  ///
+  /// `next` fait passer au champ suivant, toute autre action referme le
+  /// clavier. C'est traite ici une fois pour toutes : sinon chaque ecran
+  /// doit y penser, et il suffit d'un oubli pour qu'un formulaire pietine.
+  void _onSubmitted(String value) {
+    widget.onSubmitted?.call(value);
+    if (widget.textInputAction == TextInputAction.next) {
+      FocusScope.of(context).nextFocus();
+    } else {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+  }
+
   @override
   void dispose() {
     _focus.removeListener(_onFocusChanged);
@@ -109,7 +123,7 @@ class _GiTextFieldState extends State<GiTextField> {
                   obscureText: widget.isPassword && _obscure,
                   keyboardType: widget.keyboardType,
                   textInputAction: widget.textInputAction,
-                  onFieldSubmitted: widget.onSubmitted,
+                  onFieldSubmitted: _onSubmitted,
                   validator: widget.validator,
                   cursorColor: FigBrand.amber,
                   style: FigText.field.copyWith(color: c.fieldText),

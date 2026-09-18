@@ -101,6 +101,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Changer le mot de passe'),
         content: TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
           controller: controller,
           decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
           obscureText: true,

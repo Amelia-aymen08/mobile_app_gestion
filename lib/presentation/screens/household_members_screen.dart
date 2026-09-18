@@ -414,11 +414,17 @@ class _MemberFormSheetState extends State<_MemberFormSheet> {
                 ),
               ),
               const SizedBox(height: 18),
-              TextField(controller: _nameCtrl, decoration: const InputDecoration(hintText: 'Nom complet')),
+              TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),controller: _nameCtrl, decoration: const InputDecoration(hintText: 'Nom complet')),
               const SizedBox(height: 12),
-              TextField(controller: _relationCtrl, decoration: const InputDecoration(hintText: 'Relation (ex: Épouse, Fils...)')),
+              TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),controller: _relationCtrl, decoration: const InputDecoration(hintText: 'Relation (ex: Épouse, Fils...)')),
               const SizedBox(height: 12),
-              TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(hintText: 'Téléphone (optionnel)')),
+              TextField(
+          textInputAction: TextInputAction.next,
+          onSubmitted: (_) => FocusScope.of(context).nextFocus(),controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(hintText: 'Téléphone (optionnel)')),
               const SizedBox(height: 16),
               Text("Niveau d'accès", style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 8),
