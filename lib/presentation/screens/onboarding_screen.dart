@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -314,9 +312,13 @@ class _BottomBlock extends StatelessWidget {
 /// donc seule la partie centrale de sa courbe apparait — c'est elle qui trace
 /// l'arc au-dessus du texte.
 ///
-/// Elle porte aussi un flou d'arriere-plan de 74,85 : c'est ce qui adoucit le
-/// bas de la photo et rend le texte lisible. Sans ce flou, l'arc ne serait
-/// qu'un voile colore et l'effet tomberait a plat.
+/// Volontairement sans flou d'arriere-plan, bien que l'export Figma annonce
+/// `blur(74.85px)`. A cette valeur, la photo est entierement effacee sous
+/// l'arc, alors que la maquette laisse voir les balcons nettement. Meme un
+/// sigma de 6 detruit deja le detail. La valeur exportee ne correspond donc
+/// pas a ce que Figma affiche ; on garde ses opacites et on retire le flou,
+/// ce qui reproduit le rendu de la maquette et evite au passage un
+/// BackdropFilter, couteux sur mobile.
 class _Arc extends StatelessWidget {
   final bool isDark;
   const _Arc({required this.isDark});
@@ -326,16 +328,15 @@ class _Arc extends StatelessWidget {
     return SizedBox(
       width: 645,
       height: 462,
+      // ClipOval inscrit une ellipse dans la boite : 645 x 462. Un
+      // BoxShape.circle dessinerait un cercle du cote le plus court.
       child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 74.85, sigmaY: 74.85),
-          child: ColoredBox(
-            // Figma : creme a 60 % en clair, navy a 50 % en sombre.
-            color: isDark
-                ? FigBrand.navy.withValues(alpha: 0.50)
-                : FigBrand.cream.withValues(alpha: 0.60),
-            child: const SizedBox.expand(),
-          ),
+        child: ColoredBox(
+          // Figma : creme a 60 % en clair, navy a 50 % en sombre.
+          color: isDark
+              ? FigBrand.navy.withValues(alpha: 0.50)
+              : FigBrand.cream.withValues(alpha: 0.60),
+          child: const SizedBox.expand(),
         ),
       ),
     );
