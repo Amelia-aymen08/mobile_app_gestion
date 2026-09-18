@@ -44,6 +44,21 @@
     var efface = [];
     try { localStorage.clear(); efface.push('stockage local'); } catch (e) {}
     try { sessionStorage.clear(); efface.push('stockage de session'); } catch (e) {}
+    // Le service worker de Flutter garde une copie de l'application : sans
+    // ce nettoyage, le navigateur continue de servir l'ancienne version et
+    // les modifications ne se voient pas.
+    try {
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        });
+      }
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (cles) {
+          cles.forEach(function (k) { caches.delete(k); });
+        });
+      }
+    } catch (e) {}
     try {
       if (window.indexedDB && indexedDB.databases) {
         indexedDB.databases().then(function (bases) {
@@ -58,7 +73,7 @@
         ? 'Vous êtes déconnecté. L\'onboarding réapparaîtra également.'
         : "Le navigateur a refusé l'accès au stockage (fenêtre privée ?).";
 
-    setTimeout(function () { location.replace('/'); }, 1400);
+    setTimeout(function () { location.replace('/?onboarding=1'); }, 1600);
   })();
 </script>
 </body>
