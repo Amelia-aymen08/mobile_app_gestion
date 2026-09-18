@@ -21,6 +21,18 @@ class ApiService {
   String? _token;
   void setToken(String? token) => _token = token;
 
+  /// MODE DEMONSTRATION — a retirer avant la mise en production.
+  /// Rebranche le faux serveur au redemarrage quand la session restauree
+  /// appartient a un profil de demonstration. Sans cela, le jeton survit au
+  /// rechargement mais les appels repartent vers le vrai back-end.
+  bool restoreDemoSession(String email) {
+    final profile = demoProfileByEmail(email);
+    if (profile == null) return false;
+    _client = DemoClient(profile);
+    return true;
+  }
+
+
   http.Client _client = http.Client();
   final String baseUrl = const String.fromEnvironment(
     'API_URL',

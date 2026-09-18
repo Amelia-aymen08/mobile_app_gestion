@@ -719,7 +719,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final due = _chargesSummary['nextPaymentDate']?.toString();
     final dueDate = due == null ? null : DateTime.tryParse(due)?.toLocal();
 
-    return Row(
+    // IntrinsicHeight est indispensable : dans une ListView la hauteur est
+    // non bornee, et un Row en CrossAxisAlignment.stretch ne peut alors pas
+    // se dimensionner. Il donne aussi la meme hauteur aux deux cartes.
+    return IntrinsicHeight(
+      child: Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
@@ -750,6 +754,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           ),
         ),
       ],
+      ),
     );
   }
 
@@ -855,7 +860,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final rows = <Widget>[];
     for (var i = 0; i < actions.length; i += columns) {
       final slice = actions.skip(i).take(columns).toList();
-      rows.add(Row(
+      rows.add(IntrinsicHeight(
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var j = 0; j < columns; j++) ...[
@@ -867,6 +873,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             ),
           ],
         ],
+        ),
       ));
       if (i + columns < actions.length) {
         rows.add(const SizedBox(height: FigSpace.lg));

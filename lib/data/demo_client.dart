@@ -329,6 +329,12 @@ DemoProfile? demoProfileFor(String email, String password) {
   return _profiles[email.trim().toLowerCase()];
 }
 
+/// Retrouve un profil par sa seule adresse, sans mot de passe : sert a
+/// rebrancher le faux serveur au redemarrage de l'app, quand la session est
+/// restauree depuis le stockage local.
+DemoProfile? demoProfileByEmail(String email) =>
+    _profiles[email.trim().toLowerCase()];
+
 /// Vrai si l'adresse appartient a un profil de demonstration, quel que soit
 /// le mot de passe : sert a basculer le client avant l'appel.
 bool isDemoEmail(String email) =>
@@ -381,10 +387,10 @@ class DemoClient extends http.BaseClient {
   (int, Object?) _route(String method, String path, Map payload) {
     // ── Authentification ──────────────────────────────────────────────────
     if (path == '/auth/login') {
-      return (200, {
-        'token': 'demo-token',
-        'user': _user(),
-      });
+      // AuthProvider lit les champs de l'utilisateur au premier niveau de la
+      // reponse, pas sous une cle « user » : on respecte cette forme, sans
+      // quoi le prenom et le role arrivent vides.
+      return (200, {'token': 'demo-token', ..._user()});
     }
     if (path == '/auth/me') return (200, _user());
     if (path == '/auth/logout') return (200, {'ok': true});
