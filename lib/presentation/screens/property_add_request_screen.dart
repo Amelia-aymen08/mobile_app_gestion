@@ -308,7 +308,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SvgPicture.asset('assets/figma/icons/alert_16.svg',
+                SvgPicture.asset('assets/figma/icons/info_16.svg',
                     width: 16,
                     height: 16,
                     colorFilter:

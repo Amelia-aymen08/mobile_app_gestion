@@ -94,14 +94,14 @@ class ResidentProfileScreen extends StatelessWidget {
               title: t.myAccount,
               rows: [
                 GiSettingsRow(
-                  icon: SvgPicture.asset('assets/figma/icons/profile_20.svg',
+                  icon: SvgPicture.asset('assets/figma/icons/mail_16.svg',
                       colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                   label: t.emailLabel,
                   value: email.isEmpty ? t.notProvided : email,
                   trailing: const SizedBox.shrink(),
                 ),
                 GiSettingsRow(
-                  icon: SvgPicture.asset('assets/figma/icons/profile_20.svg',
+                  icon: SvgPicture.asset('assets/figma/icons/phone_16.svg',
                       colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                   label: t.phoneLabel,
                   value: phone.isEmpty ? t.notProvided : phone,

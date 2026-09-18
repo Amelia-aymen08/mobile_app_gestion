@@ -510,7 +510,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
           children: [
             SvgPicture.asset(
                 has
-                    ? 'assets/figma/icons/trash_15.svg'
+                    ? 'assets/figma/icons/close_16.svg'
                     : 'assets/figma/icons/camera_24.svg',
                 width: 18,
                 height: 18,
