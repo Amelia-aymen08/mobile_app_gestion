@@ -49,6 +49,7 @@ String _isoIn(int daysAhead) =>
     DateTime.now().add(Duration(days: daysAhead)).toIso8601String();
 
 Map<String, dynamic> _property({
+  required String ownerEmail,
   required String id,
   required String residenceName,
   required String address,
@@ -67,6 +68,9 @@ Map<String, dynamic> _property({
       'block': block,
       'status': 'ACTIF',
       'residenceId': residenceName,
+      // getMyProperties filtre sur owner.email : sans ce champ la liste
+      // revient vide, meme si le serveur a bien repondu.
+      'owner': {'email': ownerEmail},
       'Residence': {
         'id': residenceName,
         'name': residenceName,
@@ -83,6 +87,7 @@ final demoSingle = DemoProfile(
   fullName: 'Mehdi Messadi',
   properties: [
     _property(
+      ownerEmail: 'un.bien@demo.dz',
       id: 'p1',
       residenceName: 'Angélite',
       address: 'Hydra, Alger — Wilaya 16',
@@ -209,6 +214,7 @@ final demoMulti = DemoProfile(
   fullName: 'Yacine Belkacem',
   properties: [
     _property(
+      ownerEmail: 'trois.biens@demo.dz',
       id: 'p1',
       residenceName: 'Corail',
       address: 'Hydra, Alger — Wilaya 16',
@@ -219,6 +225,7 @@ final demoMulti = DemoProfile(
       block: 'B',
     ),
     _property(
+      ownerEmail: 'trois.biens@demo.dz',
       id: 'p2',
       residenceName: 'Péridot',
       address: 'Chéraga, Alger — Wilaya 16',
@@ -229,6 +236,7 @@ final demoMulti = DemoProfile(
       block: 'C',
     ),
     _property(
+      ownerEmail: 'trois.biens@demo.dz',
       id: 'p3',
       residenceName: 'Sélénite',
       address: 'Bab Ezzouar, Alger — Wilaya 16',
@@ -396,7 +404,10 @@ class DemoClient extends http.BaseClient {
     if (path == '/auth/logout') return (200, {'ok': true});
 
     // ── Biens et residences ───────────────────────────────────────────────
-    if (path == '/properties') return (200, profile.properties);
+    if (path == '/properties') {
+      // getMyProperties lit la liste sous la cle « data », pas a la racine.
+      return (200, {'data': profile.properties});
+    }
     if (path == '/residences') {
       return (
         200,

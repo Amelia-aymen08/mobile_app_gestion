@@ -57,5 +57,14 @@
   "alertPaymentBody": "Your next payment is due on {date}.",
   "alertPaymentHint": "Tap below to view the details and settle your instalment.",
   "close": "Close",
-  "viewPayment": "View payment"
+  "viewPayment": "View payment",
+  "noticesSubtitle": "Official communications",
+  "filterAll": "All",
+  "filterUrgent": "Urgent",
+  "filterInfo": "Info",
+  "filterEvent": "Event",
+  "readMore": "Read more",
+  "newCount": "{count, plural, =1{1 new} other{{count} new}}",
+  "emptyNoticesTitle": "No Notices Yet",
+  "emptyNoticesBody": "You are all caught up. There are no notices to display at this moment."
 }

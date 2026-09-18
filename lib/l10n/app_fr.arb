@@ -110,5 +110,21 @@
         "type": "String"
       }
     }
+  },
+  "noticesSubtitle": "Communications officielles",
+  "filterAll": "Tous",
+  "filterUrgent": "Urgent",
+  "filterInfo": "Info",
+  "filterEvent": "Événement",
+  "readMore": "Lire la suite",
+  "newCount": "{count, plural, =1{1 nouveau} other{{count} nouveaux}}",
+  "emptyNoticesTitle": "Aucun avis",
+  "emptyNoticesBody": "Vous êtes à jour. Il n'y a aucun avis à afficher pour le moment.",
+  "@newCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

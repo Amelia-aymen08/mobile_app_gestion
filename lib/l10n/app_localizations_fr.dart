@@ -215,4 +215,40 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get viewPayment => 'Voir le paiement';
+
+  @override
+  String get noticesSubtitle => 'Communications officielles';
+
+  @override
+  String get filterAll => 'Tous';
+
+  @override
+  String get filterUrgent => 'Urgent';
+
+  @override
+  String get filterInfo => 'Info';
+
+  @override
+  String get filterEvent => 'Événement';
+
+  @override
+  String get readMore => 'Lire la suite';
+
+  @override
+  String newCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count nouveaux',
+      one: '1 nouveau',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get emptyNoticesTitle => 'Aucun avis';
+
+  @override
+  String get emptyNoticesBody =>
+      'Vous êtes à jour. Il n\'y a aucun avis à afficher pour le moment.';
 }

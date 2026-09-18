@@ -57,5 +57,14 @@
   "alertPaymentBody": "دفعتك القادمة مستحقة في {date}.",
   "alertPaymentHint": "اضغط أدناه لعرض التفاصيل وتسوية دفعتك.",
   "close": "إغلاق",
-  "viewPayment": "عرض الدفعة"
+  "viewPayment": "عرض الدفعة",
+  "noticesSubtitle": "بلاغات رسمية",
+  "filterAll": "الكل",
+  "filterUrgent": "عاجل",
+  "filterInfo": "معلومة",
+  "filterEvent": "حدث",
+  "readMore": "اقرأ المزيد",
+  "newCount": "{count, plural, =1{جديد واحد} =2{جديدان} few{{count} جديدة} many{{count} جديدًا} other{{count} جديد}}",
+  "emptyNoticesTitle": "لا توجد إعلانات",
+  "emptyNoticesBody": "أنت على اطلاع كامل. لا توجد إعلانات لعرضها في الوقت الحالي."
 }

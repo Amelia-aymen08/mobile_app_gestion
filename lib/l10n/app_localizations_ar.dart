@@ -219,4 +219,43 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get viewPayment => 'عرض الدفعة';
+
+  @override
+  String get noticesSubtitle => 'بلاغات رسمية';
+
+  @override
+  String get filterAll => 'الكل';
+
+  @override
+  String get filterUrgent => 'عاجل';
+
+  @override
+  String get filterInfo => 'معلومة';
+
+  @override
+  String get filterEvent => 'حدث';
+
+  @override
+  String get readMore => 'اقرأ المزيد';
+
+  @override
+  String newCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count جديد',
+      many: '$count جديدًا',
+      few: '$count جديدة',
+      two: 'جديدان',
+      one: 'جديد واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get emptyNoticesTitle => 'لا توجد إعلانات';
+
+  @override
+  String get emptyNoticesBody =>
+      'أنت على اطلاع كامل. لا توجد إعلانات لعرضها في الوقت الحالي.';
 }

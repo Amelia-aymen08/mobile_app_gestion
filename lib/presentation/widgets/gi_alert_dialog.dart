@@ -243,13 +243,19 @@ class _GiAlert extends StatelessWidget {
               ? null
               : Border.all(color: FigBrand.amber, width: 1.5),
         ),
-        child: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: FigText.button.copyWith(
-            fontSize: 14,
-            color: filled ? Colors.black : FigBrand.amber,
+        // Le Figma dimensionne ces boutons pour « Close » et « Open Notice ».
+        // En francais et en arabe les libelles sont plus longs : on les
+        // reduit legerement plutot que de les couper, ce qui rendrait
+        // l'action illisible.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: FigText.button.copyWith(
+              fontSize: 14,
+              color: filled ? Colors.black : FigBrand.amber,
+            ),
           ),
         ),
       ),

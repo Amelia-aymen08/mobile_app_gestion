@@ -12,7 +12,6 @@ import 'gi_pressable.dart';
 class GiNavItem {
   final String asset;
   final String label;
-  final double iconSize;
 
   /// Compteur affiche en pastille sur l'icone. Absent du Figma, mais les
   /// notifications non lues existent dans l'app : on ne supprime pas une
@@ -22,15 +21,15 @@ class GiNavItem {
   const GiNavItem({
     required this.asset,
     required this.label,
-    this.iconSize = FigSize.navIcon,
     this.badge = 0,
   });
 }
 
 /// Barre de navigation flottante — frames Figma 928:2843 (LT) et 931:4053 (DT).
 ///
-/// Geometrie relevee au pixel : largeur 359, rayon 40, padding 16, onglets de
-/// 60 de large, ecart icone/libelle de 8, libelle 13.
+/// Geometrie relevee au pixel : largeur 359, rayon 40, padding 16, ecart
+/// icone/libelle de 8, libelle 13. Les icones gardent leur taille propre,
+/// celle que porte chaque SVG exporte du Figma.
 ///
 /// L'animation de selection est volontairement sobre : l'icone fait une
 /// impulsion breve puis revient a sa taille, pendant que la couleur passe au
@@ -69,10 +68,16 @@ class GiBottomNav extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 for (var i = 0; i < items.length; i++)
-                  _GiNavTab(
-                    item: items[i],
-                    selected: i == currentIndex,
-                    onTap: () => onTap(i),
+                  // Le Figma fige les onglets a 60, largeur taillee pour
+                  // l'anglais. « Paiement » n'y tient pas : on repartit la
+                  // barre a parts egales, ce qui donne un peu plus de place
+                  // sans rien decaler.
+                  Expanded(
+                    child: _GiNavTab(
+                      item: items[i],
+                      selected: i == currentIndex,
+                      onTap: () => onTap(i),
+                    ),
                   ),
               ],
             ),
@@ -99,9 +104,7 @@ class _GiNavTab extends StatelessWidget {
     return GiPressable(
       onTap: onTap,
       pressedScale: 0.90,
-      child: SizedBox(
-        width: FigSize.navItemW,
-        child: TweenAnimationBuilder<double>(
+      child: TweenAnimationBuilder<double>(
           tween: Tween(begin: selected ? 1 : 0, end: selected ? 1 : 0),
           duration: const Duration(milliseconds: 340),
           curve: Curves.easeOutCubic,
@@ -120,17 +123,20 @@ class _GiNavTab extends StatelessWidget {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
+                        // Pas de width/height : chaque SVG du Figma porte sa
+                        // taille exacte dans son attribut racine, et c'est
+                        // elle qui reproduit la maquette.
                         SvgPicture.asset(
                           item.asset,
-                          width: item.iconSize,
-                          height: item.iconSize,
                           colorFilter:
                               ColorFilter.mode(color, BlendMode.srcIn),
                         ),
                         if (item.badge > 0)
                           PositionedDirectional(
-                            top: -5,
-                            end: -7,
+                            // Reste dans la barre : au-dela, le ClipRRect qui
+                            // porte le flou rogne la pastille.
+                            top: -6,
+                            end: -4,
                             child: Container(
                               constraints: const BoxConstraints(minWidth: 16),
                               height: 16,
@@ -171,7 +177,6 @@ class _GiNavTab extends StatelessWidget {
               ],
             );
           },
-        ),
       ),
     );
   }

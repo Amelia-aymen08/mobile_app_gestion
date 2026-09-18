@@ -446,6 +446,60 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Voir le paiement'**
   String get viewPayment;
+
+  /// No description provided for @noticesSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Communications officielles'**
+  String get noticesSubtitle;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous'**
+  String get filterAll;
+
+  /// No description provided for @filterUrgent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Urgent'**
+  String get filterUrgent;
+
+  /// No description provided for @filterInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Info'**
+  String get filterInfo;
+
+  /// No description provided for @filterEvent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Événement'**
+  String get filterEvent;
+
+  /// No description provided for @readMore.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lire la suite'**
+  String get readMore;
+
+  /// No description provided for @newCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count, plural, =1{1 nouveau} other{{count} nouveaux}}'**
+  String newCount(int count);
+
+  /// No description provided for @emptyNoticesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun avis'**
+  String get emptyNoticesTitle;
+
+  /// No description provided for @emptyNoticesBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes à jour. Il n\'y a aucun avis à afficher pour le moment.'**
+  String get emptyNoticesBody;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

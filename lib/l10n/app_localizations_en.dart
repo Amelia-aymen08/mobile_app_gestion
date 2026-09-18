@@ -214,4 +214,40 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get viewPayment => 'View payment';
+
+  @override
+  String get noticesSubtitle => 'Official communications';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterUrgent => 'Urgent';
+
+  @override
+  String get filterInfo => 'Info';
+
+  @override
+  String get filterEvent => 'Event';
+
+  @override
+  String get readMore => 'Read more';
+
+  @override
+  String newCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new',
+      one: '1 new',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get emptyNoticesTitle => 'No Notices Yet';
+
+  @override
+  String get emptyNoticesBody =>
+      'You are all caught up. There are no notices to display at this moment.';
 }

@@ -291,14 +291,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       items: [
         GiNavItem(
             asset: 'assets/figma/icons/nav_home.svg',
-            label: t.navHome,
-            iconSize: FigSize.navIconAlt),
+            label: t.navHome),
         GiNavItem(
             asset: 'assets/figma/icons/nav_notice.svg', label: t.navNotice),
         GiNavItem(
             asset: 'assets/figma/icons/nav_report.svg',
-            label: t.navReport,
-            iconSize: FigSize.navIconAlt),
+            label: t.navReport),
         GiNavItem(
             asset: 'assets/figma/icons/nav_payment.svg', label: t.navPayment),
         GiNavItem(
@@ -396,8 +394,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                     clipBehavior: Clip.none,
                     children: [
                       SvgPicture.asset('assets/figma/icons/bell_16.svg',
-                          width: 16,
-                          height: 16,
                           colorFilter:
                               ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                       if (_unreadCount > 0)
@@ -579,8 +575,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                         children: [
                           SvgPicture.asset(
                               'assets/figma/icons/pin_location.svg',
-                              width: 8,
-                              height: 12,
                               colorFilter: const ColorFilter.mode(
                                   FigBrand.amber, BlendMode.srcIn)),
                           const SizedBox(width: FigSpace.md),
@@ -716,8 +710,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 size: FigSize.chipSm,
                 radius: FigRadius.pill,
                 icon: SvgPicture.asset(asset,
-                    width: 15,
-                    height: 15,
                     colorFilter: ColorFilter.mode(accent, BlendMode.srcIn)),
               ),
               const GiChevron(),
@@ -829,8 +821,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             accent: accent,
             icon: asset != null
                 ? SvgPicture.asset(asset,
-                    width: 20,
-                    height: 20,
                     colorFilter: ColorFilter.mode(accent, BlendMode.srcIn))
                 : Icon(icon, size: 20, color: accent),
           ),
