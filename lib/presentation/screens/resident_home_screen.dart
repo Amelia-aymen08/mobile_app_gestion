@@ -1,11 +1,18 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_bottom_nav.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_pressable.dart';
 import '../theme/residence_images.dart';
 import 'login_screen.dart';
 import 'my_properties_screen.dart';
@@ -132,7 +139,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       final dark = Theme.of(context).brightness == Brightness.dark;
       await showDialog<void>(
         context: context,
-        builder: (_) => Dialog(
+        // Sans ce contexte propre au dialogue, les boutons fermaient la route
+        // de l'ecran au lieu du dialogue lui-meme.
+        barrierDismissible: true,
+        builder: (dialogContext) => Dialog(
           backgroundColor: dark ? darkCard : Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -167,7 +177,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: brandAmber,
                           side: const BorderSide(color: brandAmber, width: 1.5),
@@ -183,7 +193,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.of(dialogContext).pop();
                           setState(() => _tab = 3);
                         },
                         style: ElevatedButton.styleFrom(
@@ -220,23 +230,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
     if (diff.inDays < 7) return 'Il y a ${diff.inDays} j';
     return _formatDate(d);
-  }
-
-  Color _statusColor(String? s) {
-    switch (s) {
-      case 'Signalé':
-        return const Color(0xFFF59E0B);
-      case 'En cours':
-        return const Color(0xFF3B82F6);
-      case 'Terminé':
-        return const Color(0xFF16A34A);
-      case 'SAV':
-        return const Color(0xFF8B5CF6);
-      case 'Rejeté':
-        return const Color(0xFFDC2626);
-      default:
-        return const Color(0xFF9AA3AB);
-    }
   }
 
   String? _imgUrl(dynamic raw) {
@@ -351,703 +344,625 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           _moreTab(user, dark),
         ],
       ),
-      bottomNavigationBar: _buildNavBar(dark),
+      bottomNavigationBar: _buildNavBar(),
     );
   }
 
-  Widget _buildNavBar(bool dark) {
-    final items = [
-      const _NavItem(
-          icon: Icons.home_outlined,
-          activeIcon: Icons.home_rounded,
-          label: 'Accueil'),
-      const _NavItem(
-          icon: Icons.campaign_outlined,
-          activeIcon: Icons.campaign_rounded,
-          label: 'Avis'),
-      const _NavItem(
-          icon: Icons.add_circle_outline,
-          activeIcon: Icons.add_circle_rounded,
-          label: 'Signaler'),
-      const _NavItem(
-          icon: Icons.credit_card_outlined,
-          activeIcon: Icons.credit_card_rounded,
-          label: 'Paiement'),
-      const _NavItem(
-          icon: Icons.more_horiz_rounded,
-          activeIcon: Icons.more_horiz_rounded,
-          label: 'Plus'),
-    ];
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      decoration: BoxDecoration(
-        color: dark ? darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: dark ? 0.40 : 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          )
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(items.length, (i) {
-          final item = items[i];
-          final active = _tab == i;
-          return GestureDetector(
-            onTap: () => setState(() => _tab = i),
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: active
-                  ? BoxDecoration(
-                      color: brandAmber.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    )
-                  : null,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(
-                        active ? item.activeIcon : item.icon,
-                        color: active
-                            ? brandAmber
-                            : (dark ? darkMuted : const Color(0xFF6B7280)),
-                        size: 24,
-                      ),
-                      if (i == 4 && _unreadCount > 0)
-                        Positioned(
-                          top: -4,
-                          right: -6,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFDC2626),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                                '${_unreadCount > 9 ? '9+' : _unreadCount}',
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item.label,
-                    style: TextStyle(
-                      color: active
-                          ? brandAmber
-                          : (dark ? darkMuted : const Color(0xFF6B7280)),
-                      fontSize: 10,
-                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
+  Widget _buildNavBar() {
+    final t = AppL10n.of(context);
+    return GiBottomNav(
+      currentIndex: _tab,
+      onTap: (i) => setState(() => _tab = i),
+      items: [
+        GiNavItem(
+            asset: 'assets/figma/icons/nav_home.svg',
+            label: t.navHome,
+            iconSize: FigSize.navIconAlt),
+        GiNavItem(
+            asset: 'assets/figma/icons/nav_notice.svg', label: t.navNotice),
+        GiNavItem(
+            asset: 'assets/figma/icons/nav_report.svg',
+            label: t.navReport,
+            iconSize: FigSize.navIconAlt),
+        GiNavItem(
+            asset: 'assets/figma/icons/nav_payment.svg', label: t.navPayment),
+        GiNavItem(
+            asset: 'assets/figma/icons/nav_more.svg',
+            label: t.navMore,
+            badge: _unreadCount),
+      ],
     );
   }
 
   // ─── Tab 0 — Accueil ─────────────────────────────────────
+  // Frames Figma "Home LT" (927:7894) et "Home DT" (960:6915).
+  // Rythme vertical de la maquette : en-tete a 66, contenu a 118, blocs
+  // espaces de 16, elements internes de 12.
   Widget _homeTab(Map? user, bool dark) {
-    final firstName = (user?['name'] ?? '').toString().split(' ').first;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+    final name = (user?['name'] ?? user?['fullName'] ?? '').toString();
+    final firstName = name.trim().isEmpty ? '' : name.trim().split(' ').first;
 
-    final openTickets = _tickets
-        .whereType<Map>()
-        .where((t) =>
-            !['Terminé', 'Rejeté'].contains((t['status'] ?? '').toString()))
-        .toList();
-    final inProgressTickets = _tickets
-        .whereType<Map>()
-        .where((t) => (t['status'] ?? '').toString() == 'En cours')
-        .toList();
-
-    final ownerStatus =
-        (_chargesSummary['ownerStatus'] ?? _chargesSummary['status'] ?? '')
-            .toString();
-    final annualAmount = _chargesSummary['annualAmount'];
-    final nextPaymentRaw = _chargesSummary['nextPaymentDate']?.toString();
-    final nextPaymentDate = nextPaymentRaw != null
-        ? DateTime.tryParse(nextPaymentRaw)?.toLocal()
-        : null;
+    final openTickets = _tickets.where((e) {
+      final s = (e is Map ? e['status'] : '').toString().toUpperCase();
+      return !['TERMINE', 'TERMINEE', 'CLOTURE', 'RESOLU', 'REJETE']
+          .contains(s);
+    }).length;
+    final inProgress = _tickets.where((e) {
+      final s = (e is Map ? e['status'] : '').toString().toUpperCase();
+      return s == 'EN_COURS';
+    }).length;
 
     return SafeArea(
+      bottom: false,
       child: RefreshIndicator(
-        onRefresh: () => Future.wait([_fetchDashboard(), _fetchUnread()]),
+        color: FigBrand.amber,
+        backgroundColor: c.card,
+        onRefresh: () async {
+          await _fetchDashboard();
+          await _fetchUnread();
+        },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          padding: const EdgeInsets.fromLTRB(
+              FigSpace.pagePadding, 22, FigSpace.pagePadding, 150),
           children: [
-            // ── Header ──────────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Bienvenue ${firstName.isNotEmpty ? firstName : ''}',
-                    style: TextStyle(
-                        color: fg, fontWeight: FontWeight.w900, fontSize: 24),
-                  ),
-                ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    _iconButton(
-                      icon: Icons.notifications_outlined,
-                      dark: dark,
-                      onTap: () => _push(const NotificationsScreen()),
-                    ),
-                    if (_unreadCount > 0)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          width: 9,
-                          height: 9,
-                          decoration: const BoxDecoration(
-                              color: Color(0xFFDC2626), shape: BoxShape.circle),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: (dark ? Colors.white : brandNavy)
-                        .withValues(alpha: 0.08),
-                    border: Border.all(color: brandAmber, width: 2),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(Icons.person_rounded, color: fg, size: 22),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-
-            // ── My Residence(s) carousel ────────────────
-            if (_properties.isNotEmpty)
-              _residenceCarousel(ownerStatus, dark, fg, muted)
-            else if (_loadingDashboard)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            const SizedBox(height: 14),
-
-            // ── Stat cards ──────────────────────────────
-            Row(
-              children: [
-                Expanded(
-                  child: _statCard(
-                    icon: Icons.account_balance_wallet_outlined,
-                    iconColor: brandAmber,
-                    label: 'Prochain paiement',
-                    value: annualAmount != null ? '$annualAmount DZD' : '—',
-                    sub: nextPaymentDate != null
-                        ? 'Échéance : ${_formatDate(nextPaymentDate)}'
-                        : (ownerStatus.isNotEmpty ? ownerStatus : null),
-                    subColor: brandAmber,
-                    dark: dark,
-                    fg: fg,
-                    muted: muted,
-                    onTap: () => setState(() => _tab = 3),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _statCard(
-                    icon: Icons.error_outline_rounded,
-                    iconColor: const Color(0xFFE0362B),
-                    label: 'Signalements',
-                    value:
-                        '${openTickets.length} ouvert${openTickets.length > 1 ? 's' : ''}',
-                    sub: inProgressTickets.isNotEmpty
-                        ? '${inProgressTickets.length} en cours'
-                        : null,
-                    subColor: const Color(0xFFE0362B),
-                    dark: dark,
-                    fg: fg,
-                    muted: muted,
-                    onTap: () => setState(() => _tab = 2),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
-
-            // ── Quick actions ──────────────────────────
-            Text('Actions rapides',
-                style: TextStyle(
-                    color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 12),
-            _quickActionsGrid(dark, fg),
-            const SizedBox(height: 24),
-
-            // ── Recent activity ────────────────────────
-            if (_tickets.isNotEmpty) ...[
-              Text('Activité récente',
-                  style: TextStyle(
-                      color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
-              const SizedBox(height: 12),
-              ..._tickets.take(3).map((t) {
-                if (t is! Map) return const SizedBox.shrink();
-                final status = (t['status'] ?? '').toString();
-                final title =
-                    (t['type'] ?? t['title'] ?? 'Signalement').toString();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _tab = 2),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: dark ? darkCard : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                                color: _statusColor(status),
-                                shape: BoxShape.circle),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    color: fg,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14)),
-                          ),
-                          Text(_timeAgo(t['createdAt']?.toString()),
-                              style: TextStyle(color: muted, fontSize: 11)),
-                          const SizedBox(width: 6),
-                          Icon(Icons.chevron_right_rounded,
-                              size: 18, color: muted),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 10),
-            ],
+            _header(c, t, firstName),
+            const SizedBox(height: 20),
+            _heroSection(c, t),
+            const SizedBox(height: FigSpace.lg),
+            _statsRow(c, t, openTickets, inProgress),
+            const SizedBox(height: FigSpace.xl),
+            Text(t.quickActions,
+                style: FigText.titleMd.copyWith(color: c.textBody)),
+            const SizedBox(height: FigSpace.lg),
+            _quickActionsGrid(c, t),
+            const SizedBox(height: FigSpace.xl),
+            Text(t.recentActivity,
+                style: FigText.titleMd.copyWith(color: c.textBody)),
+            const SizedBox(height: FigSpace.lg),
+            _recentActivity(c),
           ],
         ),
       ),
     );
   }
 
-  Widget _iconButton(
-      {required IconData icon,
-      required bool dark,
-      required VoidCallback onTap}) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: dark ? darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: dark ? Colors.white : brandNavy, size: 22),
-        onPressed: onTap,
+  Widget _header(GiColors c, AppL10n t, String firstName) {
+    return SizedBox(
+      height: FigSize.chipMd,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              t.greeting(firstName),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: FigText.greeting.copyWith(color: c.title),
+            ),
+          ),
+          const SizedBox(width: FigSpace.lg),
+          Row(
+            children: [
+              GiPressable(
+                pressedScale: 0.88,
+                onTap: () => _push(const NotificationsScreen()),
+                child: Container(
+                  width: FigSize.chipMd,
+                  height: FigSize.chipMd,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.headerChipBg,
+                    border: Border.all(color: c.headerChipBorder),
+                    borderRadius: BorderRadius.circular(FigRadius.chip),
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      SvgPicture.asset('assets/figma/icons/bell_16.svg',
+                          width: 16,
+                          height: 16,
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                      if (_unreadCount > 0)
+                        PositionedDirectional(
+                          top: -2,
+                          end: -2,
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                                color: FigAlert.error, shape: BoxShape.circle),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              GiPressable(
+                pressedScale: 0.88,
+                onTap: () => _push(const ResidentProfileScreen()),
+                child: Container(
+                  width: FigSize.chipMd,
+                  height: FigSize.chipMd,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.headerChipBg,
+                    border: Border.all(color: FigBrand.amber),
+                    borderRadius: BorderRadius.circular(FigRadius.chip),
+                  ),
+                  child:
+                      Icon(Icons.person_rounded, size: 18, color: c.textBody),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _residenceCarousel(
-      String ownerStatus, bool dark, Color fg, Color muted) {
-    final properties = _properties.whereType<Map>().toList();
-    if (properties.length == 1) {
-      final property = Map<String, dynamic>.from(properties.first);
-      final residence = property['Residence'] is Map
-          ? Map<String, dynamic>.from(property['Residence'] as Map)
-          : const <String, dynamic>{};
-      return _myResidenceCard(property, residence, ownerStatus, dark, fg, muted);
+  // Carte « Ma residence ». Le Figma n'en montre qu'une ; l'app peut en
+  // compter plusieurs, on garde donc le defilement horizontal, chaque carte
+  // etant rendue a l'identique de la maquette.
+  Widget _heroSection(GiColors c, AppL10n t) {
+    if (_loadingDashboard) {
+      return Container(
+        height: FigSize.heroH,
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(FigRadius.card),
+          border: Border.all(color: c.cardBorder),
+        ),
+      );
     }
-
-    return Column(
-      children: [
-        SizedBox(
-          height: 216,
-          child: PageView.builder(
-            controller: _residenceCarouselController,
-            itemCount: properties.length,
-            onPageChanged: (i) => setState(() => _carouselPage = i),
-            itemBuilder: (_, i) {
-              final property = Map<String, dynamic>.from(properties[i]);
-              final residence = property['Residence'] is Map
-                  ? Map<String, dynamic>.from(property['Residence'] as Map)
-                  : const <String, dynamic>{};
-              return Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: _myResidenceCard(
-                    property, residence, ownerStatus, dark, fg, muted),
-              );
-            },
+    if (_properties.isEmpty) {
+      return GiCard(
+        child: SizedBox(
+          height: 120,
+          child: Center(
+            child: Text(t.myResidence,
+                style: FigText.body.copyWith(color: c.textMuted)),
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(properties.length, (i) {
-            final active = i == _carouselPage;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 20 : 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: active ? brandAmber : (dark ? darkBorder : const Color(0xFFE2DDCF)),
-                borderRadius: BorderRadius.circular(20),
+      );
+    }
+    return SizedBox(
+      height: FigSize.heroH,
+      child: PageView.builder(
+        controller: _residenceCarouselController,
+        itemCount: _properties.length,
+        onPageChanged: (i) => setState(() => _carouselPage = i),
+        itemBuilder: (_, i) => Padding(
+          padding: EdgeInsetsDirectional.only(
+              end: i == _properties.length - 1 ? 0 : FigSpace.lg),
+          child: _heroCard(c, t, _properties[i] as Map),
+        ),
+      ),
+    );
+  }
+
+  Widget _heroCard(GiColors c, AppL10n t, Map property) {
+    final residence = property['Residence'] is Map
+        ? Map<String, dynamic>.from(property['Residence'] as Map)
+        : <String, dynamic>{};
+    final resName = (residence['name'] ?? '').toString();
+    final address = (residence['address'] ?? '').toString();
+    final asset = residenceImageAsset(
+        id: (residence['id'] ?? '').toString(), name: resName);
+    final url = _imgUrl(residence['image']);
+    final lot = (property['lotNumber'] ?? '').toString();
+    final status = (property['status'] ?? '').toString();
+
+    return GiPressable(
+      pressedScale: 0.985,
+      onTap: () => _push(const MyPropertiesScreen()),
+      child: Container(
+        height: FigSize.heroH,
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(FigRadius.card),
+          border: Border.all(color: c.heroBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // La photo occupe la droite de la carte et se fond vers la
+            // gauche : dans le Figma elle est masquee par un degrade qui la
+            // ramene a la couleur de la carte.
+            PositionedDirectional(
+              end: 0,
+              top: 0,
+              bottom: 0,
+              width: 205,
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.transparent, Colors.white],
+                  stops: [0.14, 0.86],
+                ).createShader(rect),
+                child: asset != null
+                    ? Image.asset(asset, fit: BoxFit.cover)
+                    : (url != null
+                        ? Image.network(url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                ColoredBox(color: c.card))
+                        : ColoredBox(color: c.card)),
               ),
-            );
-          }),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(FigSpace.heroPadding),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(t.myResidence,
+                                    style: FigText.body
+                                        .copyWith(color: c.textFaint)),
+                                const SizedBox(height: FigSpace.xs),
+                                Text(resName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: FigText.titleMd
+                                        .copyWith(color: c.textBody)),
+                              ],
+                            ),
+                          ),
+                          if (lot.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: c.scaffold,
+                                border: Border.all(color: c.cardBorder),
+                                borderRadius:
+                                    BorderRadius.circular(FigRadius.pill),
+                              ),
+                              child: Text(lot,
+                                  style: FigText.body
+                                      .copyWith(color: FigBrand.amber)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: FigSpace.lg),
+                      Row(
+                        children: [
+                          SvgPicture.asset(
+                              'assets/figma/icons/pin_location.svg',
+                              width: 8,
+                              height: 12,
+                              colorFilter: const ColorFilter.mode(
+                                  FigBrand.amber, BlendMode.srcIn)),
+                          const SizedBox(width: FigSpace.md),
+                          Expanded(
+                            child: Text(address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    FigText.body.copyWith(color: c.textBody)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  _heroStats(c, t, property, status),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _heroStats(GiColors c, AppL10n t, Map property, String status) {
+    Widget cell(String label, String value, {Color? valueColor}) => Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: FigText.label.copyWith(color: c.textFaint)),
+            Text(value,
+                style: FigText.statValue
+                    .copyWith(color: valueColor ?? c.textBody)),
+          ],
+        );
+
+    final divider = Container(width: 1, height: 37, color: c.innerBorder);
+    final floor = (property['floor'] ?? '').toString();
+    final surface = (property['surface'] ?? '').toString();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(FigRadius.card),
+        border: Border.all(color: c.innerBorder),
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.centerStart,
+          end: AlignmentDirectional.centerEnd,
+          colors: [c.card.withValues(alpha: 0), c.card],
+        ),
+      ),
+      child: SizedBox(
+        height: 40,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            cell(t.floor, floor),
+            divider,
+            cell(t.area, surface.isEmpty ? '' : '$surface m²'),
+            divider,
+            cell(t.status, status.isEmpty ? t.statusActive : status,
+                valueColor: FigAlert.success),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statsRow(GiColors c, AppL10n t, int open, int inProgress) {
+    final amount = _chargesSummary['annualAmount'];
+    final due = _chargesSummary['nextPaymentDate']?.toString();
+    final dueDate = due == null ? null : DateTime.tryParse(due)?.toLocal();
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: _statCard(
+            c,
+            asset: 'assets/figma/icons/payment_15.svg',
+            accent: FigAccent.amber,
+            label: t.nextPayment,
+            value: amount == null ? '—' : '$amount DZD',
+            sub: dueDate == null
+                ? ''
+                : t.paymentDeadline(_formatDate(dueDate)),
+            subColor: FigBrand.amber,
+            onTap: () => setState(() => _tab = 3),
+          ),
+        ),
+        const SizedBox(width: FigSpace.lg),
+        Expanded(
+          child: _statCard(
+            c,
+            asset: 'assets/figma/icons/alert_16.svg',
+            accent: FigAccent.red,
+            label: t.reports,
+            value: t.reportsOpen(open),
+            sub: inProgress == 0 ? '' : t.reportsInProgress(inProgress),
+            subColor: FigAlert.error,
+            onTap: () => setState(() => _tab = 2),
+          ),
         ),
       ],
     );
   }
 
-  Widget _myResidenceCard(Map property, Map residence, String ownerStatus,
-      bool dark, Color fg, Color muted) {
-    final name = (residence['name'] ?? '').toString();
-    final address = (residence['address'] ?? '').toString();
-    final localAsset = residenceImageAsset(
-        id: (residence['id'] ?? property['residenceId'])?.toString(),
-        name: name);
-    final image = _imgUrl(residence['image']);
-    final floor = (property['floor'] ?? '').toString();
-    final surface = (property['surface'] ?? '').toString();
-    final unitRaw = (property['lotNumber'] ?? '').toString();
-    final unit = unitRaw.contains('-') ? unitRaw.split('-').last : unitRaw;
-    final active = ownerStatus.isEmpty || ownerStatus == 'Actif';
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: dark ? darkCard : Colors.white,
-          border:
-              Border.all(color: dark ? darkBorder : const Color(0xFFE9E4D8)),
-        ),
-        child: Stack(
-          children: [
-            if (localAsset != null || image != null)
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: FractionallySizedBox(
-                    widthFactor: 1,
-                    child: ShaderMask(
-                      shaderCallback: (rect) => LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          (dark ? darkCard : brandCream).withValues(alpha: .72),
-                          (dark ? darkCard : brandCream).withValues(alpha: .08),
-                        ],
-                        stops: const [0.0, 0.72],
-                      ).createShader(rect),
-                      blendMode: BlendMode.dstIn,
-                      child: localAsset != null
-                          ? Image.asset(localAsset, fit: BoxFit.cover)
-                          : Image.network(image!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  const SizedBox.shrink()),
-                    ),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text('MA RÉSIDENCE',
-                            style: TextStyle(
-                                color: muted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1)),
-                      ),
-                      if (unit.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: (dark ? darkSurface : brandCream),
-                            border: Border.all(color: brandAmber, width: 1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text('APT.$unit',
-                              style: const TextStyle(
-                                  color: brandAmber,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(name.isNotEmpty ? name : 'Résidence',
-                      style: TextStyle(
-                          color: fg,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800)),
-                  if (address.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 15, color: brandAmber),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(address,
-                              style: TextStyle(color: muted, fontSize: 13),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: (dark ? Colors.white : brandNavy)
-                          .withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        if (floor.isNotEmpty)
-                          _Stat(
-                              label: 'Étage',
-                              value: floor,
-                              muted: muted,
-                              fg: fg),
-                        if (floor.isNotEmpty && surface.isNotEmpty)
-                          _statDivider(dark),
-                        if (surface.isNotEmpty)
-                          _Stat(
-                              label: 'Surface',
-                              value: '$surface m²',
-                              muted: muted,
-                              fg: fg),
-                        _statDivider(dark),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Statut',
-                                  style: TextStyle(color: muted, fontSize: 11)),
-                              const SizedBox(height: 2),
-                              Text(active ? 'Actif' : ownerStatus,
-                                  style: TextStyle(
-                                      color: active
-                                          ? const Color(0xFF16A34A)
-                                          : const Color(0xFFDC2626),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statDivider(bool dark) => Container(
-        width: 1,
-        height: 26,
-        color: dark ? darkBorder : const Color(0xFFE2DDCF),
-        margin: const EdgeInsets.symmetric(horizontal: 10),
-      );
-
-  Widget _statCard({
-    required IconData icon,
-    required Color iconColor,
+  Widget _statCard(
+    GiColors c, {
+    required String asset,
+    required Color accent,
     required String label,
     required String value,
-    String? sub,
+    required String sub,
     required Color subColor,
-    required bool dark,
-    required Color fg,
-    required Color muted,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return GiCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: dark ? darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(10)),
-                  alignment: Alignment.center,
-                  child: Icon(icon, color: iconColor, size: 18),
-                ),
-                const Spacer(),
-                Icon(Icons.chevron_right_rounded, size: 16, color: muted),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(label, style: TextStyle(color: muted, fontSize: 12)),
-            const SizedBox(height: 2),
-            Text(value,
-                style: TextStyle(
-                    color: fg, fontSize: 15, fontWeight: FontWeight.w800)),
-            if (sub != null) ...[
-              const SizedBox(height: 2),
-              Text(sub,
-                  style: TextStyle(
-                      color: subColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GiIconChip(
+                accent: accent,
+                size: FigSize.chipSm,
+                radius: FigRadius.pill,
+                icon: SvgPicture.asset(asset,
+                    width: 15,
+                    height: 15,
+                    colorFilter: ColorFilter.mode(accent, BlendMode.srcIn)),
+              ),
+              const GiChevron(),
             ],
+          ),
+          const SizedBox(height: FigSpace.sm),
+          Text(label, style: FigText.body.copyWith(color: c.textMuted)),
+          const SizedBox(height: FigSpace.sm),
+          Text(value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: FigText.titleMd.copyWith(color: c.textBody)),
+          if (sub.isNotEmpty) ...[
+            const SizedBox(height: FigSpace.sm),
+            Text(sub,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: FigText.caption.copyWith(color: subColor)),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _quickActionsGrid(bool dark, Color fg) {
-    final actions = [
+  Widget _quickActionsGrid(GiColors c, AppL10n t) {
+    final actions = <(String?, IconData?, Color, String, VoidCallback)>[
       (
-        const _QAction(
-            icon: Icons.error_outline_rounded,
-            color: Color(0xFFE0362B),
-            label: 'Signalements'),
+        'assets/figma/icons/alert_20.svg',
+        null,
+        FigAccent.red,
+        t.reports,
         () => setState(() => _tab = 2)
       ),
       (
-        const _QAction(
-            icon: Icons.campaign_outlined,
-            color: Color(0xFF8B7CF6),
-            label: 'Avis'),
+        'assets/figma/icons/notice_20.svg',
+        null,
+        FigAccent.violet,
+        t.notices,
         () => setState(() => _tab = 1)
       ),
       (
-        const _QAction(
-            icon: Icons.account_balance_wallet_outlined,
-            color: brandAmber,
-            label: 'Paiements'),
+        'assets/figma/icons/payment_20.svg',
+        null,
+        FigAccent.amber,
+        t.payments,
         () => setState(() => _tab = 3)
       ),
       (
-        const _QAction(
-            icon: Icons.description_outlined,
-            color: Color(0xFF3B82F6),
-            label: 'Documents'),
+        'assets/figma/icons/documents_20.svg',
+        null,
+        FigAccent.blue,
+        t.documents,
         () => _push(const MyPropertiesScreen())
       ),
       (
-        _QAction(
-            icon: Icons.person_outline_rounded,
-            color: dark ? darkMuted : const Color(0xFF6B7280),
-            label: 'Profil'),
+        'assets/figma/icons/profile_20.svg',
+        null,
+        FigAccent.purple,
+        t.profile,
         () => _push(const ResidentProfileScreen())
       ),
+      // Absente du Figma : la maquette ne prevoit que cinq actions, mais
+      // l'ajout d'un bien existe dans l'app. On garde la fonctionnalite en
+      // lui appliquant le meme habillage, faute d'icone fournie.
       (
-        const _QAction(
-            icon: Icons.add_home_work_outlined,
-            color: Color(0xFF16A34A),
-            label: 'Ajouter un bien'),
+        null,
+        Icons.add_home_work_outlined,
+        FigAlert.success,
+        t.addProperty,
         () => _push(const PropertyAddRequestScreen())
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 0.92,
-      children: actions.map((a) {
-        final qa = a.$1;
-        return GestureDetector(
-          onTap: a.$2,
-          child: Container(
-            decoration: BoxDecoration(
-              color: dark ? darkCard : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+    const columns = 3;
+    final rows = <Widget>[];
+    for (var i = 0; i < actions.length; i += columns) {
+      final slice = actions.skip(i).take(columns).toList();
+      rows.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var j = 0; j < columns; j++) ...[
+            if (j > 0) const SizedBox(width: FigSpace.lg),
+            Expanded(
+              child: j < slice.length
+                  ? _quickTile(c, slice[j])
+                  : const SizedBox.shrink(),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                      color: qa.color.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(12)),
-                  alignment: Alignment.center,
-                  child: Icon(qa.icon, color: qa.color, size: 20),
-                ),
-                const SizedBox(height: 8),
-                Text(qa.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    style: TextStyle(
-                        color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
-              ],
-            ),
+          ],
+        ],
+      ));
+      if (i + columns < actions.length) {
+        rows.add(const SizedBox(height: FigSpace.lg));
+      }
+    }
+    return Column(children: rows);
+  }
+
+  Widget _quickTile(
+      GiColors c, (String?, IconData?, Color, String, VoidCallback) a) {
+    final (asset, icon, accent, label, onTap) = a;
+    return GiCard(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GiIconChip(
+            accent: accent,
+            icon: asset != null
+                ? SvgPicture.asset(asset,
+                    width: 20,
+                    height: 20,
+                    colorFilter: ColorFilter.mode(accent, BlendMode.srcIn))
+                : Icon(icon, size: 20, color: accent),
           ),
-        );
-      }).toList(),
+          const SizedBox(height: FigSpace.lg),
+          Text(label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: FigText.body.copyWith(color: c.textMuted)),
+        ],
+      ),
+    );
+  }
+
+  Widget _recentActivity(GiColors c) {
+    final recent = _tickets.take(3).toList();
+    if (recent.isEmpty) {
+      return GiCard(
+        child: SizedBox(
+          height: 56,
+          child: Center(
+            child: Text('—', style: FigText.body.copyWith(color: c.textMuted)),
+          ),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        for (var i = 0; i < recent.length; i++) ...[
+          if (i > 0) const SizedBox(height: FigSpace.lg),
+          _activityRow(c, recent[i] as Map),
+        ],
+      ],
+    );
+  }
+
+  Widget _activityRow(GiColors c, Map ticket) {
+    final status = (ticket['status'] ?? '').toString().toUpperCase();
+    final dot = status == 'EN_COURS'
+        ? FigAccent.violet
+        : status.startsWith('TERMIN')
+            ? FigAlert.success
+            : FigAlert.error;
+
+    return GiCard(
+      onTap: () => setState(() => _tab = 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: FigSize.activityDot,
+                height: FigSize.activityDot,
+                decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: FigSpace.md),
+              Expanded(
+                child: Text((ticket['title'] ?? '').toString(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: FigText.bodyLg.copyWith(color: c.textBody)),
+              ),
+              const GiChevron(),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xs),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 14),
+            child: Text(_timeAgo(ticket['createdAt']?.toString()),
+                style: FigText.caption.copyWith(color: c.textMuted)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1250,46 +1165,3 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 }
 
-class _Stat extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color muted;
-  final Color fg;
-  const _Stat(
-      {required this.label,
-      required this.value,
-      required this.muted,
-      required this.fg});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: muted, fontSize: 11)),
-          const SizedBox(height: 2),
-          Text(value,
-              style: TextStyle(
-                  color: fg, fontSize: 14, fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-}
-
-class _QAction {
-  final IconData icon;
-  final Color color;
-  final String label;
-  const _QAction(
-      {required this.icon, required this.color, required this.label});
-}
-
-class _NavItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  const _NavItem(
-      {required this.icon, required this.activeIcon, required this.label});
-}

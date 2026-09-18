@@ -14,10 +14,16 @@ class GiNavItem {
   final String label;
   final double iconSize;
 
+  /// Compteur affiche en pastille sur l'icone. Absent du Figma, mais les
+  /// notifications non lues existent dans l'app : on ne supprime pas une
+  /// information utile parce que la maquette ne l'a pas prevue.
+  final int badge;
+
   const GiNavItem({
     required this.asset,
     required this.label,
     this.iconSize = FigSize.navIcon,
+    this.badge = 0,
   });
 }
 
@@ -111,11 +117,40 @@ class _GiNavTab extends StatelessWidget {
                   offset: Offset(0, -3 * pop),
                   child: Transform.scale(
                     scale: 1 + 0.16 * pop,
-                    child: SvgPicture.asset(
-                      item.asset,
-                      width: item.iconSize,
-                      height: item.iconSize,
-                      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        SvgPicture.asset(
+                          item.asset,
+                          width: item.iconSize,
+                          height: item.iconSize,
+                          colorFilter:
+                              ColorFilter.mode(color, BlendMode.srcIn),
+                        ),
+                        if (item.badge > 0)
+                          PositionedDirectional(
+                            top: -5,
+                            end: -7,
+                            child: Container(
+                              constraints: const BoxConstraints(minWidth: 16),
+                              height: 16,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: FigAlert.error,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                item.badge > 9 ? '9+' : '${item.badge}',
+                                style: FigText.caption.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),

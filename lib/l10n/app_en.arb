@@ -51,5 +51,6 @@
   "sendLink": "Send the link",
   "emailSentTitle": "Email sent",
   "emailSentBody": "If an account exists for {email}, a reset link has just been sent. Remember to check your spam folder.",
-  "backToLogin": "Back to login"
+  "backToLogin": "Back to login",
+  "addProperty": "Add a property"
 }

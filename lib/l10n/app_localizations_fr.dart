@@ -194,4 +194,7 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get backToLogin => 'Retour à la connexion';
+
+  @override
+  String get addProperty => 'Ajouter un bien';
 }

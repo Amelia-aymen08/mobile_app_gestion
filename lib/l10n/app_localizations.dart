@@ -410,6 +410,12 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Retour à la connexion'**
   String get backToLogin;
+
+  /// No description provided for @addProperty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un bien'**
+  String get addProperty;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

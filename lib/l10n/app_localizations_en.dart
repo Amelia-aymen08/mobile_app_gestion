@@ -193,4 +193,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get backToLogin => 'Back to login';
+
+  @override
+  String get addProperty => 'Add a property';
 }

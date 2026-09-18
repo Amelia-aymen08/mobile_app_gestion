@@ -97,5 +97,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "addProperty": "Ajouter un bien"
 }

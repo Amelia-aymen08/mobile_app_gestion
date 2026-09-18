@@ -199,4 +199,7 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get backToLogin => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get addProperty => 'إضافة عقار';
 }
