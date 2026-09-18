@@ -275,6 +275,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
   Widget _emptyState(GiColors c, AppL10n t) => Padding(
         padding: const EdgeInsets.only(top: 24),
         child: GiEmptyState(
+          illustration: 'assets/figma/empty/notices.svg',
           title: t.emptyNoticesTitle,
           message: t.emptyNoticesBody,
         ),

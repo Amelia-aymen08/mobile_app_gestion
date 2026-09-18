@@ -448,4 +448,64 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get estimated => 'تقديري';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get issueType => 'نوع المشكلة';
+
+  @override
+  String get descriptionLabel => 'الوصف';
+
+  @override
+  String get describeProblem => 'صف المشكلة بالتفصيل…';
+
+  @override
+  String get priorityLabel => 'الأولوية';
+
+  @override
+  String get priorityLow => 'منخفضة';
+
+  @override
+  String get priorityMedium => 'متوسطة';
+
+  @override
+  String get priorityHigh => 'عالية';
+
+  @override
+  String get priorityUrgent => 'عاجلة';
+
+  @override
+  String get attachPhoto => 'إرفاق صورة';
+
+  @override
+  String get submitReport => 'إرسال البلاغ';
+
+  @override
+  String get you => 'أنت';
+
+  @override
+  String get primaryResident => 'المقيم الرئيسي';
+
+  @override
+  String get fullAccess => 'وصول كامل';
+
+  @override
+  String get residentAccess => 'وصول مقيم';
+
+  @override
+  String get visitorAccess => 'وصول زائر';
+
+  @override
+  String get customAccess => 'وصول مخصص';
+
+  @override
+  String get addMember => 'إضافة فرد';
+
+  @override
+  String get edit => 'تعديل';
+
+  @override
+  String get remove => 'إزالة';
 }

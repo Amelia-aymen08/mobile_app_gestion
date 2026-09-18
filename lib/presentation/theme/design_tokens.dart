@@ -27,6 +27,7 @@ abstract final class FigBrand {
   static const amber = Color(0xFFDB9200); // accent CTA / actif
   static const navy  = Color(0xFF0C1620); // fond dark + navbar en thème light
   static const cream = Color(0xFFF6F3EC); // fond light
+  static const goldDark = Color(0xFFA08851); // or sourd du halo de splash
 }
 
 /// États — styles nommés "Alert/xx" dans Figma.

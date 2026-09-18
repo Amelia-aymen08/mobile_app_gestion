@@ -866,6 +866,126 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'estimé'**
   String get estimated;
+
+  /// No description provided for @category.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégorie'**
+  String get category;
+
+  /// No description provided for @issueType.
+  ///
+  /// In fr, this message translates to:
+  /// **'Type de problème'**
+  String get issueType;
+
+  /// No description provided for @descriptionLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Description'**
+  String get descriptionLabel;
+
+  /// No description provided for @describeProblem.
+  ///
+  /// In fr, this message translates to:
+  /// **'Décrivez le problème en détail…'**
+  String get describeProblem;
+
+  /// No description provided for @priorityLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Priorité'**
+  String get priorityLabel;
+
+  /// No description provided for @priorityLow.
+  ///
+  /// In fr, this message translates to:
+  /// **'Basse'**
+  String get priorityLow;
+
+  /// No description provided for @priorityMedium.
+  ///
+  /// In fr, this message translates to:
+  /// **'Moyenne'**
+  String get priorityMedium;
+
+  /// No description provided for @priorityHigh.
+  ///
+  /// In fr, this message translates to:
+  /// **'Haute'**
+  String get priorityHigh;
+
+  /// No description provided for @priorityUrgent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Urgente'**
+  String get priorityUrgent;
+
+  /// No description provided for @attachPhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Joindre une photo'**
+  String get attachPhoto;
+
+  /// No description provided for @submitReport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le signalement'**
+  String get submitReport;
+
+  /// No description provided for @you.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous'**
+  String get you;
+
+  /// No description provided for @primaryResident.
+  ///
+  /// In fr, this message translates to:
+  /// **'Résident principal'**
+  String get primaryResident;
+
+  /// No description provided for @fullAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès complet'**
+  String get fullAccess;
+
+  /// No description provided for @residentAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès résident'**
+  String get residentAccess;
+
+  /// No description provided for @visitorAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès visiteur'**
+  String get visitorAccess;
+
+  /// No description provided for @customAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès personnalisé'**
+  String get customAccess;
+
+  /// No description provided for @addMember.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter un membre'**
+  String get addMember;
+
+  /// No description provided for @edit.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier'**
+  String get edit;
+
+  /// No description provided for @remove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer'**
+  String get remove;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

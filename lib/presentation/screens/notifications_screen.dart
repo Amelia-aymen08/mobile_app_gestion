@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_pressable.dart';
+// `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
+import 'package:intl/intl.dart' hide TextDirection;
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -135,17 +142,57 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             children: [
               Row(
                 children: [
+                  // Cet ecran s'ouvre depuis la cloche de l'accueil : sans
+                  // retour, on ne peut plus en sortir.
+                  GiPressable(
+                    onTap: () => Navigator.pop(context),
+                    pressedScale: 0.88,
+                    child: Container(
+                      width: FigSize.chipMd,
+                      height: FigSize.chipMd,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: GiColors.of(context).headerChipBg,
+                        border: Border.all(
+                            color: GiColors.of(context).headerChipBorder),
+                        borderRadius: BorderRadius.circular(FigRadius.chip),
+                      ),
+                      child: Transform.flip(
+                        flipX:
+                            Directionality.of(context) == TextDirection.rtl,
+                        child: SvgPicture.asset(
+                          'assets/figma/icons/back_14.svg',
+                          colorFilter: ColorFilter.mode(
+                              GiColors.of(context).textBody, BlendMode.srcIn),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: FigSpace.xl),
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: FigSize.chipLg,
+                    height: FigSize.chipLg,
                     decoration: BoxDecoration(
-                      color: brandAmber.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(14),
+                      color: FigAccent.chipFill(FigBrand.amber),
+                      border:
+                          Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(Icons.campaign_outlined, color: brandAmber, size: 22),
+                    child: SizedBox(
+                      width: FigSize.chipLg * GiIconChip.iconRatio,
+                      height: FigSize.chipLg * GiIconChip.iconRatio,
+                      child: FittedBox(
+                        fit: BoxFit.contain,
+                        child: SvgPicture.asset(
+                          'assets/figma/icons/notice_20.svg',
+                          colorFilter: const ColorFilter.mode(
+                              FigBrand.amber, BlendMode.srcIn),
+                        ),
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: FigSpace.lg),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

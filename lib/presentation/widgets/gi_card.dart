@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
@@ -91,8 +92,9 @@ class GiIconChip extends StatelessWidget {
   }
 }
 
-/// Chevron de fin de ligne : 7 x 8,615 dans le Figma, oriente par le sens de
-/// lecture pour que l'arabe le renvoie vers la gauche.
+/// Chevron de fin de ligne — asset du Figma, 9 x 8, a sa taille propre.
+/// Il est retourne en lecture de droite a gauche pour pointer vers la sortie
+/// de l'ecran, et non vers le bord dont on vient.
 class GiChevron extends StatelessWidget {
   final Color? color;
   const GiChevron({super.key, this.color});
@@ -102,10 +104,10 @@ class GiChevron extends StatelessWidget {
     final rtl = Directionality.of(context) == TextDirection.rtl;
     return Transform.flip(
       flipX: rtl,
-      child: Icon(
-        Icons.chevron_right_rounded,
-        size: 18,
-        color: color ?? GiColors.of(context).textMuted,
+      child: SvgPicture.asset(
+        'assets/figma/icons/chevron_row.svg',
+        colorFilter: ColorFilter.mode(
+            color ?? GiColors.of(context).textMuted, BlendMode.srcIn),
       ),
     );
   }

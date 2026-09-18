@@ -114,7 +114,11 @@ class _GiNavTab extends StatelessWidget {
           curve: Curves.easeOutCubic,
           builder: (context, t, _) {
             // Impulsion : nulle aux extremites, maximale au milieu.
-            final pop = math.sin(t * math.pi);
+            //
+            // Elle ne joue qu'a la selection. Sans ce garde, l'onglet qu'on
+            // quitte pulse lui aussi en repassant de 1 a 0, et deux icones
+            // bougent pour un seul appui.
+            final pop = selected ? math.sin(t * math.pi) : 0.0;
             final color = Color.lerp(Colors.white, FigBrand.amber, t)!;
 
             return Column(

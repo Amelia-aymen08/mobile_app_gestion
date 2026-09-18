@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/services.dart';
 import '../../data/api_service.dart';
-import '../theme/app_theme.dart';
 
 class ResidentCreateTicketScreen extends StatefulWidget {
   final Map<String, dynamic> property;
@@ -204,218 +210,320 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
-    final fieldFill = dark ? darkCard : const Color(0xFFECE7DA);
-    final p = widget.property;
-    final apt = _apartmentNumberFromLotNumber(p['lotNumber']);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          _backButton(context, dark, fg),
-                          const SizedBox(width: 12),
-                          Text('Nouveau signalement',
-                              style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                        ],
+      backgroundColor: c.scaffold,
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+                FigSpace.pagePadding,
+                MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                FigSpace.pagePadding,
+                40),
+            children: [
+              // En-tete du Figma : pastille de retour de 32, ecart 17, titre 18.
+              Row(
+                children: [
+                  GiPressable(
+                    onTap: () => Navigator.pop(context),
+                    pressedScale: 0.88,
+                    child: Container(
+                      width: FigSize.chipMd,
+                      height: FigSize.chipMd,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: c.headerChipBg,
+                        border: Border.all(color: c.headerChipBorder),
+                        borderRadius: BorderRadius.circular(FigRadius.chip),
                       ),
-                      const SizedBox(height: 20),
-
-                      // ── Bien concerné ──────────────────────
-                      Container(
-                        decoration: BoxDecoration(
-                          color: dark ? darkCard : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Bien concerné', style: TextStyle(fontWeight: FontWeight.w800, color: fg)),
-                            const SizedBox(height: 6),
-                            Text(
-                              apt.isNotEmpty ? 'Appartement n° $apt' : (p['title'] ?? 'Appartement').toString(),
-                              style: TextStyle(fontWeight: FontWeight.w700, color: fg),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(_locationLabel(), style: TextStyle(color: muted, fontSize: 12)),
-                          ],
+                      child: Transform.flip(
+                        flipX:
+                            Directionality.of(context) == TextDirection.rtl,
+                        child: SvgPicture.asset(
+                          'assets/figma/icons/back_14.svg',
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn),
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      // ── Catégorie ───────────────────────────
-                      _label('Catégorie', fg),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _categories.map((c) {
-                          final name = (c['category'] ?? '').toString();
-                          final active = name == _selectedCategory;
-                          return GestureDetector(
-                            onTap: () => setState(() {
-                              _selectedCategory = name;
-                              _selectedSubCategory = null;
-                            }),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: active ? brandAmber.withValues(alpha: 0.16) : fieldFill,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: active ? brandAmber : Colors.transparent, width: 1.4),
-                              ),
-                              child: Text(name,
-                                  style: TextStyle(
-                                      color: active ? brandAmber : muted,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13)),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 18),
-
-                      // ── Type de problème (sous-catégorie) ──
-                      _label('Type de problème', fg),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _subCategoriesForSelected.map((s) {
-                          final active = s == _selectedSubCategory;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedSubCategory = s),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: active ? brandAmber : fieldFill,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(s,
-                                  style: TextStyle(
-                                      color: active ? brandNavy : muted,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13)),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ── Description ─────────────────────────
-                      _label('Description', fg),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _descController,
-                        maxLines: 4,
-                        maxLength: 100,
-                        style: TextStyle(color: fg),
-                        inputFormatters: [LengthLimitingTextInputFormatter(100)],
-                        decoration: InputDecoration(
-                          hintText: 'Décrivez le problème en détail...',
-                          hintStyle: TextStyle(color: muted.withValues(alpha: 0.7)),
-                          filled: true,
-                          fillColor: fieldFill,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-
-                      // ── Priorité ────────────────────────────
-                      _label('Priorité', fg),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(color: fieldFill, borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _priority,
-                            isExpanded: true,
-                            dropdownColor: dark ? darkCard : Colors.white,
-                            style: TextStyle(color: fg, fontSize: 15),
-                            items: const ['Basse', 'Moyenne', 'Haute', 'Urgent']
-                                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                                .toList(),
-                            onChanged: (v) => setState(() => _priority = v ?? _priority),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-
-                      // ── Pièce jointe ────────────────────────
-                      GestureDetector(
-                        onTap: _submitting ? null : _pickAttachment,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: brandAmber.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: brandAmber.withValues(alpha: 0.4), style: BorderStyle.solid),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.camera_alt_outlined, color: brandAmber, size: 20),
-                              const SizedBox(width: 10),
-                              Text(_attachment?.name ?? 'Joindre une photo ou un document',
-                                  style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 26),
-
-                      ElevatedButton(
-                        onPressed: _submitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandAmber,
-                          foregroundColor: brandNavy,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          minimumSize: const Size.fromHeight(54),
-                          elevation: 0,
-                        ),
-                        child: _submitting
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(color: brandNavy, strokeWidth: 2))
-                            : const Text('Envoyer le signalement',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 17),
+                  Text(t.newReport,
+                      style: FigText.titleMd
+                          .copyWith(fontSize: 18, color: c.textBody)),
+                ],
               ),
-            ),
+              const SizedBox(height: FigSpace.xxl),
+              _propertyCard(c, t),
+              const SizedBox(height: 17),
+              _label(c, t.category),
+              const SizedBox(height: FigSpace.xs),
+              _chips(
+                c,
+                _categories.map((e) => e['category'].toString()).toList(),
+                _selectedCategory,
+                (v) => setState(() {
+                  _selectedCategory = v;
+                  _selectedSubCategory = null;
+                }),
+              ),
+              if (_subCategoriesForSelected.isNotEmpty) ...[
+                const SizedBox(height: 17),
+                _label(c, t.issueType),
+                const SizedBox(height: FigSpace.xs),
+                _chips(c, _subCategoriesForSelected, _selectedSubCategory,
+                    (v) => setState(() => _selectedSubCategory = v)),
+              ],
+              const SizedBox(height: 17),
+              _label(c, t.descriptionLabel),
+              const SizedBox(height: FigSpace.xs),
+              _descriptionField(c, t),
+              const SizedBox(height: 17),
+              _label(c, t.priorityLabel),
+              const SizedBox(height: FigSpace.xs),
+              _priorityField(c, t),
+              const SizedBox(height: 17),
+              _attachBox(c, t),
+              const SizedBox(height: FigSpace.xxl),
+              GiPrimaryButton(
+                label: t.submitReport,
+                isLoading: _submitting,
+                onPressed: _canSubmit ? _submit : null,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _label(String text, Color fg) =>
-      Text(text, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w700));
+  bool get _canSubmit =>
+      !_loading &&
+      _selectedCategory != null &&
+      _selectedSubCategory != null &&
+      _descController.text.trim().isNotEmpty;
 
-  Widget _backButton(BuildContext context, bool dark, Color fg) => Container(
+  Widget _label(GiColors c, String text) =>
+      Text(text, style: FigText.fieldLabel.copyWith(color: c.textBody));
+
+  /// Rappel du bien concerne. Absent du Figma, mais un resident peut posseder
+  /// plusieurs biens : sans ce rappel il ne sait pas lequel il signale.
+  Widget _propertyCard(GiColors c, AppL10n t) {
+    return GiCard(
+      child: Row(
+        children: [
+          GiIconChip(
+            accent: FigBrand.amber,
+            size: FigSize.chipSm,
+            radius: FigRadius.pill,
+            icon: SvgPicture.asset('assets/figma/icons/pin_location.svg',
+                colorFilter:
+                    const ColorFilter.mode(FigBrand.amber, BlendMode.srcIn)),
+          ),
+          const SizedBox(width: FigSpace.lg),
+          Expanded(
+            child: Text(_locationLabel(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: FigText.body.copyWith(color: c.textMuted)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Puces de selection — composant "Fillter" du Figma en version 6 de rayon :
+  /// selectionnee en bleu a 5 % sur trait a 10 %, les autres en gris.
+  Widget _chips(GiColors c, List<String> values, String? selected,
+      ValueChanged<String> onPick) {
+    return Wrap(
+      spacing: FigSpace.md,
+      runSpacing: FigSpace.md,
+      children: [
+        for (final v in values)
+          GiPressable(
+            pressedScale: 0.94,
+            onTap: () => onPick(v),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: v == selected
+                    ? FigAccent.chipFill(_chipBlue)
+                    : c.card,
+                border: Border.all(
+                    color: v == selected
+                        ? FigAccent.chipBorder(_chipBlue)
+                        : c.cardBorder),
+                borderRadius: BorderRadius.circular(FigRadius.pill),
+              ),
+              child: Text(
+                v,
+                style: FigText.fieldLabel.copyWith(
+                    color: v == selected ? _chipBlue : c.fieldHint),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _descriptionField(GiColors c, AppL10n t) {
+    return Container(
+      height: 138 - 21,
+      padding: const EdgeInsets.all(FigSpace.xl - 1.5),
+      decoration: BoxDecoration(
+        color: c.fieldBg,
+        borderRadius: BorderRadius.circular(FigRadius.field),
+        border: Border.all(color: c.fieldBorder, width: 1.5),
+      ),
+      child: TextFormField(
+        controller: _descController,
+        maxLines: null,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        cursorColor: FigBrand.amber,
+        style: FigText.field.copyWith(color: c.fieldText),
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: t.describeProblem,
+          hintStyle: FigText.field.copyWith(color: c.fieldHint),
+          filled: false,
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+        ),
+      ),
+    );
+  }
+
+  /// Priorite : le Figma ouvre un panneau de quatre lignes sous le champ.
+  /// Une feuille glissee du bas rend la meme liste utilisable au pouce.
+  Widget _priorityField(GiColors c, AppL10n t) {
+    return GiPressable(
+      pressedScale: 0.99,
+      onTap: () => _pickPriority(c, t),
+      child: Container(
+        padding: const EdgeInsets.all(FigSpace.xl - 1.5),
         decoration: BoxDecoration(
-          color: dark ? darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: c.fieldBg,
+          borderRadius: BorderRadius.circular(FigRadius.field),
+          border: Border.all(color: c.fieldBorder, width: 1.5),
         ),
-        child: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: fg),
-          onPressed: () => Navigator.pop(context),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(_priorityLabel(t, _priority),
+                  style: FigText.field.copyWith(color: c.fieldText)),
+            ),
+            Icon(Icons.keyboard_arrow_down_rounded,
+                size: 20, color: c.textMuted),
+          ],
         ),
-      );
+      ),
+    );
+  }
+
+  String _priorityLabel(AppL10n t, String value) => switch (value) {
+        'Basse' => t.priorityLow,
+        'Haute' => t.priorityHigh,
+        'Urgente' => t.priorityUrgent,
+        _ => t.priorityMedium,
+      };
+
+  Future<void> _pickPriority(GiColors c, AppL10n t) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: c.scaffold,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(FigRadius.card)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+              FigSpace.pagePadding, FigSpace.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(t.priorityLabel,
+                  style: FigText.titleMd.copyWith(color: c.textBody)),
+              const SizedBox(height: FigSpace.xl),
+              for (final value in const ['Basse', 'Moyenne', 'Haute', 'Urgente'])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: FigSpace.md),
+                  child: GiCard(
+                    onTap: () {
+                      setState(() => _priority = value);
+                      Navigator.pop(sheetContext);
+                    },
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(_priorityLabel(t, value),
+                              style: FigText.statValue
+                                  .copyWith(color: c.textBody)),
+                        ),
+                        if (_priority == value)
+                          const Icon(Icons.check_rounded,
+                              color: FigBrand.amber, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Zone de piece jointe : fond ambre a 5 %, trait a 10 %, rayon 8.
+  /// Une fois un fichier choisi, la zone affiche son nom et permet de le
+  /// retirer — le Figma ne prevoit pas cet etat, mais sans lui on ne peut
+  /// pas revenir sur une piece jointe par erreur.
+  Widget _attachBox(GiColors c, AppL10n t) {
+    final has = _attachment != null;
+    return GiPressable(
+      pressedScale: 0.98,
+      onTap: has ? () => setState(() => _attachment = null) : _pickAttachment,
+      child: Container(
+        padding: const EdgeInsets.all(FigSpace.cardPadding),
+        decoration: BoxDecoration(
+          color: FigAccent.chipFill(FigBrand.amber),
+          border: Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
+          borderRadius: BorderRadius.circular(FigRadius.field),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(has ? Icons.close_rounded : Icons.photo_camera_outlined,
+                size: 18, color: has ? FigAlert.error : FigBrand.amber),
+            const SizedBox(width: FigSpace.lg),
+            Flexible(
+              child: Text(
+                has ? _attachment!.name : t.attachPhoto,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: FigText.field.copyWith(color: c.textBody),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
+/// Bleu des puces selectionnees, propre a cet ecran dans le Figma.
+const _chipBlue = Color(0xFF0088FF);

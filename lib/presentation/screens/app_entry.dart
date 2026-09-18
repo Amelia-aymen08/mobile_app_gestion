@@ -38,6 +38,10 @@ class _AppEntryState extends State<AppEntry> {
   }
 
   Future<void> _init() async {
+    // Duree minimale d'affichage du splash : sans elle, une session deja
+    // restauree le fait disparaitre avant que son animation ne se voie.
+    final minimumSplash =
+        Future<void>.delayed(const Duration(milliseconds: 1500));
     final auth = context.read<AuthProvider>();
     final prefs = await SharedPreferences.getInstance();
     await auth.restoreSession();
@@ -49,6 +53,7 @@ class _AppEntryState extends State<AppEntry> {
     if (forced || (!onboardingDone && !auth.isAuthenticated)) {
       _showOnboarding = true;
     }
+    await minimumSplash;
     if (mounted) setState(() => _ready = true);
   }
 

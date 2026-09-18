@@ -331,7 +331,7 @@ class AppL10nEn extends AppL10n {
   String get tabCommonAreas => 'Common areas';
 
   @override
-  String get newReport => 'New report';
+  String get newReport => 'New Report';
 
   @override
   String get emptyReportsTitle => 'No Reports Yet';
@@ -441,4 +441,64 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get estimated => 'estimated';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get issueType => 'Issue type';
+
+  @override
+  String get descriptionLabel => 'Description';
+
+  @override
+  String get describeProblem => 'Describe the problem in detail…';
+
+  @override
+  String get priorityLabel => 'Priority';
+
+  @override
+  String get priorityLow => 'Low';
+
+  @override
+  String get priorityMedium => 'Medium';
+
+  @override
+  String get priorityHigh => 'High';
+
+  @override
+  String get priorityUrgent => 'Urgent';
+
+  @override
+  String get attachPhoto => 'Attach Photo';
+
+  @override
+  String get submitReport => 'Submit Report';
+
+  @override
+  String get you => 'You';
+
+  @override
+  String get primaryResident => 'Primary Resident';
+
+  @override
+  String get fullAccess => 'Full Access';
+
+  @override
+  String get residentAccess => 'Resident Access';
+
+  @override
+  String get visitorAccess => 'Visitor Access';
+
+  @override
+  String get customAccess => 'Custom Access';
+
+  @override
+  String get addMember => 'Add member';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get remove => 'Remove';
 }

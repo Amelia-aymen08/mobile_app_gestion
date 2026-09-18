@@ -2,6 +2,14 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
 import '../theme/app_theme.dart';
 import '../../data/api_service.dart';
 
@@ -38,23 +46,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     }
   }
 
-  static const _accessLabels = {
-    'FULL': 'Accès complet',
-    'RESIDENT': 'Accès résident',
-    'VISITOR': 'Accès visiteur',
-    'CUSTOM': 'Accès personnalisé',
-  };
 
-  Color _accessColor(String level, bool dark) {
-    switch (level) {
-      case 'FULL':
-        return const Color(0xFF16A34A);
-      case 'VISITOR':
-        return dark ? darkMuted : const Color(0xFF6B7280);
-      default:
-        return brandAmber;
-    }
-  }
 
   Future<void> _openForm({Map<String, dynamic>? existing}) async {
     final saved = await showModalBottomSheet<bool>(
@@ -94,177 +86,272 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
         child: Column(
           children: [
+            // En-tete du Figma : pastille de retour de 32, ecart 16, titre 18.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                  FigSpace.pagePadding,
+                  0),
               child: Row(
                 children: [
-                  _iconBtn(Icons.arrow_back_rounded, dark, fg, () => Navigator.pop(context)),
-                  const SizedBox(width: 12),
-                  Text('Membres du foyer',
-                      style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
+                  GiPressable(
+                    onTap: () => Navigator.pop(context),
+                    pressedScale: 0.88,
+                    child: Container(
+                      width: FigSize.chipMd,
+                      height: FigSize.chipMd,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: c.headerChipBg,
+                        border: Border.all(color: c.headerChipBorder),
+                        borderRadius: BorderRadius.circular(FigRadius.chip),
+                      ),
+                      child: Transform.flip(
+                        flipX:
+                            Directionality.of(context) == TextDirection.rtl,
+                        child: SvgPicture.asset(
+                          'assets/figma/icons/back_14.svg',
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: FigSpace.xl),
+                  Text(t.householdMembers,
+                      style: FigText.titleMd
+                          .copyWith(fontSize: 18, color: c.textBody)),
                 ],
               ),
             ),
+            const SizedBox(height: FigSpace.xxl),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: FigBrand.amber))
                   : RefreshIndicator(
+                      color: FigBrand.amber,
+                      backgroundColor: c.card,
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                        padding: const EdgeInsets.fromLTRB(
+                            FigSpace.pagePadding, 0, FigSpace.pagePadding, 120),
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
-                          _memberTile(
-                            fg: fg,
-                            muted: muted,
-                            dark: dark,
-                            name: 'Vous',
-                            relation: 'Résident principal',
-                            accessLabel: 'Accès complet',
-                            accessColor: const Color(0xFF16A34A),
+                          // Le titulaire du bien, toujours en tete et sans
+                          // menu : il ne peut ni etre modifie ni retire.
+                          _memberCard(
+                            c,
+                            name: t.you,
+                            relation: t.primaryResident,
+                            accessLabel: t.fullAccess,
+                            accessColor: FigAlert.success,
                             photo: null,
-                            trailing: null,
+                            member: null,
                           ),
-                          if (_members.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 40),
-                              child: Center(
-                                child: Text('Aucun autre membre pour le moment.',
-                                    style: TextStyle(color: muted, fontSize: 14)),
-                              ),
+                          // Figma : les cartes sont espacees de 4, pas de 12.
+                          for (final m in _members.whereType<Map>()) ...[
+                            const SizedBox(height: FigSpace.xs),
+                            _memberCard(
+                              c,
+                              name: (m['fullName'] ?? '').toString(),
+                              relation: (m['relation'] ?? '').toString(),
+                              accessLabel: _accessLabel(
+                                  t, (m['accessLevel'] ?? 'RESIDENT').toString()),
+                              accessColor: FigBrand.amber,
+                              photo: (m['photo'] ?? '').toString(),
+                              member: Map<String, dynamic>.from(m),
                             ),
-                          ..._members.whereType<Map>().map((m) {
-                            final member = Map<String, dynamic>.from(m);
-                            final level = (member['accessLevel'] ?? 'RESIDENT').toString();
-                            return _memberTile(
-                              fg: fg,
-                              muted: muted,
-                              dark: dark,
-                              name: (member['fullName'] ?? '').toString(),
-                              relation: (member['relation'] ?? '').toString(),
-                              accessLabel: _accessLabels[level] ?? level,
-                              accessColor: _accessColor(level, dark),
-                              photo: (member['photo'] ?? '').toString(),
-                              trailing: PopupMenuButton<String>(
-                                icon: Icon(Icons.more_vert_rounded, color: muted),
-                                onSelected: (v) {
-                                  if (v == 'edit') _openForm(existing: member);
-                                  if (v == 'remove') _remove(member);
-                                },
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(
-                                      value: 'edit',
-                                      child: Row(children: [
-                                        Icon(Icons.edit_outlined, size: 18),
-                                        SizedBox(width: 10),
-                                        Text('Modifier'),
-                                      ])),
-                                  PopupMenuItem(
-                                      value: 'remove',
-                                      child: Row(children: [
-                                        Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFDC2626)),
-                                        SizedBox(width: 10),
-                                        Text('Retirer', style: TextStyle(color: Color(0xFFDC2626))),
-                                      ])),
-                                ],
-                              ),
-                            );
-                          }),
+                          ],
                         ],
                       ),
                     ),
             ),
+            // Le Figma pose le bouton a 52 du bas, hors de la liste.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+                  FigSpace.pagePadding, FigSpace.xxl),
+              child: GiPrimaryButton(
+                label: t.addMember,
+                onPressed: () => _openForm(),
+              ),
+            ),
           ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => _openForm(),
-            child: const Text('Ajouter un membre'),
-          ),
         ),
       ),
     );
   }
 
-  Widget _memberTile({
-    required Color fg,
-    required Color muted,
-    required bool dark,
+  String _accessLabel(AppL10n t, String level) => switch (level.toUpperCase()) {
+        'FULL' => t.fullAccess,
+        'VISITOR' || 'VISITEUR' => t.visitorAccess,
+        'CUSTOM' || 'PERSONNALISE' => t.customAccess,
+        _ => t.residentAccess,
+      };
+
+  /// Carte de membre — Figma 0:4180 : avatar rond de 36, ecart 12, trois
+  /// lignes de texte espacees de 4, et le menu a trois points de 20.
+  Widget _memberCard(
+    GiColors c, {
     required String name,
     required String relation,
     required String accessLabel,
     required Color accessColor,
     required String? photo,
-    required Widget? trailing,
+    required Map<String, dynamic>? member,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(18)),
+    return GiCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _avatar(photo, name, dark),
-          const SizedBox(width: 14),
+          _avatar(c, photo, name),
+          const SizedBox(width: FigSpace.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(name, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-                if (relation.isNotEmpty)
-                  Text(relation, style: TextStyle(color: muted, fontSize: 12)),
-                const SizedBox(height: 2),
+                Text(name.isEmpty ? '—' : name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: FigText.statValue
+                        .copyWith(height: 1.2, color: c.textBody)),
+                if (relation.isNotEmpty) ...[
+                  const SizedBox(height: FigSpace.xs),
+                  Text(relation,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.body.copyWith(color: c.textMuted)),
+                ],
+                const SizedBox(height: FigSpace.xs),
                 Text(accessLabel,
-                    style: TextStyle(color: accessColor, fontSize: 12, fontWeight: FontWeight.w700)),
+                    style: FigText.body.copyWith(
+                        fontWeight: FontWeight.w500, color: accessColor)),
               ],
             ),
           ),
-          if (trailing != null) trailing,
+          if (member != null) ...[
+            const SizedBox(width: FigSpace.md),
+            GiPressable(
+              pressedScale: 0.82,
+              ensureMinTapTarget: true,
+              onTap: () => _openMemberMenu(c, member),
+              child: SvgPicture.asset(
+                'assets/figma/icons/dots_20.svg',
+                colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _avatar(String? photo, String name, bool dark) {
-    final initials = name.trim().isEmpty
-        ? '?'
-        : name.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase();
-    if (photo != null && photo.isNotEmpty) {
-      return ClipOval(
-        child: Image.network('${ApiService().baseUrl.replaceAll('/api', '')}$photo',
-            width: 48, height: 48, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _initialsCircle(initials, dark)),
-      );
-    }
-    return _initialsCircle(initials, dark);
+  /// Avatar rond de 36. Sans photo servie par l'API, on retombe sur les
+  /// initiales plutot que sur une silhouette generique : elles distinguent
+  /// au moins les membres entre eux.
+  Widget _avatar(GiColors c, String? photo, String name) {
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty)
+        .take(2)
+        .map((e) => e[0].toUpperCase())
+        .join();
+
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: FigAccent.chipFill(FigBrand.amber),
+        border: Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: photo != null && photo.startsWith('http')
+          ? Image.network(photo,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _initials(initials))
+          : _initials(initials),
+    );
   }
 
-  Widget _initialsCircle(String initials, bool dark) => Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: brandAmber.withValues(alpha: 0.16)),
-        alignment: Alignment.center,
-        child: Text(initials, style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w800)),
+  Widget _initials(String initials) => Text(
+        initials.isEmpty ? '?' : initials,
+        style: FigText.body.copyWith(
+            fontWeight: FontWeight.w600, color: FigBrand.amber),
       );
 
-  Widget _iconBtn(IconData icon, bool dark, Color fg, VoidCallback onTap) => Container(
-        decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
-        child: IconButton(icon: Icon(icon, color: fg), onPressed: onTap),
-      );
+  /// Menu du Figma : « Modifier » puis « Retirer » en rouge.
+  Future<void> _openMemberMenu(GiColors c, Map<String, dynamic> member) async {
+    final t = AppL10n.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: c.scaffold,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(FigRadius.card)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+              FigSpace.pagePadding, FigSpace.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GiCard(
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _openForm(existing: member);
+                },
+                child: Row(
+                  children: [
+                    SvgPicture.asset('assets/figma/icons/edit_13.svg',
+                        colorFilter:
+                            ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    const SizedBox(width: FigSpace.lg),
+                    Text(t.edit,
+                        style: FigText.field.copyWith(color: c.textBody)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: FigSpace.md),
+              GiCard(
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _remove(member);
+                },
+                child: Row(
+                  children: [
+                    SvgPicture.asset('assets/figma/icons/trash_15.svg',
+                        colorFilter: const ColorFilter.mode(
+                            FigAlert.error, BlendMode.srcIn)),
+                    const SizedBox(width: FigSpace.lg),
+                    Text(t.remove,
+                        style:
+                            FigText.field.copyWith(color: FigAlert.error)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+
 
 // ─── Add / Edit sheet ───────────────────────────────────────────────────────
 class _MemberFormSheet extends StatefulWidget {

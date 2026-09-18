@@ -442,4 +442,64 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get estimated => 'estimé';
+
+  @override
+  String get category => 'Catégorie';
+
+  @override
+  String get issueType => 'Type de problème';
+
+  @override
+  String get descriptionLabel => 'Description';
+
+  @override
+  String get describeProblem => 'Décrivez le problème en détail…';
+
+  @override
+  String get priorityLabel => 'Priorité';
+
+  @override
+  String get priorityLow => 'Basse';
+
+  @override
+  String get priorityMedium => 'Moyenne';
+
+  @override
+  String get priorityHigh => 'Haute';
+
+  @override
+  String get priorityUrgent => 'Urgente';
+
+  @override
+  String get attachPhoto => 'Joindre une photo';
+
+  @override
+  String get submitReport => 'Envoyer le signalement';
+
+  @override
+  String get you => 'Vous';
+
+  @override
+  String get primaryResident => 'Résident principal';
+
+  @override
+  String get fullAccess => 'Accès complet';
+
+  @override
+  String get residentAccess => 'Accès résident';
+
+  @override
+  String get visitorAccess => 'Accès visiteur';
+
+  @override
+  String get customAccess => 'Accès personnalisé';
+
+  @override
+  String get addMember => 'Ajouter un membre';
+
+  @override
+  String get edit => 'Modifier';
+
+  @override
+  String get remove => 'Retirer';
 }

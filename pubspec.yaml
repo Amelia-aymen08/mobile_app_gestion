@@ -38,6 +38,7 @@ flutter:
     - assets/figma/icons/
     - assets/brand/
     - assets/figma/onboarding/
+    - assets/figma/empty/
 
   fonts:
     - family: Montserrat
