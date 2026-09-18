@@ -632,4 +632,14 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get errorTitle => 'Une erreur est survenue';
+
+  @override
+  String get notificationsSubtitle => 'Vos alertes et rappels';
+
+  @override
+  String get emptyNotificationsTitle => 'Aucune notification';
+
+  @override
+  String get emptyNotificationsBody =>
+      'Vous êtes à jour. Rien à signaler pour le moment.';
 }

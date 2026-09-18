@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
 import '../providers/auth_provider.dart';
 import '../../l10n/app_localizations.dart';
-import '../theme/app_theme.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_bottom_nav.dart';
@@ -225,7 +224,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final user = context.watch<AuthProvider>().user;
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: GiColors.of(context).scaffold,
       extendBody: true,
       body: IndexedStack(
         index: _tab,
@@ -919,7 +918,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             150),
         children: [
           _identityCard(c, t, name, lot, resName, block),
-          const SizedBox(height: FigSpace.lg),
+          const SizedBox(height: FigSpace.xl),
           GiCard(
             onTap: () => _openSwitch(),
             child: Row(
@@ -999,7 +998,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: FigSpace.xxl),
+          const SizedBox(height: FigSpace.xl),
           // Le Figma place ici un bouton plein ; en rouge plutot qu'en ambre,
           // la deconnexion n'etant pas une action que l'on veut mettre en
           // avant comme les autres.

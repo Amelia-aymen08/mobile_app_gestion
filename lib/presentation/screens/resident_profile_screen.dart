@@ -87,9 +87,9 @@ class ResidentProfileScreen extends StatelessWidget {
                         .copyWith(fontSize: 18, color: c.textBody)),
               ],
             ),
-            const SizedBox(height: FigSpace.xxl),
-            _identity(c, name, email),
             const SizedBox(height: FigSpace.xl),
+            _identity(c, name, email),
+            const SizedBox(height: FigSpace.lg),
             GiSettingsGroup(
               title: t.myAccount,
               rows: [
@@ -107,7 +107,7 @@ class ResidentProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: FigSpace.xl),
+            const SizedBox(height: FigSpace.lg),
             GiSettingsGroup(
               title: t.services,
               rows: [

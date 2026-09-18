@@ -187,5 +187,8 @@
   "addPropertyNotice": "يُرسل طلبك إلى مسيّر الإقامة. سيظهر العقار ضمن ممتلكاتك بمجرد الموافقة عليه.",
   "requestSentTitle": "تم إرسال الطلب",
   "requestSentBody": "استلم مسيّر الإقامة طلبك. سيتم إشعارك فور معالجته.",
-  "errorTitle": "حدث خطأ"
+  "errorTitle": "حدث خطأ",
+  "notificationsSubtitle": "تنبيهاتك وتذكيراتك",
+  "emptyNotificationsTitle": "لا توجد إشعارات",
+  "emptyNotificationsBody": "أنت على اطلاع. لا جديد في الوقت الحالي."
 }

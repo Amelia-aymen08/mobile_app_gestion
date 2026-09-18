@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../data/api_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/gi_appear.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
@@ -144,7 +145,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                       title: t.serviceCharges,
                       subtitle: _propertyLine(),
                     ),
-                    const SizedBox(height: FigSpace.xxl),
+                    const SizedBox(height: 20),
                     _summaryCard(c, t, due, totalDue),
                     const SizedBox(height: FigSpace.xl),
                     _breakdown(c, t, due, totalDue),
@@ -157,7 +158,8 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                     else
                       for (var i = 0; i < paidHistory.length; i++) ...[
                         if (i > 0) const SizedBox(height: FigSpace.lg),
-                        _historyCard(c, paidHistory[i]),
+                        GiAppear(
+                            index: i, child: _historyCard(c, paidHistory[i])),
                       ],
                   ],
                 ),
@@ -232,7 +234,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
               ),
             ],
           ),
-          const SizedBox(height: FigSpace.xl),
+          const SizedBox(height: FigSpace.lg),
           Text(t.totalDue, style: FigText.body.copyWith(color: c.textMuted)),
           const SizedBox(height: FigSpace.xs),
           Text(_formatAmount(totalDue),

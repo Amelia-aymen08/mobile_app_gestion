@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/gi_appear.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
@@ -221,7 +222,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                 ],
               ),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
             SizedBox(
               height: 28,
               child: ListView(
@@ -330,7 +331,8 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                   FigSpace.pagePadding, 0, FigSpace.pagePadding, 150),
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(height: FigSpace.lg),
-              itemBuilder: (context, i) => _reportCard(c, t, filtered[i]),
+              itemBuilder: (context, i) => GiAppear(
+                  index: i, child: _reportCard(c, t, filtered[i])),
             ),
     );
   }

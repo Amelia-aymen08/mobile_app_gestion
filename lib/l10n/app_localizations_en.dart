@@ -631,4 +631,14 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get errorTitle => 'Something went wrong';
+
+  @override
+  String get notificationsSubtitle => 'Your alerts and reminders';
+
+  @override
+  String get emptyNotificationsTitle => 'No notifications';
+
+  @override
+  String get emptyNotificationsBody =>
+      'You are up to date. Nothing to report right now.';
 }

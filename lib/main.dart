@@ -90,9 +90,25 @@ class GeranceImmoServiceApp extends StatelessWidget {
 class GiScrollBehavior extends MaterialScrollBehavior {
   const GiScrollBehavior();
 
+  /// `RangeMaintainingScrollPhysics` en parent : quand une image finit de se
+  /// charger au-dessus de ce qu'on lit, elle conserve la position au lieu de
+  /// faire sauter la liste. C'est la principale source de saccade a l'usage.
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const ClampingScrollPhysics();
+      const ClampingScrollPhysics(parent: RangeMaintainingScrollPhysics());
+
+  /// Le halo bleu d'Android en bout de liste n'existe pas dans le Figma, et
+  /// jure avec l'ambre. L'arret net suffit a dire qu'on est au bout.
+  @override
+  Widget buildOverscrollIndicator(
+          BuildContext context, Widget child, ScrollableDetails details) =>
+      child;
+
+  /// Avec deux doigts poses, suivre le dernier evite le blocage du defilement
+  /// quand un doigt reste immobile.
+  @override
+  MultitouchDragStrategy getMultitouchDragStrategy(BuildContext context) =>
+      MultitouchDragStrategy.latestPointer;
 
   @override
   Set<PointerDeviceKind> get dragDevices => {

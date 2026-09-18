@@ -1226,6 +1226,24 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Une erreur est survenue'**
   String get errorTitle;
+
+  /// No description provided for @notificationsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos alertes et rappels'**
+  String get notificationsSubtitle;
+
+  /// No description provided for @emptyNotificationsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune notification'**
+  String get emptyNotificationsTitle;
+
+  /// No description provided for @emptyNotificationsBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes à jour. Rien à signaler pour le moment.'**
+  String get emptyNotificationsBody;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../data/api_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/gi_appear.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_header.dart';
@@ -103,7 +104,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
                 badge: unreadCount > 0 ? t.newCount(unreadCount) : null,
               ),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
             SizedBox(
               height: 28,
               child: ListView.separated(
@@ -122,7 +123,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
                 },
               ),
             ),
-            const SizedBox(height: FigSpace.xl),
+            const SizedBox(height: 20),
             Expanded(
               child: _loading
                   ? const Center(
@@ -150,8 +151,11 @@ class _NoticesScreenState extends State<NoticesScreen> {
                               itemCount: filtered.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: FigSpace.lg),
-                              itemBuilder: (context, i) => _noticeCard(
-                                  c, t, Map<String, dynamic>.from(filtered[i])),
+                              itemBuilder: (context, i) => GiAppear(
+                                index: i,
+                                child: _noticeCard(c, t,
+                                    Map<String, dynamic>.from(filtered[i])),
+                              ),
                             ),
                     ),
             ),
@@ -501,7 +505,11 @@ class NoticeDetailScreen extends StatelessWidget {
         children: [
           Column(
             children: [
-              Icon(Icons.place, size: 16, color: color),
+              // Epingle du Figma plutot que l'icone Material.
+              SvgPicture.asset(
+                'assets/figma/icons/pin_location.svg',
+                colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+              ),
               if (!last)
                 Expanded(
                   child: _DashedLine(color: c.innerBorder),

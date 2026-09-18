@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
-import '../theme/design_tokens.dart';
-import '../theme/gi_colors.dart';
-import '../widgets/gi_card.dart';
-import '../widgets/gi_pressable.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
 import 'package:intl/intl.dart' hide TextDirection;
-import '../../data/api_service.dart';
-import '../theme/app_theme.dart';
 
+import '../../data/api_service.dart';
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../widgets/gi_appear.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_empty_state.dart';
+import '../widgets/gi_header.dart';
+import '../widgets/gi_pressable.dart';
+
+/// Notifications du resident.
+///
+/// Le Figma ne dessine pas cet ecran : il reprend la frame « Notices LT »,
+/// dont il partage la matiere — en-tete a pastille, rangee de filtres et
+/// cartes de 16 de rayon. Le compteur de l'en-tete sert aussi de bouton :
+/// l'appuyer marque tout comme lu.
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
@@ -38,7 +47,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
     try {
       final data = await _api.getNotifications();
-      final items = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      final items =
+          data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -53,33 +63,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  String _formatDate(dynamic value) {
-    if (value == null) return '';
-    try {
-      final dt = DateTime.parse(value.toString()).toLocal();
-      return DateFormat('dd/MM/yyyy HH:mm').format(dt);
-    } catch (_) {
-      return value.toString();
-    }
-  }
-
   Future<void> _markRead(Map<String, dynamic> n) async {
     final id = n['id']?.toString();
-    if (id == null || id.isEmpty) return;
-    if ((n['isRead'] == true)) return;
+    if (id == null || id.isEmpty || n['isRead'] == true) return;
     try {
       await _api.markNotificationRead(id);
       if (!mounted) return;
       setState(() {
         _items = _items
-            .map((x) => x['id']?.toString() == id ? { ...x, 'isRead': true } : x)
+            .map((x) => x['id']?.toString() == id ? {...x, 'isRead': true} : x)
             .toList();
       });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-      );
+    } catch (_) {
+      // Marquer comme lu est accessoire : un echec ne doit pas interrompre
+      // l'ouverture de la notification.
     }
   }
 
@@ -88,17 +85,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await _api.markAllNotificationsRead();
       if (!mounted) return;
       setState(() {
-        _items = _items.map((x) => { ...x, 'isRead': true }).toList();
+        _items = _items.map((x) => {...x, 'isRead': true}).toList();
       });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
-      );
-    }
+    } catch (_) {}
   }
 
-  bool _isUrgent(Map n) => ['WARNING', 'ERROR'].contains((n['type'] ?? '').toString());
+  bool _isUrgent(Map n) =>
+      ['WARNING', 'ERROR'].contains((n['type'] ?? '').toString());
 
   List<Map<String, dynamic>> get _filtered {
     if (_filter == 'urgent') return _items.where(_isUrgent).toList();
@@ -106,41 +99,77 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return _items;
   }
 
-  ({IconData icon, Color color}) _typeStyle(String type) {
-    switch (type) {
-      case 'WARNING':
-        return (icon: Icons.report_problem_outlined, color: const Color(0xFFF59E0B));
-      case 'ERROR':
-        return (icon: Icons.error_outline_rounded, color: const Color(0xFFE0362B));
-      case 'SUCCESS':
-        return (icon: Icons.check_circle_outline_rounded, color: const Color(0xFF16A34A));
-      default:
-        return (icon: Icons.info_outline_rounded, color: const Color(0xFF3B82F6));
+  /// Couleur et pastille par type, alignees sur les accents du Figma.
+  ({String asset, Color color}) _typeStyle(String type) => switch (type) {
+        'WARNING' => (
+            asset: 'assets/figma/icons/alert_20.svg',
+            color: FigBrand.amber
+          ),
+        'ERROR' => (
+            asset: 'assets/figma/icons/alert_20.svg',
+            color: FigAlert.error
+          ),
+        'SUCCESS' => (
+            asset: 'assets/figma/icons/notif_booking_16.svg',
+            color: FigAlert.success
+          ),
+        'PAYMENT' => (
+            asset: 'assets/figma/icons/notif_payment_16.svg',
+            color: FigAccent.violet
+          ),
+        _ => (
+            asset: 'assets/figma/icons/notif_announce_16.svg',
+            color: FigAccent.blue
+          ),
+      };
+
+  String _typeLabel(AppL10n t, String type) => switch (type) {
+        'WARNING' || 'ERROR' => t.filterUrgent,
+        'SUCCESS' => t.notifBookings,
+        'PAYMENT' => t.notifPayments,
+        _ => t.filterInfo,
+      };
+
+  String _formatDate(dynamic value) {
+    if (value == null) return '';
+    try {
+      final dt = DateTime.parse(value.toString()).toLocal();
+      return DateFormat('dd/MM/yyyy · HH:mm').format(dt);
+    } catch (_) {
+      return value.toString();
     }
   }
 
   void _openDetail(Map<String, dynamic> n) {
     _markRead(n);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => _NoticeDetailScreen(notice: n)));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => _NotificationDetailScreen(
+              notification: n,
+              accent: _typeStyle((n['type'] ?? '').toString()).color)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
-    final unreadCount = _items.where((e) => e['isRead'] != true).length;
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+    final unread = _items.where((e) => e['isRead'] != true).length;
     final list = _filtered;
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            children: [
-              Row(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                  FigSpace.pagePadding,
+                  0),
+              child: Row(
                 children: [
                   // Cet ecran s'ouvre depuis la cloche de l'accueil : sans
                   // retour, on ne peut plus en sortir.
@@ -152,9 +181,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       height: FigSize.chipMd,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: GiColors.of(context).headerChipBg,
-                        border: Border.all(
-                            color: GiColors.of(context).headerChipBorder),
+                        color: c.headerChipBg,
+                        border: Border.all(color: c.headerChipBorder),
                         borderRadius: BorderRadius.circular(FigRadius.chip),
                       ),
                       child: Transform.flip(
@@ -162,204 +190,106 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             Directionality.of(context) == TextDirection.rtl,
                         child: SvgPicture.asset(
                           'assets/figma/icons/back_14.svg',
-                          colorFilter: ColorFilter.mode(
-                              GiColors.of(context).textBody, BlendMode.srcIn),
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: FigSpace.xl),
-                  Container(
-                    width: FigSize.chipLg,
-                    height: FigSize.chipLg,
-                    decoration: BoxDecoration(
-                      color: FigAccent.chipFill(FigBrand.amber),
-                      border:
-                          Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
-                      borderRadius: BorderRadius.circular(FigRadius.chip),
-                    ),
-                    alignment: Alignment.center,
-                    child: SizedBox(
-                      width: FigSize.chipLg * GiIconChip.iconRatio,
-                      height: FigSize.chipLg * GiIconChip.iconRatio,
-                      child: FittedBox(
-                        fit: BoxFit.contain,
-                        child: SvgPicture.asset(
-                          'assets/figma/icons/notice_20.svg',
-                          colorFilter: const ColorFilter.mode(
-                              FigBrand.amber, BlendMode.srcIn),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: FigSpace.lg),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                        Text('Communications officielles', style: TextStyle(color: muted, fontSize: 12)),
-                      ],
+                    child: GiScreenHeader(
+                      iconAsset: 'assets/figma/icons/bell_16.svg',
+                      accent: FigBrand.amber,
+                      title: t.notificationsTitle,
+                      subtitle: t.notificationsSubtitle,
                     ),
                   ),
-                  if (unreadCount > 0)
-                    GestureDetector(
+                  if (unread > 0) ...[
+                    const SizedBox(width: FigSpace.md),
+                    // Le compteur fait aussi office de « tout marquer comme
+                    // lu » : deux elements pour la meme information seraient
+                    // redondants dans un en-tete deja charge.
+                    GiPressable(
+                      pressedScale: 0.92,
                       onTap: _markAllRead,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(color: brandAmber, borderRadius: BorderRadius.circular(20)),
-                        child: Text('$unreadCount nouveau${unreadCount > 1 ? 'x' : ''}',
-                            style: const TextStyle(
-                                color: brandNavy, fontWeight: FontWeight.w700, fontSize: 12)),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 18),
-
-              // ── Filter chips ─────────────────────────────
-              Row(
-                children: [
-                  _chip('Tout', 'all', dark, fg),
-                  const SizedBox(width: 8),
-                  _chip('Urgent', 'urgent', dark, fg),
-                  const SizedBox(width: 8),
-                  _chip('Info', 'info', dark, fg),
-                ],
-              ),
-              const SizedBox(height: 18),
-
-              if (_loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 60),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 60),
-                  child: Center(
-                    child: Text(_error!,
-                        style: const TextStyle(color: Color(0xFFE0362B), fontWeight: FontWeight.w600)),
-                  ),
-                )
-              else if (list.isEmpty)
-                _emptyState(dark, fg, muted)
-              else
-                ...list.map((n) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _noticeCard(n, dark, fg, muted),
-                    )),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(String label, String value, bool dark, Color fg) {
-    final active = _filter == value;
-    return GestureDetector(
-      onTap: () => setState(() => _filter = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-        decoration: BoxDecoration(
-          color: active ? (dark ? brandAmber : brandNavy) : (dark ? darkCard : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                color: active ? (dark ? brandNavy : Colors.white) : fg,
-                fontWeight: FontWeight.w600,
-                fontSize: 13)),
-      ),
-    );
-  }
-
-  Widget _noticeCard(Map<String, dynamic> n, bool dark, Color fg, Color muted) {
-    final title = (n['title'] ?? '').toString();
-    final message = (n['message'] ?? '').toString();
-    final isRead = n['isRead'] == true;
-    final type = (n['type'] ?? 'INFO').toString();
-    final style = _typeStyle(type);
-    final createdAt = _formatDate(n['createdAt']);
-
-    return GestureDetector(
-      onTap: () => _openDetail(n),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: dark ? darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (createdAt.isNotEmpty)
-              Text(createdAt, style: TextStyle(color: muted, fontSize: 11)),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: style.color.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(style.icon, color: style.color, size: 20),
-                    ),
-                    if (!isRead)
-                      Positioned(
-                        top: -3,
-                        right: -3,
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: const BoxDecoration(color: brandAmber, shape: BoxShape.circle),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: FigBrand.amber,
+                          borderRadius: BorderRadius.circular(FigRadius.pill),
                         ),
+                        child: Text(t.newCount(unread),
+                            style: FigText.label.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black)),
                       ),
+                    ),
                   ],
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title.isEmpty ? 'Avis' : title,
-                          style: TextStyle(
-                              color: fg,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              height: 1.25)),
-                      if (message.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(message,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: muted, fontSize: 13, height: 1.4)),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Lire la suite',
-                      style: TextStyle(color: brandAmber, fontWeight: FontWeight.w700, fontSize: 13)),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
                 ],
               ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 28,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: FigSpace.pagePadding),
+                children: [
+                  GiFilterChip(
+                      label: t.filterAll,
+                      selected: _filter == 'all',
+                      onTap: () => setState(() => _filter = 'all')),
+                  const SizedBox(width: FigSpace.xs),
+                  GiFilterChip(
+                      label: t.filterUrgent,
+                      selected: _filter == 'urgent',
+                      onTap: () => setState(() => _filter = 'urgent')),
+                  const SizedBox(width: FigSpace.xs),
+                  GiFilterChip(
+                      label: t.filterInfo,
+                      selected: _filter == 'info',
+                      onTap: () => setState(() => _filter = 'info')),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  : RefreshIndicator(
+                      color: FigBrand.amber,
+                      backgroundColor: c.card,
+                      onRefresh: _load,
+                      child: list.isEmpty
+                          ? ListView(
+                              padding: const EdgeInsets.fromLTRB(
+                                  FigSpace.pagePadding, 24,
+                                  FigSpace.pagePadding, 40),
+                              children: [
+                                GiEmptyState(
+                                  illustration:
+                                      'assets/figma/empty/notices.svg',
+                                  title: t.emptyNotificationsTitle,
+                                  message:
+                                      _error ?? t.emptyNotificationsBody,
+                                ),
+                              ],
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(
+                                  FigSpace.pagePadding, 0,
+                                  FigSpace.pagePadding, 40),
+                              itemCount: list.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: FigSpace.lg),
+                              itemBuilder: (_, i) =>
+                                  GiAppear(index: i, child: _card(c, t, list[i])),
+                            ),
+                    ),
             ),
           ],
         ),
@@ -367,37 +297,113 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _emptyState(bool dark, Color fg, Color muted) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
+  /// Carte de notification — meme grammaire que la « Notice Card » du Figma :
+  /// pastille de type, titre, extrait, puis date et lien de lecture.
+  Widget _card(GiColors c, AppL10n t, Map<String, dynamic> n) {
+    final title = (n['title'] ?? '').toString();
+    final message = (n['message'] ?? '').toString();
+    final type = (n['type'] ?? 'INFO').toString();
+    final style = _typeStyle(type);
+    final isRead = n['isRead'] == true;
+
+    return GiCard(
+      onTap: () => _openDetail(n),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: dark ? darkBorder : const Color(0xFFE2DDCF), width: 3),
-            ),
-            alignment: Alignment.center,
-            child: Icon(Icons.priority_high_rounded,
-                size: 56, color: dark ? darkBorder : const Color(0xFFE2DDCF)),
+          Row(
+            children: [
+              Flexible(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: FigAccent.chipFill(style.color),
+                    border:
+                        Border.all(color: FigAccent.chipBorder(style.color)),
+                    borderRadius: BorderRadius.circular(FigRadius.pill),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(style.asset,
+                          width: 11,
+                          height: 11,
+                          colorFilter:
+                              ColorFilter.mode(style.color, BlendMode.srcIn)),
+                      const SizedBox(width: FigSpace.xs),
+                      Flexible(
+                        child: Text(_typeLabel(t, type),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: FigText.caption.copyWith(color: style.color)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Point ambre tant que la notification n'a pas ete ouverte.
+              if (!isRead)
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                      color: FigBrand.amber, shape: BoxShape.circle),
+                ),
+            ],
           ),
-          const SizedBox(height: 22),
-          Text('Aucun avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
-          const SizedBox(height: 8),
-          Text('Vous êtes à jour. Aucun avis à afficher pour le moment.',
-              textAlign: TextAlign.center, style: TextStyle(color: muted, fontSize: 13)),
+          const SizedBox(height: FigSpace.xl),
+          Text(title.isEmpty ? t.notificationsTitle : title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: FigText.statValue.copyWith(
+                  height: 1.2,
+                  fontWeight: isRead ? FontWeight.w500 : FontWeight.w600,
+                  color: c.textBody)),
+          if (message.isNotEmpty) ...[
+            const SizedBox(height: FigSpace.sm),
+            Text(message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: FigText.body.copyWith(height: 1.4, color: c.textMuted)),
+          ],
+          const SizedBox(height: FigSpace.xl),
+          Row(
+            children: [
+              Expanded(
+                child: Text(_formatDate(n['createdAt']),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: FigText.caption.copyWith(color: c.textFaint)),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              Text(t.readMore,
+                  style: FigText.caption.copyWith(color: c.textBody)),
+              const SizedBox(width: FigSpace.xs),
+              Transform.flip(
+                flipX: Directionality.of(context) == TextDirection.rtl,
+                child: SvgPicture.asset(
+                  'assets/figma/icons/arrow_readmore.svg',
+                  colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-// ─── Notice detail ──────────────────────────────────────────────────────────
-class _NoticeDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> notice;
-  const _NoticeDetailScreen({required this.notice});
+/// Detail d'une notification — reprend la mise en page de « Notice Detail
+/// LT » : en-tete a pastille, carte de contenu, puis le corps du message.
+class _NotificationDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> notification;
+  final Color accent;
+
+  const _NotificationDetailScreen(
+      {required this.notification, required this.accent});
 
   String _formatDate(dynamic value) {
     if (value == null) return '';
@@ -411,51 +417,88 @@ class _NoticeDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
-    final title = (notice['title'] ?? '').toString();
-    final message = (notice['message'] ?? '').toString();
-    final createdAt = _formatDate(notice['createdAt']);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+    final title = (notification['title'] ?? '').toString();
+    final message = (notification['message'] ?? '').toString();
+    final date = _formatDate(notification['createdAt']);
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: EdgeInsets.fromLTRB(
+              FigSpace.pagePadding,
+              MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+              FigSpace.pagePadding,
+              40),
           children: [
             Row(
               children: [
-                _backButton(context, dark, fg),
-                const SizedBox(width: 12),
+                GiPressable(
+                  onTap: () => Navigator.pop(context),
+                  pressedScale: 0.88,
+                  child: Container(
+                    width: FigSize.chipMd,
+                    height: FigSize.chipMd,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.headerChipBg,
+                      border: Border.all(color: c.headerChipBorder),
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
+                    ),
+                    child: Transform.flip(
+                      flipX: Directionality.of(context) == TextDirection.rtl,
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/back_14.svg',
+                        colorFilter:
+                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 17),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                      if (createdAt.isNotEmpty)
-                        Text(createdAt, style: TextStyle(color: muted, fontSize: 12)),
+                      Text(t.notificationsTitle,
+                          style: FigText.titleMd
+                              .copyWith(fontSize: 18, color: c.textBody)),
+                      if (date.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(date,
+                            style:
+                                FigText.label.copyWith(color: c.textMuted)),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: dark ? darkCard : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
+            GiCard(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(title.isEmpty ? 'Avis' : title,
-                      style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 19)),
+                  Container(
+                    height: 3,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(FigRadius.pill),
+                    ),
+                  ),
+                  const SizedBox(height: FigSpace.xl),
+                  Text(title.isEmpty ? t.notificationsTitle : title,
+                      style: FigText.greeting
+                          .copyWith(fontSize: 20, height: 1.2, color: c.textBody)),
                   if (message.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(message, style: TextStyle(color: muted, fontSize: 14, height: 1.6)),
+                    const SizedBox(height: FigSpace.lg),
+                    Text(message,
+                        style: FigText.fieldLabel
+                            .copyWith(height: 1.6, color: c.textMuted)),
                   ],
                 ],
               ),
@@ -465,15 +508,4 @@ class _NoticeDetailScreen extends StatelessWidget {
       ),
     );
   }
-
-  Widget _backButton(BuildContext context, bool dark, Color fg) => Container(
-        decoration: BoxDecoration(
-          color: dark ? darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: fg),
-          onPressed: () => Navigator.pop(context),
-        ),
-      );
 }

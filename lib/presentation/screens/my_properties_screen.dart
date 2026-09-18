@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
+import '../widgets/gi_appear.dart';
 import '../theme/gi_colors.dart';
 import '../theme/residence_images.dart';
 import '../widgets/gi_empty_state.dart';
@@ -237,7 +238,11 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                               else
                                 for (var i = 0; i < _properties.length; i++) ...[
                                   if (i > 0) const SizedBox(height: FigSpace.lg),
-                                  _residenceCard(c, t, _properties[i] as Map, i),
+                                  GiAppear(
+                                    index: i,
+                                    child: _residenceCard(
+                                        c, t, _properties[i] as Map, i),
+                                  ),
                                 ],
                             ],
                           ),

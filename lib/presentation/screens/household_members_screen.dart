@@ -133,7 +133,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: FigSpace.xxl),
+            const SizedBox(height: 20),
             Expanded(
               child: _loading
                   ? const Center(

@@ -35,6 +35,19 @@ class _AppEntryState extends State<AppEntry> {
   void initState() {
     super.initState();
     _init();
+    // Les photos de l'onboarding sont chargees pendant le splash : sans ce
+    // prechargement, le premier ecran s'affiche vide puis la photo apparait
+    // d'un coup, ce qui se lit comme un clignotement.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final asset in const [
+        'assets/onboarding-who-we-are.png',
+        'assets/figma/onboarding/photo_2.png',
+        'assets/figma/onboarding/photo_3.png',
+      ]) {
+        precacheImage(AssetImage(asset), context);
+      }
+    });
   }
 
   Future<void> _init() async {
@@ -178,6 +191,37 @@ class _AppEntryState extends State<AppEntry> {
     final auth = context.watch<AuthProvider>();
     _configureNotificationPolling(auth);
 
+    // Le passage du splash a l'ecran suivant se fait en fondu. Sans lui, le
+    // fond creme du splash laisse brutalement place a la photo sombre de
+    // l'onboarding : la coupure se lit comme un defaut d'affichage.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 520),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      // Les deux ecrans se superposent pendant le fondu au lieu de se
+      // pousser : l'un s'efface exactement ou l'autre apparait.
+      layoutBuilder: (current, previous) => Stack(
+        fit: StackFit.expand,
+        children: [...previous, if (current != null) current],
+      ),
+      child: KeyedSubtree(
+        key: ValueKey(_routeKey(auth)),
+        child: _routeFor(auth),
+      ),
+    );
+  }
+
+  /// Identifiant de l'ecran courant, pour que le fondu ne se declenche qu'aux
+  /// vrais changements de page et non a chaque reconstruction.
+  String _routeKey(AuthProvider auth) {
+    if (!_ready) return 'splash';
+    if (_showOnboarding) return 'onboarding';
+    if (!auth.isAuthenticated) return 'login';
+    if (auth.mustChangePassword) return 'password';
+    return 'home-${auth.userRole}';
+  }
+
+  Widget _routeFor(AuthProvider auth) {
     if (!_ready) return const SplashScreen();
 
     if (_showOnboarding) {

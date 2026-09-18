@@ -187,5 +187,8 @@
   "addPropertyNotice": "Your request goes to the residence manager. The property will appear in your properties once it is approved.",
   "requestSentTitle": "Request sent",
   "requestSentBody": "The residence manager has received your request. You will be notified as soon as it is processed.",
-  "errorTitle": "Something went wrong"
+  "errorTitle": "Something went wrong",
+  "notificationsSubtitle": "Your alerts and reminders",
+  "emptyNotificationsTitle": "No notifications",
+  "emptyNotificationsBody": "You are up to date. Nothing to report right now."
 }

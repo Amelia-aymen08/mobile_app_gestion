@@ -636,4 +636,14 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get errorTitle => 'حدث خطأ';
+
+  @override
+  String get notificationsSubtitle => 'تنبيهاتك وتذكيراتك';
+
+  @override
+  String get emptyNotificationsTitle => 'لا توجد إشعارات';
+
+  @override
+  String get emptyNotificationsBody =>
+      'أنت على اطلاع. لا جديد في الوقت الحالي.';
 }
