@@ -641,4 +641,94 @@ class AppL10nEn extends AppL10n {
   @override
   String get emptyNotificationsBody =>
       'You are up to date. Nothing to report right now.';
+
+  @override
+  String get editMember => 'Edit member';
+
+  @override
+  String get addPhoto => 'Add photo';
+
+  @override
+  String get changePhoto => 'Change photo';
+
+  @override
+  String get fullNameLabel => 'Full name';
+
+  @override
+  String get fullNameHint => 'Enter the full name';
+
+  @override
+  String get emailOrPhone => 'Email / Phone';
+
+  @override
+  String get emailOrPhoneHint => 'Enter email or phone';
+
+  @override
+  String get relationshipLabel => 'Relationship';
+
+  @override
+  String get chooseRelationship => 'Choose a relationship';
+
+  @override
+  String get selectAccessLevel => 'Select access level';
+
+  @override
+  String get accessFull => 'Full access';
+
+  @override
+  String get accessFullDesc => 'Can access all features.';
+
+  @override
+  String get accessResident => 'Resident access';
+
+  @override
+  String get accessResidentDesc =>
+      'Can view notices, create reports and manage visitors.';
+
+  @override
+  String get accessVisitor => 'Visitor access';
+
+  @override
+  String get accessVisitorDesc => 'Can manage visitors only.';
+
+  @override
+  String get accessCustom => 'Custom access';
+
+  @override
+  String get accessCustomDesc => 'Choose specific permissions.';
+
+  @override
+  String get relFather => 'Father';
+
+  @override
+  String get relMother => 'Mother';
+
+  @override
+  String get relWife => 'Wife';
+
+  @override
+  String get relHusband => 'Husband';
+
+  @override
+  String get relSon => 'Son';
+
+  @override
+  String get relDaughter => 'Daughter';
+
+  @override
+  String get relOther => 'Other';
+
+  @override
+  String get removeMemberTitle => 'Remove this member?';
+
+  @override
+  String removeMemberBody(String name) {
+    return '$name will no longer be listed in your household.';
+  }
+
+  @override
+  String get nameRequired => 'A name is required.';
+
+  @override
+  String get saveLabel => 'Save';
 }

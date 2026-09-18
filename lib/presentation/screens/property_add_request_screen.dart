@@ -308,7 +308,11 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: c.textFaint),
+                SvgPicture.asset('assets/figma/icons/alert_16.svg',
+                    width: 16,
+                    height: 16,
+                    colorFilter:
+                        ColorFilter.mode(c.textFaint, BlendMode.srcIn)),
                 const SizedBox(width: FigSpace.md),
                 Expanded(
                   child: Text(t.addPropertyNotice,
@@ -402,8 +406,8 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
                 ),
               ),
               const SizedBox(width: FigSpace.md),
-              Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 20, color: c.textMuted),
+              SvgPicture.asset('assets/figma/icons/chevron_down.svg',
+                      colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn)),
             ],
           ),
         ),
@@ -469,8 +473,9 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
                                     .copyWith(color: c.textBody)),
                           ),
                           if (option.id == current)
-                            const Icon(Icons.check_rounded,
-                                color: FigBrand.amber, size: 20),
+                            SvgPicture.asset('assets/figma/icons/check_14.svg',
+                                colorFilter: const ColorFilter.mode(
+                                    FigBrand.amber, BlendMode.srcIn)),
                         ],
                       ),
                     );

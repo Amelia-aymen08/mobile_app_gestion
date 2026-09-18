@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -277,8 +278,11 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                   AnimatedRotation(
                     turns: _breakdownOpen ? 0.5 : 0,
                     duration: const Duration(milliseconds: 240),
-                    child: Icon(Icons.keyboard_arrow_down_rounded,
-                        size: 16, color: c.textMuted),
+                    child: SvgPicture.asset(
+                      'assets/figma/icons/chevron_down.svg',
+                      colorFilter:
+                          ColorFilter.mode(c.textMuted, BlendMode.srcIn),
+                    ),
                   ),
                 ],
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/api_service.dart';
 import '../../l10n/app_localizations.dart';
@@ -140,8 +141,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.mark_email_read_outlined,
-              color: FigAlert.success, size: 34),
+          child: SvgPicture.asset(
+            'assets/figma/icons/check_14.svg',
+            width: 30,
+            height: 30,
+            colorFilter:
+                const ColorFilter.mode(FigAlert.success, BlendMode.srcIn),
+          ),
         ),
         const SizedBox(height: FigSpace.xxl),
         Text(t.emailSentTitle,
@@ -181,7 +187,10 @@ class _BackChip extends StatelessWidget {
           border: Border.all(color: c.headerChipBorder),
           borderRadius: BorderRadius.circular(FigRadius.chip),
         ),
-        child: Icon(Icons.arrow_back_rounded, size: 18, color: c.textBody),
+        child: Transform.flip(
+          flipX: Directionality.of(context) == TextDirection.rtl,
+          child: SvgPicture.asset('assets/figma/icons/back_14.svg',
+              colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn))),
       ),
     );
   }

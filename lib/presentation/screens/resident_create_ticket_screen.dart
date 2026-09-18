@@ -424,8 +424,8 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
               child: Text(_priorityLabel(t, _priority),
                   style: FigText.field.copyWith(color: c.fieldText)),
             ),
-            Icon(Icons.keyboard_arrow_down_rounded,
-                size: 20, color: c.textMuted),
+            SvgPicture.asset('assets/figma/icons/chevron_down.svg',
+                      colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn)),
           ],
         ),
       ),
@@ -475,8 +475,9 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                                   .copyWith(color: c.textBody)),
                         ),
                         if (_priority == value)
-                          const Icon(Icons.check_rounded,
-                              color: FigBrand.amber, size: 20),
+                          SvgPicture.asset('assets/figma/icons/check_14.svg',
+                              colorFilter: const ColorFilter.mode(
+                                  FigBrand.amber, BlendMode.srcIn)),
                       ],
                     ),
                   ),
@@ -507,8 +508,14 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(has ? Icons.close_rounded : Icons.photo_camera_outlined,
-                size: 18, color: has ? FigAlert.error : FigBrand.amber),
+            SvgPicture.asset(
+                has
+                    ? 'assets/figma/icons/trash_15.svg'
+                    : 'assets/figma/icons/camera_24.svg',
+                width: 18,
+                height: 18,
+                colorFilter: ColorFilter.mode(
+                    has ? FigAlert.error : FigBrand.amber, BlendMode.srcIn)),
             const SizedBox(width: FigSpace.lg),
             Flexible(
               child: Text(

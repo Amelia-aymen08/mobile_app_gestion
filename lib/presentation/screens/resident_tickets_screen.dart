@@ -770,7 +770,10 @@ class _AddPhotoTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_photo_alternate_outlined, size: 16, color: color),
+              SvgPicture.asset('assets/figma/icons/camera_24.svg',
+                  width: 16,
+                  height: 16,
+                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
               const SizedBox(height: FigSpace.sm),
               Text(label,
                   style: FigText.fieldLabel.copyWith(color: color)),

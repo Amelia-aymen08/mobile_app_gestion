@@ -94,13 +94,15 @@ class ResidentProfileScreen extends StatelessWidget {
               title: t.myAccount,
               rows: [
                 GiSettingsRow(
-                  icon: Icon(Icons.mail_outline_rounded, color: c.textBody),
+                  icon: SvgPicture.asset('assets/figma/icons/profile_20.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                   label: t.emailLabel,
                   value: email.isEmpty ? t.notProvided : email,
                   trailing: const SizedBox.shrink(),
                 ),
                 GiSettingsRow(
-                  icon: Icon(Icons.phone_outlined, color: c.textBody),
+                  icon: SvgPicture.asset('assets/figma/icons/profile_20.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                   label: t.phoneLabel,
                   value: phone.isEmpty ? t.notProvided : phone,
                   trailing: const SizedBox.shrink(),
@@ -126,7 +128,8 @@ class ResidentProfileScreen extends StatelessWidget {
                   // Le Figma reutilise l'icone du cadenas sur la ligne du
                   // theme, visiblement par copie : on prend une icone qui
                   // correspond a l'action.
-                  icon: Icon(Icons.dark_mode_outlined, color: c.textBody),
+                  icon: SvgPicture.asset('assets/figma/icons/theme_16.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                   label: t.darkTheme,
                   trailing: GiToggle(
                     value: theme.isDark,
@@ -236,8 +239,9 @@ class ResidentProfileScreen extends StatelessWidget {
                                   .copyWith(color: c.textBody)),
                         ),
                         if (provider.locale.languageCode == entry.key)
-                          const Icon(Icons.check_rounded,
-                              color: FigBrand.amber, size: 20),
+                          SvgPicture.asset('assets/figma/icons/check_14.svg',
+                              colorFilter: const ColorFilter.mode(
+                                  FigBrand.amber, BlendMode.srcIn)),
                       ],
                     ),
                   ),
@@ -325,7 +329,8 @@ class _NotificationPrefsState extends State<_NotificationPrefs> {
         row(_keys[0], svg('notif_announce_16'), t.notifAnnouncements),
         // Le Figma reprend ici l'icone de la langue, visiblement par copie :
         // on prend une icone qui correspond a l'intervention.
-        row(_keys[1], Icon(Icons.build_outlined, color: c.textBody),
+        row(_keys[1], SvgPicture.asset('assets/figma/icons/alert_16.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
             t.notifMaintenance),
         row(_keys[2], svg('notif_booking_16'), t.notifBookings),
         row(_keys[3], svg('notif_payment_16'), t.notifPayments),

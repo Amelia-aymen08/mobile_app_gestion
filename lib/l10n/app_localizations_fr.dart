@@ -642,4 +642,94 @@ class AppL10nFr extends AppL10n {
   @override
   String get emptyNotificationsBody =>
       'Vous êtes à jour. Rien à signaler pour le moment.';
+
+  @override
+  String get editMember => 'Modifier le membre';
+
+  @override
+  String get addPhoto => 'Ajouter une photo';
+
+  @override
+  String get changePhoto => 'Changer la photo';
+
+  @override
+  String get fullNameLabel => 'Nom complet';
+
+  @override
+  String get fullNameHint => 'Entrez le nom complet';
+
+  @override
+  String get emailOrPhone => 'E-mail / Téléphone';
+
+  @override
+  String get emailOrPhoneHint => 'Entrez l\'e-mail ou le téléphone';
+
+  @override
+  String get relationshipLabel => 'Relation';
+
+  @override
+  String get chooseRelationship => 'Choisir une relation';
+
+  @override
+  String get selectAccessLevel => 'Sélectionner le niveau d\'accès';
+
+  @override
+  String get accessFull => 'Accès complet';
+
+  @override
+  String get accessFullDesc => 'Accès à toutes les fonctionnalités.';
+
+  @override
+  String get accessResident => 'Accès résident';
+
+  @override
+  String get accessResidentDesc =>
+      'Peut consulter les avis, créer des signalements et gérer les visiteurs.';
+
+  @override
+  String get accessVisitor => 'Accès visiteur';
+
+  @override
+  String get accessVisitorDesc => 'Peut uniquement gérer les visiteurs.';
+
+  @override
+  String get accessCustom => 'Accès personnalisé';
+
+  @override
+  String get accessCustomDesc => 'Choisir des autorisations précises.';
+
+  @override
+  String get relFather => 'Père';
+
+  @override
+  String get relMother => 'Mère';
+
+  @override
+  String get relWife => 'Épouse';
+
+  @override
+  String get relHusband => 'Époux';
+
+  @override
+  String get relSon => 'Fils';
+
+  @override
+  String get relDaughter => 'Fille';
+
+  @override
+  String get relOther => 'Autre';
+
+  @override
+  String get removeMemberTitle => 'Retirer ce membre ?';
+
+  @override
+  String removeMemberBody(String name) {
+    return '$name ne figurera plus dans votre foyer.';
+  }
+
+  @override
+  String get nameRequired => 'Le nom est requis.';
+
+  @override
+  String get saveLabel => 'Enregistrer';
 }

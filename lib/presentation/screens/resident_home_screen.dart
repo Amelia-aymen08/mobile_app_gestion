@@ -43,8 +43,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   Timer? _notifTimer;
   bool _checkedUrgent = false;
 
-  final _residenceCarouselController = PageController();
-  Timer? _carouselTimer;
+  /// Bien affiche sur l'accueil. Il ne change que par le selecteur : une
+  /// rotation automatique, ou un defilement qui ferait glisser la carte,
+  /// changerait de residence sans que le resident l'ait demande.
   int _carouselPage = 0;
 
   @override
@@ -61,23 +62,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   @override
   void dispose() {
     _notifTimer?.cancel();
-    _carouselTimer?.cancel();
-    _residenceCarouselController.dispose();
     super.dispose();
-  }
-
-  void _restartCarouselAutoplay() {
-    _carouselTimer?.cancel();
-    if (_properties.length < 2) return;
-    _carouselTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted || !_residenceCarouselController.hasClients) return;
-      final next = (_carouselPage + 1) % _properties.length;
-      _residenceCarouselController.animateToPage(
-        next,
-        duration: const Duration(milliseconds: 450),
-        curve: Curves.easeInOut,
-      );
-    });
   }
 
   Future<void> _fetchUnread() async {
@@ -117,7 +102,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         _loadingDashboard = false;
       });
       _carouselPage = 0;
-      _restartCarouselAutoplay();
     } catch (_) {
       if (mounted) setState(() => _loadingDashboard = false);
     }
@@ -183,14 +167,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     );
     if (!mounted) return;
     _fetchUnread();
-    if (picked != null &&
-        picked != _carouselPage &&
-        picked < _properties.length) {
-      _residenceCarouselController.animateToPage(
-        picked,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
-      );
+    if (picked != null && picked != _carouselPage && picked < _properties.length) {
+      setState(() => _carouselPage = picked);
     }
   }
 
@@ -426,18 +404,34 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         ),
       );
     }
-    return SizedBox(
-      height: FigSize.heroH,
-      child: PageView.builder(
-        controller: _residenceCarouselController,
-        itemCount: _properties.length,
-        onPageChanged: (i) => setState(() => _carouselPage = i),
-        itemBuilder: (_, i) => Padding(
-          padding: EdgeInsetsDirectional.only(
-              end: i == _properties.length - 1 ? 0 : FigSpace.lg),
-          child: _heroCard(c, t, _properties[i] as Map),
-        ),
-      ),
+    final index = _carouselPage.clamp(0, _properties.length - 1);
+    return Column(
+      children: [
+        _heroCard(c, t, _properties[index] as Map),
+        // Reperes de position, affiches seulement s'il y a plusieurs biens.
+        // Ils indiquent lequel on regarde ; c'est la carte qu'on touche pour
+        // en changer.
+        if (_properties.length > 1) ...[
+          const SizedBox(height: FigSpace.lg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < _properties.length; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: i == index ? 18 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: i == index ? FigBrand.amber : c.innerBorder,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 
@@ -758,7 +752,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       // lui appliquant le meme habillage, faute d'icone fournie.
       (
         null,
-        Icons.add_home_work_outlined,
+        null,
         FigAlert.success,
         t.addProperty,
         () => _push(const PropertyAddRequestScreen())
@@ -952,7 +946,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             title: t.services,
             rows: [
               GiSettingsRow(
-                icon: Icon(Icons.tune_rounded, color: c.textBody),
+                icon: SvgPicture.asset('assets/figma/icons/settings_16.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.settingsTitle,
                 value: t.settingsSubtitle,
                 onTap: () => _push(const ResidentProfileScreen()),
@@ -987,12 +982,14 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 ),
               ),
               GiSettingsRow(
-                icon: Icon(Icons.apartment_rounded, color: c.textBody),
+                icon: SvgPicture.asset('assets/figma/icons/nav_home.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.myProperties,
                 onTap: () => _openSwitch(),
               ),
               GiSettingsRow(
-                icon: Icon(Icons.groups_outlined, color: c.textBody),
+                icon: SvgPicture.asset('assets/figma/icons/household_16.svg',
+                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.householdMembers,
                 onTap: () => _push(const HouseholdMembersScreen()),
               ),
@@ -1018,9 +1015,6 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.logout_rounded,
-                      size: 18, color: FigAlert.error),
-                  const SizedBox(width: FigSpace.md),
                   Text(t.logout,
                       style: FigText.button.copyWith(color: FigAlert.error)),
                 ],

@@ -646,4 +646,94 @@ class AppL10nAr extends AppL10n {
   @override
   String get emptyNotificationsBody =>
       'أنت على اطلاع. لا جديد في الوقت الحالي.';
+
+  @override
+  String get editMember => 'تعديل العضو';
+
+  @override
+  String get addPhoto => 'إضافة صورة';
+
+  @override
+  String get changePhoto => 'تغيير الصورة';
+
+  @override
+  String get fullNameLabel => 'الاسم الكامل';
+
+  @override
+  String get fullNameHint => 'أدخل الاسم الكامل';
+
+  @override
+  String get emailOrPhone => 'البريد / الهاتف';
+
+  @override
+  String get emailOrPhoneHint => 'أدخل البريد أو الهاتف';
+
+  @override
+  String get relationshipLabel => 'صلة القرابة';
+
+  @override
+  String get chooseRelationship => 'اختر صلة القرابة';
+
+  @override
+  String get selectAccessLevel => 'اختر مستوى الوصول';
+
+  @override
+  String get accessFull => 'وصول كامل';
+
+  @override
+  String get accessFullDesc => 'يمكنه استخدام جميع الميزات.';
+
+  @override
+  String get accessResident => 'وصول مقيم';
+
+  @override
+  String get accessResidentDesc =>
+      'يمكنه الاطلاع على الإعلانات وإنشاء البلاغات وإدارة الزوار.';
+
+  @override
+  String get accessVisitor => 'وصول زائر';
+
+  @override
+  String get accessVisitorDesc => 'يمكنه إدارة الزوار فقط.';
+
+  @override
+  String get accessCustom => 'وصول مخصص';
+
+  @override
+  String get accessCustomDesc => 'اختر أذونات محددة.';
+
+  @override
+  String get relFather => 'الأب';
+
+  @override
+  String get relMother => 'الأم';
+
+  @override
+  String get relWife => 'الزوجة';
+
+  @override
+  String get relHusband => 'الزوج';
+
+  @override
+  String get relSon => 'الابن';
+
+  @override
+  String get relDaughter => 'الابنة';
+
+  @override
+  String get relOther => 'أخرى';
+
+  @override
+  String get removeMemberTitle => 'إزالة هذا العضو؟';
+
+  @override
+  String removeMemberBody(String name) {
+    return 'لن يظهر $name ضمن أفراد أسرتك بعد الآن.';
+  }
+
+  @override
+  String get nameRequired => 'الاسم مطلوب.';
+
+  @override
+  String get saveLabel => 'حفظ';
 }

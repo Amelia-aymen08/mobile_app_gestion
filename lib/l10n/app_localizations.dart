@@ -1244,6 +1244,180 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Vous êtes à jour. Rien à signaler pour le moment.'**
   String get emptyNotificationsBody;
+
+  /// No description provided for @editMember.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier le membre'**
+  String get editMember;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter une photo'**
+  String get addPhoto;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer la photo'**
+  String get changePhoto;
+
+  /// No description provided for @fullNameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom complet'**
+  String get fullNameLabel;
+
+  /// No description provided for @fullNameHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez le nom complet'**
+  String get fullNameHint;
+
+  /// No description provided for @emailOrPhone.
+  ///
+  /// In fr, this message translates to:
+  /// **'E-mail / Téléphone'**
+  String get emailOrPhone;
+
+  /// No description provided for @emailOrPhoneHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez l\'e-mail ou le téléphone'**
+  String get emailOrPhoneHint;
+
+  /// No description provided for @relationshipLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Relation'**
+  String get relationshipLabel;
+
+  /// No description provided for @chooseRelationship.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une relation'**
+  String get chooseRelationship;
+
+  /// No description provided for @selectAccessLevel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionner le niveau d\'accès'**
+  String get selectAccessLevel;
+
+  /// No description provided for @accessFull.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès complet'**
+  String get accessFull;
+
+  /// No description provided for @accessFullDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès à toutes les fonctionnalités.'**
+  String get accessFullDesc;
+
+  /// No description provided for @accessResident.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès résident'**
+  String get accessResident;
+
+  /// No description provided for @accessResidentDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Peut consulter les avis, créer des signalements et gérer les visiteurs.'**
+  String get accessResidentDesc;
+
+  /// No description provided for @accessVisitor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès visiteur'**
+  String get accessVisitor;
+
+  /// No description provided for @accessVisitorDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Peut uniquement gérer les visiteurs.'**
+  String get accessVisitorDesc;
+
+  /// No description provided for @accessCustom.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès personnalisé'**
+  String get accessCustom;
+
+  /// No description provided for @accessCustomDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir des autorisations précises.'**
+  String get accessCustomDesc;
+
+  /// No description provided for @relFather.
+  ///
+  /// In fr, this message translates to:
+  /// **'Père'**
+  String get relFather;
+
+  /// No description provided for @relMother.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mère'**
+  String get relMother;
+
+  /// No description provided for @relWife.
+  ///
+  /// In fr, this message translates to:
+  /// **'Épouse'**
+  String get relWife;
+
+  /// No description provided for @relHusband.
+  ///
+  /// In fr, this message translates to:
+  /// **'Époux'**
+  String get relHusband;
+
+  /// No description provided for @relSon.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fils'**
+  String get relSon;
+
+  /// No description provided for @relDaughter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fille'**
+  String get relDaughter;
+
+  /// No description provided for @relOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autre'**
+  String get relOther;
+
+  /// No description provided for @removeMemberTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer ce membre ?'**
+  String get removeMemberTitle;
+
+  /// No description provided for @removeMemberBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'{name} ne figurera plus dans votre foyer.'**
+  String removeMemberBody(String name);
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le nom est requis.'**
+  String get nameRequired;
+
+  /// No description provided for @saveLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer'**
+  String get saveLabel;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

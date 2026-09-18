@@ -292,5 +292,41 @@
   },
   "notificationsSubtitle": "Vos alertes et rappels",
   "emptyNotificationsTitle": "Aucune notification",
-  "emptyNotificationsBody": "Vous êtes à jour. Rien à signaler pour le moment."
+  "emptyNotificationsBody": "Vous êtes à jour. Rien à signaler pour le moment.",
+  "editMember": "Modifier le membre",
+  "addPhoto": "Ajouter une photo",
+  "changePhoto": "Changer la photo",
+  "fullNameLabel": "Nom complet",
+  "fullNameHint": "Entrez le nom complet",
+  "emailOrPhone": "E-mail / Téléphone",
+  "emailOrPhoneHint": "Entrez l'e-mail ou le téléphone",
+  "relationshipLabel": "Relation",
+  "chooseRelationship": "Choisir une relation",
+  "selectAccessLevel": "Sélectionner le niveau d'accès",
+  "accessFull": "Accès complet",
+  "accessFullDesc": "Accès à toutes les fonctionnalités.",
+  "accessResident": "Accès résident",
+  "accessResidentDesc": "Peut consulter les avis, créer des signalements et gérer les visiteurs.",
+  "accessVisitor": "Accès visiteur",
+  "accessVisitorDesc": "Peut uniquement gérer les visiteurs.",
+  "accessCustom": "Accès personnalisé",
+  "accessCustomDesc": "Choisir des autorisations précises.",
+  "relFather": "Père",
+  "relMother": "Mère",
+  "relWife": "Épouse",
+  "relHusband": "Époux",
+  "relSon": "Fils",
+  "relDaughter": "Fille",
+  "relOther": "Autre",
+  "removeMemberTitle": "Retirer ce membre ?",
+  "removeMemberBody": "{name} ne figurera plus dans votre foyer.",
+  "nameRequired": "Le nom est requis.",
+  "saveLabel": "Enregistrer",
+  "@removeMemberBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }
