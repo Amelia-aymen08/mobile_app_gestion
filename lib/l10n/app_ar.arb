@@ -157,5 +157,9 @@
   "addMore": "إضافة",
   "reportChat": "المحادثة",
   "editLabel": "تعديل",
-  "noPhotos": "لا توجد صور"
+  "noPhotos": "لا توجد صور",
+  "typeMessage": "اكتب رسالة…",
+  "noMessages": "لا توجد رسائل بعد.",
+  "today": "اليوم",
+  "yesterday": "أمس"
 }

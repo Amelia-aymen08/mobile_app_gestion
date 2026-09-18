@@ -540,4 +540,16 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get noPhotos => 'لا توجد صور';
+
+  @override
+  String get typeMessage => 'اكتب رسالة…';
+
+  @override
+  String get noMessages => 'لا توجد رسائل بعد.';
+
+  @override
+  String get today => 'اليوم';
+
+  @override
+  String get yesterday => 'أمس';
 }

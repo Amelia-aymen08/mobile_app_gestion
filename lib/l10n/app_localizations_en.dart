@@ -533,4 +533,16 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get noPhotos => 'No photo';
+
+  @override
+  String get typeMessage => 'Type a message…';
+
+  @override
+  String get noMessages => 'No messages yet.';
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
 }

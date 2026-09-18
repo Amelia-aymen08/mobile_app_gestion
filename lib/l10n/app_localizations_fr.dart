@@ -534,4 +534,16 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get noPhotos => 'Aucune photo';
+
+  @override
+  String get typeMessage => 'Écrivez un message…';
+
+  @override
+  String get noMessages => 'Aucun message pour le moment.';
+
+  @override
+  String get today => 'Aujourd\'hui';
+
+  @override
+  String get yesterday => 'Hier';
 }

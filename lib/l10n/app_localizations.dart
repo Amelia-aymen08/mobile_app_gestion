@@ -1046,6 +1046,30 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Aucune photo'**
   String get noPhotos;
+
+  /// No description provided for @typeMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écrivez un message…'**
+  String get typeMessage;
+
+  /// No description provided for @noMessages.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun message pour le moment.'**
+  String get noMessages;
+
+  /// No description provided for @today.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aujourd\'hui'**
+  String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hier'**
+  String get yesterday;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

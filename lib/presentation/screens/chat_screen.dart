@@ -2,10 +2,16 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_pressable.dart';
+// `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
 import '../../data/api_service.dart';
 
 /// "Report Chat" — messaging thread attached to a maintenance ticket.
@@ -114,37 +120,70 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
     final myId = context.watch<AuthProvider>().user?['id'];
 
     String? lastDay;
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
         child: Column(
           children: [
+            // En-tete du Figma : pastille de retour, reference en 16 Medium et
+            // le titre du signalement en 12 dessous.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                  FigSpace.pagePadding,
+                  FigSpace.xl),
               child: Row(
                 children: [
-                  _iconBtn(Icons.arrow_back_rounded, dark, fg, () => Navigator.pop(context)),
-                  const SizedBox(width: 12),
+                  GiPressable(
+                    onTap: () => Navigator.pop(context),
+                    pressedScale: 0.88,
+                    child: Container(
+                      width: FigSize.chipMd,
+                      height: FigSize.chipMd,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: c.headerChipBg,
+                        border: Border.all(color: c.headerChipBorder),
+                        borderRadius: BorderRadius.circular(FigRadius.chip),
+                      ),
+                      child: Transform.flip(
+                        flipX:
+                            Directionality.of(context) == TextDirection.rtl,
+                        child: SvgPicture.asset(
+                          'assets/figma/icons/back_14.svg',
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: FigSpace.xl),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
+                        Text(
+                          widget.subtitle?.isNotEmpty == true
+                              ? widget.subtitle!
+                              : widget.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: FigText.statValue.copyWith(color: c.textBody),
+                        ),
+                        const SizedBox(height: 2),
                         Text(widget.title,
-                            style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 17),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                        if (widget.subtitle != null && widget.subtitle!.isNotEmpty)
-                          Text(widget.subtitle!,
-                              style: TextStyle(color: muted, fontSize: 12),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                FigText.label.copyWith(color: c.textMuted)),
                       ],
                     ),
                   ),
@@ -153,223 +192,232 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: FigBrand.amber))
                   : _messages.isEmpty
                       ? Center(
-                          child: Text('Aucun message pour le moment.',
-                              style: TextStyle(color: muted, fontSize: 14)))
+                          child: Text(t.noMessages,
+                              style:
+                                  FigText.body.copyWith(color: c.textMuted)))
                       : ListView.builder(
                           controller: _scrollCtrl,
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          padding: const EdgeInsets.fromLTRB(
+                              FigSpace.pagePadding, 0,
+                              FigSpace.pagePadding, FigSpace.xl),
                           itemCount: _messages.length,
                           itemBuilder: (context, i) {
                             final m = _messages[i];
-                            final createdAt = DateTime.tryParse((m['createdAt'] ?? '').toString())?.toLocal();
-                            final showDivider = createdAt != null && _dayLabel(createdAt) != lastDay;
+                            final createdAt = DateTime.tryParse(
+                                    (m['createdAt'] ?? '').toString())
+                                ?.toLocal();
+                            final showDivider = createdAt != null &&
+                                _dayLabel(createdAt) != lastDay;
                             if (showDivider) lastDay = _dayLabel(createdAt);
-                            final isMine = m['senderId'] != null && myId != null && '${m['senderId']}' == '$myId';
+                            final isMine = m['senderId'] != null &&
+                                myId != null &&
+                                '${m['senderId']}' == '$myId';
 
                             return Column(
                               children: [
-                                if (showDivider) _dateDivider(_dayLabel(createdAt), dark, muted),
-                                _bubble(m, isMine, dark, fg, muted, createdAt),
+                                if (showDivider)
+                                  _dayPill(c, _dayLabel(createdAt)),
+                                _bubble(c, m, isMine, createdAt),
+                                const SizedBox(height: FigSpace.lg),
                               ],
                             );
                           },
                         ),
             ),
-            if (_pendingAttachments.isNotEmpty)
-              SizedBox(
-                height: 64,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _pendingAttachments.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (_, i) => Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.memory(
-                          base64Decode(_pendingAttachments[i].split(',').last),
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _pendingAttachments.removeAt(i)),
-                          child: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(color: Color(0xFFDC2626), shape: BoxShape.circle),
-                            child: const Icon(Icons.close_rounded, size: 13, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            _composer(c, t),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Pastille de date, centree entre deux journees de messages.
+  Widget _dayPill(GiColors c, String label) => Padding(
+        padding: const EdgeInsets.only(bottom: FigSpace.lg),
+        child: Center(
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+            decoration: BoxDecoration(
+              color: c.card,
+              border: Border.all(color: c.cardBorder),
+              borderRadius: BorderRadius.circular(FigRadius.pill),
+            ),
+            child: Text(label,
+                style: FigText.label.copyWith(color: c.textMuted)),
+          ),
+        ),
+      );
+
+  /// Bulle de message — Figma : largeur 280, padding 16, rayon 16 sauf l'angle
+  /// tourne vers son auteur, qui reste droit. L'angle plat indique d'ou vient
+  /// le message sans avoir besoin de couleur.
+  Widget _bubble(
+      GiColors c, Map<String, dynamic> m, bool isMine, DateTime? createdAt) {
+    final text = (m['message'] ?? m['body'] ?? '').toString();
+    final attachment = (m['attachmentUrl'] ?? '').toString();
+    final time = createdAt == null
+        ? ''
+        : '${createdAt.hour.toString().padLeft(2, '0')}:'
+            '${createdAt.minute.toString().padLeft(2, '0')}';
+
+    return Align(
+      alignment:
+          isMine ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 280),
+        child: Container(
+          padding: const EdgeInsets.all(FigSpace.cardPadding),
+          decoration: BoxDecoration(
+            // Le message recu est un cran plus sombre que celui envoye : le
+            // Figma les distingue par la densite, pas par la teinte.
+            color: isMine ? c.card : c.innerBorder.withValues(alpha: 0.45),
+            border: Border.all(color: c.cardBorder),
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(FigRadius.card),
+              topRight: const Radius.circular(FigRadius.card),
+              bottomLeft: Radius.circular(isMine ? FigRadius.card : 0),
+              bottomRight: Radius.circular(isMine ? 0 : FigRadius.card),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (text.isNotEmpty)
+                Text(text,
+                    style: FigText.fieldLabel
+                        .copyWith(height: 1.4, color: c.textBody)),
+              if (attachment.isNotEmpty) ...[
+                const SizedBox(height: FigSpace.lg),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(FigRadius.chip),
+                  child: Image.network(attachment,
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          ColoredBox(color: c.innerBorder)),
                 ),
+              ],
+              const SizedBox(height: FigSpace.md),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(time,
+                      style: FigText.label.copyWith(color: c.textMuted)),
+                  if (isMine) ...[
+                    const SizedBox(width: FigSpace.sm),
+                    SvgPicture.asset(
+                      'assets/figma/icons/check_14.svg',
+                      colorFilter:
+                          ColorFilter.mode(c.textMuted, BlendMode.srcIn),
+                    ),
+                  ],
+                ],
               ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Barre de saisie : champ de 50 de haut avec le trombone a l'interieur,
+  /// puis le bouton d'envoi carre de 48.
+  Widget _composer(GiColors c, AppL10n t) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          FigSpace.xl, 0, FigSpace.xl, FigSpace.xxl),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 50,
+              padding: const EdgeInsets.symmetric(horizontal: FigSpace.xl),
+              decoration: BoxDecoration(
+                color: c.card,
+                border: Border.all(color: c.cardBorder),
+                borderRadius: BorderRadius.circular(FigRadius.field),
+              ),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: _pickAttachment,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                          color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(14)),
-                      alignment: Alignment.center,
-                      child: Icon(Icons.attach_file_rounded, color: muted),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: TextField(
-                        controller: _textCtrl,
-                        minLines: 1,
-                        maxLines: 4,
-                        style: TextStyle(color: fg),
-                        decoration: const InputDecoration(
-                          hintText: 'Écrire un message...',
-                          border: InputBorder.none,
-                        ),
+                    child: TextField(
+                      controller: _textCtrl,
+                      cursorColor: FigBrand.amber,
+                      style: FigText.field.copyWith(color: c.fieldText),
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _send(),
+                      decoration: InputDecoration(
+                        hintText: t.typeMessage,
+                        hintStyle:
+                            FigText.field.copyWith(color: c.fieldHint),
+                        filled: false,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: _sending ? null : _send,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(color: brandAmber, shape: BoxShape.circle),
-                      alignment: Alignment.center,
-                      child: _sending
-                          ? const SizedBox(
-                              width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: brandNavy))
-                          : const Icon(Icons.arrow_upward_rounded, color: brandNavy),
+                  const SizedBox(width: FigSpace.md),
+                  GiPressable(
+                    pressedScale: 0.82,
+                    ensureMinTapTarget: true,
+                    onTap: _pickAttachment,
+                    child: SvgPicture.asset(
+                      'assets/figma/icons/attach_20.svg',
+                      colorFilter:
+                          ColorFilter.mode(c.textMuted, BlendMode.srcIn),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _dateDivider(String label, bool dark, Color muted) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-                color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-            child: Text(label, style: TextStyle(color: muted, fontSize: 12, fontWeight: FontWeight.w600)),
           ),
-        ),
-      );
-
-  Widget _bubble(Map<String, dynamic> m, bool isMine, bool dark, Color fg, Color muted, DateTime? createdAt) {
-    final body = (m['body'] ?? '').toString();
-    final attachments = (m['attachments'] is List) ? List<dynamic>.from(m['attachments']) : const [];
-    final time = createdAt != null ? DateFormat('HH:mm').format(createdAt) : '';
-    final bubbleColor = isMine ? brandAmber.withValues(alpha: 0.18) : (dark ? darkCard : Colors.white);
-
-    return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMine ? 16 : 4),
-            bottomRight: Radius.circular(isMine ? 4 : 16),
+          const SizedBox(width: FigSpace.md),
+          GiPressable(
+            pressedScale: 0.90,
+            onTap: _sending ? null : _send,
+            child: Container(
+              width: 48,
+              height: 50,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _sending ? c.card : FigBrand.amber,
+                border: Border.all(
+                    color: _sending ? c.cardBorder : FigBrand.amber),
+                borderRadius: BorderRadius.circular(FigRadius.field),
+              ),
+              child: _sending
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation(c.textMuted)),
+                    )
+                  : Transform.flip(
+                      flipX:
+                          Directionality.of(context) == TextDirection.rtl,
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/send_16.svg',
+                        colorFilter: const ColorFilter.mode(
+                            Colors.black, BlendMode.srcIn),
+                      ),
+                    ),
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (body.isNotEmpty)
-              Text(body, style: TextStyle(color: fg, fontSize: 14, height: 1.4)),
-            if (attachments.isNotEmpty) ...[
-              if (body.isNotEmpty) const SizedBox(height: 8),
-              _attachmentsGrid(attachments, dark),
-            ],
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Text(time, style: TextStyle(color: muted, fontSize: 10)),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
-
-  Widget _attachmentsGrid(List<dynamic> attachments, bool dark) {
-    final urls = attachments
-        .whereType<Map>()
-        .map((a) => (a['url'] ?? '').toString())
-        .where((u) => u.isNotEmpty)
-        .toList();
-    if (urls.isEmpty) return const SizedBox.shrink();
-
-    final base = ApiService().baseUrl.replaceAll('/api', '');
-    final shown = urls.take(4).toList();
-    final extra = urls.length - shown.length;
-
-    return SizedBox(
-      width: 200,
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, mainAxisSpacing: 6, crossAxisSpacing: 6),
-        itemCount: shown.length,
-        itemBuilder: (_, i) {
-          final isLastWithMore = extra > 0 && i == shown.length - 1;
-          return ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network('$base${shown[i]}',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(color: dark ? darkBorder : const Color(0xFFE2E8F0))),
-                if (isLastWithMore)
-                  Container(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    alignment: Alignment.center,
-                    child: Text('+$extra',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _iconBtn(IconData icon, bool dark, Color fg, VoidCallback onTap) => Container(
-        decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
-        child: IconButton(icon: Icon(icon, color: fg), onPressed: onTap),
-      );
 }
+

@@ -157,5 +157,9 @@
   "addMore": "Add more",
   "reportChat": "Report Chat",
   "editLabel": "Edit",
-  "noPhotos": "No photo"
+  "noPhotos": "No photo",
+  "typeMessage": "Type a message…",
+  "noMessages": "No messages yet.",
+  "today": "Today",
+  "yesterday": "Yesterday"
 }

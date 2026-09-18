@@ -245,5 +245,9 @@
         "type": "int"
       }
     }
-  }
+  },
+  "typeMessage": "Écrivez un message…",
+  "noMessages": "Aucun message pour le moment.",
+  "today": "Aujourd'hui",
+  "yesterday": "Hier"
 }
