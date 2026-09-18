@@ -299,4 +299,19 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get langArabic => 'العربية';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notifAnnouncements => 'Announcements';
+
+  @override
+  String get notifMaintenance => 'Maintenance updates';
+
+  @override
+  String get notifBookings => 'Bookings';
+
+  @override
+  String get notifPayments => 'Payments';
 }

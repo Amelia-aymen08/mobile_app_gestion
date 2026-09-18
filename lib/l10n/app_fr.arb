@@ -142,5 +142,10 @@
   "selectLanguage": "Choisir la langue",
   "langFrench": "Français",
   "langEnglish": "English",
-  "langArabic": "العربية"
+  "langArabic": "العربية",
+  "notificationsTitle": "Notifications",
+  "notifAnnouncements": "Annonces",
+  "notifMaintenance": "Suivi des interventions",
+  "notifBookings": "Réservations",
+  "notifPayments": "Paiements"
 }

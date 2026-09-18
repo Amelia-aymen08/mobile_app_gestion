@@ -306,4 +306,19 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get langArabic => 'العربية';
+
+  @override
+  String get notificationsTitle => 'الإشعارات';
+
+  @override
+  String get notifAnnouncements => 'الإعلانات';
+
+  @override
+  String get notifMaintenance => 'متابعة الصيانة';
+
+  @override
+  String get notifBookings => 'الحجوزات';
+
+  @override
+  String get notifPayments => 'المدفوعات';
 }

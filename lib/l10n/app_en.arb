@@ -82,5 +82,10 @@
   "selectLanguage": "Choose a language",
   "langFrench": "Français",
   "langEnglish": "English",
-  "langArabic": "العربية"
+  "langArabic": "العربية",
+  "notificationsTitle": "Notifications",
+  "notifAnnouncements": "Announcements",
+  "notifMaintenance": "Maintenance updates",
+  "notifBookings": "Bookings",
+  "notifPayments": "Payments"
 }

@@ -596,6 +596,36 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'العربية'**
   String get langArabic;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notifAnnouncements.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annonces'**
+  String get notifAnnouncements;
+
+  /// No description provided for @notifMaintenance.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivi des interventions'**
+  String get notifMaintenance;
+
+  /// No description provided for @notifBookings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réservations'**
+  String get notifBookings;
+
+  /// No description provided for @notifPayments.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paiements'**
+  String get notifPayments;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

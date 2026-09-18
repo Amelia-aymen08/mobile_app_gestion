@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
@@ -142,6 +143,8 @@ class ResidentProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: FigSpace.xl),
+            const _NotificationPrefs(),
           ],
         ),
       ),
@@ -243,6 +246,90 @@ class ResidentProfileScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+/// Section Notifications de la frame "Setting LT" (837:4324) : quatre lignes
+/// a interrupteur.
+///
+/// A savoir : l'API n'expose aucun point d'entree pour ces preferences. Elles
+/// sont donc enregistrees sur l'appareil. Elles ne suivent pas l'utilisateur
+/// d'un telephone a l'autre, et le serveur continue d'envoyer toutes les
+/// notifications — ce reglage filtre a l'arrivee. A rebrancher sur l'API le
+/// jour ou elle les gerera.
+class _NotificationPrefs extends StatefulWidget {
+  const _NotificationPrefs();
+
+  @override
+  State<_NotificationPrefs> createState() => _NotificationPrefsState();
+}
+
+class _NotificationPrefsState extends State<_NotificationPrefs> {
+  static const _keys = [
+    'notif_announcements',
+    'notif_maintenance',
+    'notif_bookings',
+    'notif_payments',
+  ];
+
+  /// Tout est actif par defaut : un resident qui n'a rien regle doit etre
+  /// prevenu d'une coupure d'eau ou d'une echeance.
+  final _values = <String, bool>{for (final k in _keys) k: true};
+
+  @override
+  void initState() {
+    super.initState();
+    _restore();
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      for (final k in _keys) {
+        _values[k] = prefs.getBool(k) ?? true;
+      }
+    });
+  }
+
+  Future<void> _set(String key, bool value) async {
+    setState(() => _values[key] = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+
+    Widget row(String key, Widget icon, String label) => GiSettingsRow(
+          icon: icon,
+          label: label,
+          trailing: GiToggle(
+            value: _values[key] ?? true,
+            onChanged: (v) => _set(key, v),
+          ),
+        );
+
+    Widget svg(String name) => SvgPicture.asset(
+          'assets/figma/icons/$name.svg',
+          colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn),
+        );
+
+    return GiSettingsGroup(
+      title: t.notificationsTitle,
+      rows: [
+        row(_keys[0], svg('notif_announce_16'), t.notifAnnouncements),
+        // Le Figma reprend ici l'icone de la langue, visiblement par copie :
+        // on prend une icone qui correspond a l'intervention.
+        row(_keys[1], Icon(Icons.build_outlined, color: c.textBody),
+            t.notifMaintenance),
+        row(_keys[2], svg('notif_booking_16'), t.notifBookings),
+        row(_keys[3], svg('notif_payment_16'), t.notifPayments),
+      ],
     );
   }
 }
