@@ -147,13 +147,18 @@ class _Photo extends StatelessWidget {
   final String asset;
   const _Photo({super.key, required this.asset});
 
+  // SizedBox.expand est indispensable : AnimatedSwitcher ne transmet pas les
+  // contraintes d'expansion du Stack a son enfant. Sans lui, l'image se cadre
+  // sur son ratio naturel et laisse une bande vide en haut de l'ecran.
   @override
-  Widget build(BuildContext context) => Image.asset(
-        asset,
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        errorBuilder: (_, __, ___) =>
-            ColoredBox(color: GiColors.of(context).scaffold),
+  Widget build(BuildContext context) => SizedBox.expand(
+        child: Image.asset(
+          asset,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          errorBuilder: (_, __, ___) =>
+              ColoredBox(color: GiColors.of(context).scaffold),
+        ),
       );
 }
 

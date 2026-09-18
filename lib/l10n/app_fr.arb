@@ -84,5 +84,18 @@
   "onbBody3": "Restez connecté, informé et pleinement maître de votre quotidien, avec des services haut de gamme pensés pour la vie moderne.",
   "skip": "Passer",
   "next": "Suivant",
-  "getStarted": "Commencer"
+  "getStarted": "Commencer",
+  "forgotTitle": "Mot de passe oublié",
+  "forgotSubtitle": "Entrez votre adresse e-mail, nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+  "sendLink": "Envoyer le lien",
+  "emailSentTitle": "E-mail envoyé",
+  "emailSentBody": "Si un compte existe avec l'adresse {email}, un lien de réinitialisation vient d'être envoyé. Pensez à vérifier vos indésirables.",
+  "backToLogin": "Retour à la connexion",
+  "@emailSentBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  }
 }

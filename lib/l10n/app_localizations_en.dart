@@ -172,4 +172,25 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get getStarted => 'Get Started';
+
+  @override
+  String get forgotTitle => 'Forgot password';
+
+  @override
+  String get forgotSubtitle =>
+      'Enter your email address and we will send you a link to reset your password.';
+
+  @override
+  String get sendLink => 'Send the link';
+
+  @override
+  String get emailSentTitle => 'Email sent';
+
+  @override
+  String emailSentBody(String email) {
+    return 'If an account exists for $email, a reset link has just been sent. Remember to check your spam folder.';
+  }
+
+  @override
+  String get backToLogin => 'Back to login';
 }

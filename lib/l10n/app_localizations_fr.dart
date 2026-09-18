@@ -173,4 +173,25 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get getStarted => 'Commencer';
+
+  @override
+  String get forgotTitle => 'Mot de passe oublié';
+
+  @override
+  String get forgotSubtitle =>
+      'Entrez votre adresse e-mail, nous vous enverrons un lien pour réinitialiser votre mot de passe.';
+
+  @override
+  String get sendLink => 'Envoyer le lien';
+
+  @override
+  String get emailSentTitle => 'E-mail envoyé';
+
+  @override
+  String emailSentBody(String email) {
+    return 'Si un compte existe avec l\'adresse $email, un lien de réinitialisation vient d\'être envoyé. Pensez à vérifier vos indésirables.';
+  }
+
+  @override
+  String get backToLogin => 'Retour à la connexion';
 }

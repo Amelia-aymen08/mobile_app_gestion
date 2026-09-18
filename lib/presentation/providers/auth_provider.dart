@@ -21,8 +21,12 @@ class AuthProvider with ChangeNotifier {
   String _generateDeviceId() {
     final r = Random.secure();
     final a = DateTime.now().microsecondsSinceEpoch.toString();
-    final b = r.nextInt(1 << 32).toRadixString(16).padLeft(8, '0');
-    final c = r.nextInt(1 << 32).toRadixString(16).padLeft(8, '0');
+    // Sur le web les operateurs de bits travaillent sur 32 bits signes :
+    // `1 << 32` y vaut 0, et nextInt(0) leve un RangeError. On tire donc
+    // quatre blocs de 16 bits, valides sur toutes les plateformes.
+    String hex16() => r.nextInt(0x10000).toRadixString(16).padLeft(4, '0');
+    final b = '${hex16()}${hex16()}';
+    final c = '${hex16()}${hex16()}';
     return '$a-$b$c';
   }
 
@@ -33,11 +37,15 @@ class AuthProvider with ChangeNotifier {
       id = _generateDeviceId();
       await prefs.setString('device_id', id);
     }
-    final os = Platform.isAndroid
-        ? 'Android'
-        : Platform.isIOS
-            ? 'iOS'
-            : Platform.operatingSystem;
+    // `Platform` vient de dart:io et leve une exception sur le web : il faut
+    // ecarter ce cas avant toute lecture.
+    final os = kIsWeb
+        ? 'Web'
+        : Platform.isAndroid
+            ? 'Android'
+            : Platform.isIOS
+                ? 'iOS'
+                : Platform.operatingSystem;
     return { 'deviceId': id, 'deviceName': os };
   }
 

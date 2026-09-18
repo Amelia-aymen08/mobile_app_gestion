@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../data/api_service.dart';
-import '../theme/app_theme.dart';
 
+import '../../data/api_service.dart';
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
+import '../widgets/gi_text_field.dart';
+
+/// Mot de passe oublie. Pas de frame dediee dans le Figma : l'ecran reprend
+/// donc a l'identique le vocabulaire visuel du login — meme fond, meme
+/// typographie, meme champ, meme bouton — plutot que d'inventer un style.
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
@@ -47,124 +56,132 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
-    final fieldFill = dark ? darkCard : const Color(0xFFECE7DA);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.fromLTRB(
+              FigSpace.pagePadding, FigSpace.xl, FigSpace.pagePadding, 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                        color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
-                    child: IconButton(
-                      icon: Icon(Icons.arrow_back_rounded, color: fg),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                ],
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _BackChip(onTap: () => Navigator.pop(context)),
               ),
-              const SizedBox(height: 20),
-
-              if (_sent) ...[
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                      color: const Color(0xFF16A34A).withValues(alpha: 0.14), shape: BoxShape.circle),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.mark_email_read_outlined, color: Color(0xFF16A34A), size: 36),
-                ),
-                const SizedBox(height: 20),
-                Text('E-mail envoyé', style: TextStyle(color: fg, fontSize: 24, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 10),
-                Text(
-                  "Si un compte existe avec l'adresse ${_emailController.text.trim()}, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte de réception (et vos spams).",
-                  style: TextStyle(color: muted, fontSize: 14, height: 1.5),
-                ),
-                const SizedBox(height: 28),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: brandAmber,
-                    foregroundColor: brandNavy,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    minimumSize: const Size.fromHeight(54),
-                    elevation: 0,
-                  ),
-                  child: const Text('Retour à la connexion',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                ),
-              ] else ...[
-                Text('Mot de passe oublié',
-                    style: TextStyle(color: fg, fontSize: 26, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 8),
-                Text(
-                  'Entrez votre adresse e-mail, nous vous enverrons un lien pour réinitialiser votre mot de passe.',
-                  style: TextStyle(color: muted, fontSize: 14, height: 1.5),
-                ),
-                const SizedBox(height: 28),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text('Adresse e-mail',
-                          style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.done,
-                        autofillHints: const [AutofillHints.email],
-                        style: TextStyle(color: fg),
-                        onFieldSubmitted: (_) => _submit(),
-                        decoration: InputDecoration(
-                          hintText: 'exemple@email.com',
-                          hintStyle: TextStyle(color: muted.withValues(alpha: 0.6)),
-                          errorText: _error,
-                          filled: true,
-                          fillColor: fieldFill,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        ),
-                        validator: (v) =>
-                            (v?.trim().isEmpty ?? true) ? 'Adresse e-mail requise' : null,
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _loading ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandAmber,
-                          foregroundColor: brandNavy,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                          minimumSize: const Size.fromHeight(54),
-                          elevation: 0,
-                        ),
-                        child: _loading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(color: brandNavy, strokeWidth: 2))
-                            : const Text('Envoyer le lien',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              const SizedBox(height: FigSpace.xxl),
+              // Le changement d'etat se fait en fondu : l'ecran ne clignote pas
+              // entre le formulaire et la confirmation.
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 280),
+                child: _sent ? _confirmation(c, t) : _form(c, t),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _form(GiColors c, AppL10n t) {
+    return Column(
+      key: const ValueKey('form'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(t.forgotTitle,
+            style: FigText.display.copyWith(color: c.loginTitle)),
+        const SizedBox(height: FigSpace.md),
+        Text(t.forgotSubtitle,
+            style: FigText.field.copyWith(color: c.textMuted, height: 1.36)),
+        const SizedBox(height: FigSpace.xxl),
+        Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              GiTextField(
+                label: t.emailLabel,
+                hint: t.emailHint,
+                controller: _emailController,
+                errorText: _error,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                validator: (v) =>
+                    (v?.trim().isEmpty ?? true) ? t.emailRequired : null,
+              ),
+              const SizedBox(height: 24),
+              GiPrimaryButton(
+                label: t.sendLink,
+                isLoading: _loading,
+                onPressed: _submit,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _confirmation(GiColors c, AppL10n t) {
+    return Column(
+      key: const ValueKey('sent'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: FigAlert.success.withValues(alpha: 0.10),
+            border: Border.all(color: FigAlert.success.withValues(alpha: 0.20)),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: const Icon(Icons.mark_email_read_outlined,
+              color: FigAlert.success, size: 34),
+        ),
+        const SizedBox(height: FigSpace.xxl),
+        Text(t.emailSentTitle,
+            style: FigText.display.copyWith(color: c.loginTitle)),
+        const SizedBox(height: FigSpace.md),
+        Text(
+          t.emailSentBody(_emailController.text.trim()),
+          style: FigText.field.copyWith(color: c.textMuted, height: 1.36),
+        ),
+        const SizedBox(height: FigSpace.xxl),
+        GiPrimaryButton(
+          label: t.backToLogin,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    );
+  }
+}
+
+/// Bouton de retour, calque sur les pastilles d'en-tete du Figma :
+/// 32 de cote, rayon 8, fond et bordure tres legers.
+class _BackChip extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BackChip({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GiColors.of(context);
+    return GiPressable(
+      onTap: onTap,
+      pressedScale: 0.90,
+      child: Container(
+        width: FigSize.chipMd,
+        height: FigSize.chipMd,
+        decoration: BoxDecoration(
+          color: c.headerChipBg,
+          border: Border.all(color: c.headerChipBorder),
+          borderRadius: BorderRadius.circular(FigRadius.chip),
+        ),
+        child: Icon(Icons.arrow_back_rounded, size: 18, color: c.textBody),
       ),
     );
   }

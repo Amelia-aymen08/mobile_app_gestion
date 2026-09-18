@@ -374,6 +374,42 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Commencer'**
   String get getStarted;
+
+  /// No description provided for @forgotTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe oublié'**
+  String get forgotTitle;
+
+  /// No description provided for @forgotSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez votre adresse e-mail, nous vous enverrons un lien pour réinitialiser votre mot de passe.'**
+  String get forgotSubtitle;
+
+  /// No description provided for @sendLink.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer le lien'**
+  String get sendLink;
+
+  /// No description provided for @emailSentTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'E-mail envoyé'**
+  String get emailSentTitle;
+
+  /// No description provided for @emailSentBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Si un compte existe avec l\'adresse {email}, un lien de réinitialisation vient d\'être envoyé. Pensez à vérifier vos indésirables.'**
+  String emailSentBody(String email);
+
+  /// No description provided for @backToLogin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retour à la connexion'**
+  String get backToLogin;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

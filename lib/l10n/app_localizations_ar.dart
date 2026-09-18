@@ -178,4 +178,25 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get getStarted => 'ابدأ';
+
+  @override
+  String get forgotTitle => 'نسيت كلمة المرور';
+
+  @override
+  String get forgotSubtitle =>
+      'أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.';
+
+  @override
+  String get sendLink => 'إرسال الرابط';
+
+  @override
+  String get emailSentTitle => 'تم إرسال البريد';
+
+  @override
+  String emailSentBody(String email) {
+    return 'إذا كان هناك حساب مرتبط بالعنوان $email، فقد أُرسل رابط إعادة التعيين للتو. لا تنسَ التحقق من مجلد الرسائل غير المرغوب فيها.';
+  }
+
+  @override
+  String get backToLogin => 'العودة إلى تسجيل الدخول';
 }

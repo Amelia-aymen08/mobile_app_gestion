@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Import for kDebugMode
 import 'package:http_parser/http_parser.dart';
+import 'demo_client.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -20,7 +21,7 @@ class ApiService {
   String? _token;
   void setToken(String? token) => _token = token;
 
-  final http.Client _client = http.Client();
+  http.Client _client = http.Client();
   final String baseUrl = const String.fromEnvironment(
     'API_URL',
     defaultValue: 'https://landing.aymenpromotion-dz.com/api',
@@ -137,6 +138,19 @@ class ApiService {
 
   Future<Map<String, dynamic>> login(String email, String password,
       {String? deviceId, String? deviceName}) async {
+    // MODE DEMONSTRATION — a retirer avant la mise en production.
+    // Deux adresses ouvrent une session servie en local par DemoClient, sans
+    // aucun appel au back-end. Le reste de l'app ne voit pas la difference :
+    // c'est le client HTTP qui est remplace, pas le code des ecrans.
+    final demo = demoProfileFor(email, password);
+    if (demo != null) {
+      _client = DemoClient(demo);
+    } else if (isDemoEmail(email)) {
+      throw ApiException(401, 'Mot de passe de démonstration incorrect.');
+    } else if (_client is DemoClient) {
+      _client = http.Client();
+    }
+
     final payload = <String, dynamic>{
       'email': email,
       'password': password,

@@ -45,5 +45,11 @@
   "onbBody3": "Stay connected, informed, and fully in control with premium services designed for modern living.",
   "skip": "Skip",
   "next": "Next",
-  "getStarted": "Get Started"
+  "getStarted": "Get Started",
+  "forgotTitle": "Forgot password",
+  "forgotSubtitle": "Enter your email address and we will send you a link to reset your password.",
+  "sendLink": "Send the link",
+  "emailSentTitle": "Email sent",
+  "emailSentBody": "If an account exists for {email}, a reset link has just been sent. Remember to check your spam folder.",
+  "backToLogin": "Back to login"
 }
