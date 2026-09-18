@@ -197,4 +197,22 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get addProperty => 'Ajouter un bien';
+
+  @override
+  String get alertPaymentTitle => 'Paiement urgent';
+
+  @override
+  String alertPaymentBody(String date) {
+    return 'Votre prochain paiement est dû le $date.';
+  }
+
+  @override
+  String get alertPaymentHint =>
+      'Appuyez ci-dessous pour consulter le détail et régler votre échéance.';
+
+  @override
+  String get close => 'Fermer';
+
+  @override
+  String get viewPayment => 'Voir le paiement';
 }

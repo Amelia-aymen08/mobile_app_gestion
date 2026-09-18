@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_bottom_nav.dart';
+import '../widgets/gi_alert_dialog.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
 import '../theme/residence_images.dart';
@@ -136,84 +137,18 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       }
       final due = DateTime.tryParse(raw)?.toLocal();
       final label = due != null ? _formatDate(due) : raw;
-      final dark = Theme.of(context).brightness == Brightness.dark;
-      await showDialog<void>(
+      if (!mounted) return;
+      final t = AppL10n.of(context);
+      await showGiAlert<void>(
         context: context,
-        // Sans ce contexte propre au dialogue, les boutons fermaient la route
-        // de l'ecran au lieu du dialogue lui-meme.
-        barrierDismissible: true,
-        builder: (dialogContext) => Dialog(
-          backgroundColor: dark ? darkCard : Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFFE0362B), shape: BoxShape.circle),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.priority_high_rounded,
-                      color: Colors.white, size: 34),
-                ),
-                const SizedBox(height: 18),
-                Text('Paiement urgent',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: dark ? Colors.white : brandNavy)),
-                const SizedBox(height: 10),
-                Text('Votre prochain paiement est dû le $label.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: dark ? darkMuted : const Color(0xFF6B7280),
-                        fontSize: 14)),
-                const SizedBox(height: 22),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: brandAmber,
-                          side: const BorderSide(color: brandAmber, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text('Fermer',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(dialogContext).pop();
-                          setState(() => _tab = 3);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: brandAmber,
-                          foregroundColor: brandNavy,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
-                        ),
-                        child: const Text('Voir',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+        title: t.alertPaymentTitle,
+        message: t.alertPaymentBody(label),
+        hint: t.alertPaymentHint,
+        closeLabel: t.close,
+        primaryLabel: t.viewPayment,
+        onPrimary: () {
+          if (mounted) setState(() => _tab = 3);
+        },
       );
     } catch (_) {}
   }

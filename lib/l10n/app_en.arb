@@ -52,5 +52,10 @@
   "emailSentTitle": "Email sent",
   "emailSentBody": "If an account exists for {email}, a reset link has just been sent. Remember to check your spam folder.",
   "backToLogin": "Back to login",
-  "addProperty": "Add a property"
+  "addProperty": "Add a property",
+  "alertPaymentTitle": "Urgent payment",
+  "alertPaymentBody": "Your next payment is due on {date}.",
+  "alertPaymentHint": "Tap below to view the details and settle your instalment.",
+  "close": "Close",
+  "viewPayment": "View payment"
 }

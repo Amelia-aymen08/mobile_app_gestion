@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Déconnexion</title>
+<!--
+  AIDE AU TEST — a retirer avant la mise en production.
+
+  Cette page efface le stockage local du navigateur, donc la session et le
+  drapeau d'onboarding, puis renvoie vers l'app. Elle existe parce qu'en test
+  sur navigateur il n'y a pas d'autre moyen commode de repartir d'un etat
+  vierge sans passer par les outils de developpement.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #F6F3EC; color: #0C1620;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0C1620; color: #E5E5E5; }
+  }
+  .box { text-align: center; padding: 32px 24px; max-width: 320px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px; }
+  p { font-size: 14px; margin: 0 0 24px; opacity: .7; line-height: 1.45; }
+  a {
+    display: inline-block; background: #DB9200; color: #000;
+    text-decoration: none; font-weight: 500; font-size: 15px;
+    padding: 14px 32px; border-radius: 28px;
+  }
+  code { font-size: 13px; opacity: .6; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1 id="titre">Déconnexion…</h1>
+    <p id="detail">Effacement de la session en cours.</p>
+    <a href="/">Retour à l'application</a>
+  </div>
+<script>
+  (function () {
+    var efface = [];
+    try { localStorage.clear(); efface.push('stockage local'); } catch (e) {}
+    try { sessionStorage.clear(); efface.push('stockage de session'); } catch (e) {}
+    try {
+      if (window.indexedDB && indexedDB.databases) {
+        indexedDB.databases().then(function (bases) {
+          bases.forEach(function (b) { if (b.name) indexedDB.deleteDatabase(b.name); });
+        });
+      }
+    } catch (e) {}
+
+    document.getElementById('titre').textContent = 'Session effacée';
+    document.getElementById('detail').textContent =
+      efface.length
+        ? 'Vous êtes déconnecté. L\'onboarding réapparaîtra également.'
+        : "Le navigateur a refusé l'accès au stockage (fenêtre privée ?).";
+
+    setTimeout(function () { location.replace('/'); }, 1400);
+  })();
+</script>
+</body>
+</html>

@@ -98,5 +98,17 @@
       }
     }
   },
-  "addProperty": "Ajouter un bien"
+  "addProperty": "Ajouter un bien",
+  "alertPaymentTitle": "Paiement urgent",
+  "alertPaymentBody": "Votre prochain paiement est dû le {date}.",
+  "alertPaymentHint": "Appuyez ci-dessous pour consulter le détail et régler votre échéance.",
+  "close": "Fermer",
+  "viewPayment": "Voir le paiement",
+  "@alertPaymentBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

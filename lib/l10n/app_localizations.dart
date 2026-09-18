@@ -416,6 +416,36 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Ajouter un bien'**
   String get addProperty;
+
+  /// No description provided for @alertPaymentTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paiement urgent'**
+  String get alertPaymentTitle;
+
+  /// No description provided for @alertPaymentBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre prochain paiement est dû le {date}.'**
+  String alertPaymentBody(String date);
+
+  /// No description provided for @alertPaymentHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appuyez ci-dessous pour consulter le détail et régler votre échéance.'**
+  String get alertPaymentHint;
+
+  /// No description provided for @close.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
+  String get close;
+
+  /// No description provided for @viewPayment.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voir le paiement'**
+  String get viewPayment;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -52,5 +52,10 @@
   "emailSentTitle": "تم إرسال البريد",
   "emailSentBody": "إذا كان هناك حساب مرتبط بالعنوان {email}، فقد أُرسل رابط إعادة التعيين للتو. لا تنسَ التحقق من مجلد الرسائل غير المرغوب فيها.",
   "backToLogin": "العودة إلى تسجيل الدخول",
-  "addProperty": "إضافة عقار"
+  "addProperty": "إضافة عقار",
+  "alertPaymentTitle": "دفعة عاجلة",
+  "alertPaymentBody": "دفعتك القادمة مستحقة في {date}.",
+  "alertPaymentHint": "اضغط أدناه لعرض التفاصيل وتسوية دفعتك.",
+  "close": "إغلاق",
+  "viewPayment": "عرض الدفعة"
 }

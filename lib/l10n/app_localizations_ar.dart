@@ -202,4 +202,21 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get addProperty => 'إضافة عقار';
+
+  @override
+  String get alertPaymentTitle => 'دفعة عاجلة';
+
+  @override
+  String alertPaymentBody(String date) {
+    return 'دفعتك القادمة مستحقة في $date.';
+  }
+
+  @override
+  String get alertPaymentHint => 'اضغط أدناه لعرض التفاصيل وتسوية دفعتك.';
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get viewPayment => 'عرض الدفعة';
 }
