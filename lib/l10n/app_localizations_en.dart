@@ -379,4 +379,45 @@ class AppL10nEn extends AppL10n {
   String apartmentShort(String unit) {
     return 'Apt. $unit';
   }
+
+  @override
+  String get serviceCharges => 'Service Charges';
+
+  @override
+  String get currentPeriod => 'Current month';
+
+  @override
+  String get statusDue => 'Due';
+
+  @override
+  String get totalDue => 'Total amount due';
+
+  @override
+  String get chargeBreakdown => 'Charge Breakdown';
+
+  @override
+  String get hideLabel => 'Hide';
+
+  @override
+  String get showLabel => 'Show';
+
+  @override
+  String get totalLabel => 'Total';
+
+  @override
+  String get paymentHistory => 'Payment History';
+
+  @override
+  String get emptyPaymentsTitle => 'No Payments Yet';
+
+  @override
+  String get emptyPaymentsBody => 'You have not made any charge payments yet.';
+
+  @override
+  String get affectedAreas => 'Affected Areas';
+
+  @override
+  String blockNamed(String name) {
+    return 'Block $name';
+  }
 }

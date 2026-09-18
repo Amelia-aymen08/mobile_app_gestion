@@ -7,11 +7,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/api_service.dart';
 import '../../l10n/app_localizations.dart';
-import '../theme/app_theme.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_header.dart';
+import '../widgets/gi_pressable.dart';
 
 class NoticesScreen extends StatefulWidget {
   const NoticesScreen({super.key});
@@ -315,92 +315,153 @@ class _NoticesScreenState extends State<NoticesScreen> {
       );
 }
 
+/// Detail d'un avis — frame Figma "Notice Detail LT" (837:1712).
+///
+/// La maquette prevoit en plus une chronologie d'intervention, des horaires et
+/// des consignes. L'API ne renvoie que titre, corps, categorie, date et blocs
+/// concernes : ces blocs sont donc laisses de cote plutot que remplis de
+/// donnees inventees.
 class NoticeDetailScreen extends StatelessWidget {
   final Map<String, dynamic> notice;
   const NoticeDetailScreen({super.key, required this.notice});
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
 
     final category = (notice['category'] ?? 'INFO').toString().toUpperCase();
     final title = (notice['title'] ?? '').toString();
     final body = (notice['body'] ?? '').toString();
-    final publishAt = DateTime.tryParse((notice['publishAt'] ?? notice['createdAt'] ?? '').toString())?.toLocal();
+    final publishAt = DateTime.tryParse(
+            (notice['publishAt'] ?? notice['createdAt'] ?? '').toString())
+        ?.toLocal();
 
-    final categoryLabel = category == 'URGENT' ? 'Avis urgent' : (category == 'EVENT' ? 'Événement' : 'Information');
-    final categoryColor = category == 'URGENT'
-        ? const Color(0xFFDC2626)
-        : (category == 'EVENT' ? const Color(0xFF8B5CF6) : const Color(0xFF3B82F6));
+    final label = switch (category) {
+      'URGENT' => t.filterUrgent,
+      'EVENT' => t.filterEvent,
+      _ => t.filterInfo,
+    };
+    final accent = switch (category) {
+      'URGENT' => FigAlert.error,
+      'EVENT' => FigAccent.violet,
+      _ => FigAccent.blue,
+    };
+
+    final blocks = notice['blocks'];
+    final blockList = blocks is List
+        ? blocks.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
+        : <String>[];
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: EdgeInsets.fromLTRB(
+              FigSpace.pagePadding,
+              MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+              FigSpace.pagePadding,
+              40),
           children: [
+            // En-tete : pastille de retour de 32, puis la categorie et
+            // l'horodatage, comme dans la maquette.
             Row(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                      color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_back_rounded, color: fg),
-                    onPressed: () => Navigator.pop(context),
+                GiPressable(
+                  onTap: () => Navigator.pop(context),
+                  pressedScale: 0.88,
+                  child: Container(
+                    width: FigSize.chipMd,
+                    height: FigSize.chipMd,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.headerChipBg,
+                      border: Border.all(color: c.headerChipBorder),
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
+                    ),
+                    child: Transform.flip(
+                      flipX: Directionality.of(context) == TextDirection.rtl,
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/back_14.svg',
+                        colorFilter:
+                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: FigSpace.xl),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(categoryLabel, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
-                      if (publishAt != null)
-                        Text(DateFormat("dd/MM/yyyy 'à' HH:mm").format(publishAt),
-                            style: TextStyle(color: muted, fontSize: 12)),
+                      Text(label,
+                          style: FigText.titleMd
+                              .copyWith(fontSize: 18, color: c.textBody)),
+                      if (publishAt != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          DateFormat("dd/MM/yyyy 'à' HH:mm")
+                              .format(publishAt),
+                          style: FigText.body.copyWith(color: c.textMuted),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
+            const SizedBox(height: FigSpace.xxl),
+            GiCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                        color: categoryColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                    child: Text(categoryLabel,
-                        style: TextStyle(color: categoryColor, fontSize: 12, fontWeight: FontWeight.w700)),
+                      color: FigAccent.chipFill(accent),
+                      border: Border.all(color: FigAccent.chipBorder(accent)),
+                      borderRadius: BorderRadius.circular(FigRadius.pill),
+                    ),
+                    child: Text(label,
+                        style: FigText.body.copyWith(color: accent)),
                   ),
-                  const SizedBox(height: 12),
-                  Text(title, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 19)),
-                  const SizedBox(height: 12),
-                  Text(body, style: TextStyle(color: muted, fontSize: 14, height: 1.6)),
+                  const SizedBox(height: FigSpace.lg),
+                  Text(title,
+                      style: FigText.greeting.copyWith(
+                          fontSize: 20, color: c.textBody)),
+                  const SizedBox(height: FigSpace.lg),
+                  Text(body,
+                      style: FigText.field
+                          .copyWith(height: 1.5, color: c.textMuted)),
                 ],
               ),
             ),
-            if ((notice['blocks'] ?? '').toString().isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-                child: Row(
+            if (blockList.isNotEmpty) ...[
+              const SizedBox(height: FigSpace.xl),
+              Text(t.affectedAreas,
+                  style: FigText.titleMd.copyWith(color: c.textBody)),
+              const SizedBox(height: FigSpace.lg),
+              GiCard(
+                child: Wrap(
+                  spacing: FigSpace.md,
+                  runSpacing: FigSpace.md,
                   children: [
-                    Icon(Icons.location_on_outlined, color: muted, size: 18),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text('Blocs concernés : ${notice['blocks']}',
-                          style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w600)),
-                    ),
+                    for (final b in blockList)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: FigAccent.chipFill(FigBrand.amber),
+                          border: Border.all(
+                              color: FigAccent.chipBorder(FigBrand.amber)),
+                          borderRadius: BorderRadius.circular(FigRadius.pill),
+                        ),
+                        child: Text(t.blockNamed(b),
+                            style: FigText.body
+                                .copyWith(color: FigBrand.amber)),
+                      ),
                   ],
                 ),
               ),

@@ -386,4 +386,45 @@ class AppL10nAr extends AppL10n {
   String apartmentShort(String unit) {
     return 'شقة $unit';
   }
+
+  @override
+  String get serviceCharges => 'الأعباء';
+
+  @override
+  String get currentPeriod => 'الشهر الجاري';
+
+  @override
+  String get statusDue => 'مستحق';
+
+  @override
+  String get totalDue => 'إجمالي المبلغ المستحق';
+
+  @override
+  String get chargeBreakdown => 'تفصيل الأعباء';
+
+  @override
+  String get hideLabel => 'إخفاء';
+
+  @override
+  String get showLabel => 'إظهار';
+
+  @override
+  String get totalLabel => 'المجموع';
+
+  @override
+  String get paymentHistory => 'سجل المدفوعات';
+
+  @override
+  String get emptyPaymentsTitle => 'لا توجد مدفوعات';
+
+  @override
+  String get emptyPaymentsBody => 'لم تسدد أي أعباء بعد.';
+
+  @override
+  String get affectedAreas => 'العمارات المعنية';
+
+  @override
+  String blockNamed(String name) {
+    return 'عمارة $name';
+  }
 }

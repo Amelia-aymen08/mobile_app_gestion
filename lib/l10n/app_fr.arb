@@ -181,5 +181,25 @@
         "type": "String"
       }
     }
+  },
+  "serviceCharges": "Charges",
+  "currentPeriod": "Période en cours",
+  "statusDue": "À régler",
+  "totalDue": "Total à régler",
+  "chargeBreakdown": "Détail des charges",
+  "hideLabel": "Masquer",
+  "showLabel": "Afficher",
+  "totalLabel": "Total",
+  "paymentHistory": "Historique des paiements",
+  "emptyPaymentsTitle": "Aucun paiement",
+  "emptyPaymentsBody": "Vous n'avez encore réglé aucune charge.",
+  "affectedAreas": "Blocs concernés",
+  "blockNamed": "Bloc {name}",
+  "@blockNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   }
 }

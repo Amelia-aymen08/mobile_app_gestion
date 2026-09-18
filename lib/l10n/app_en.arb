@@ -107,5 +107,18 @@
   "settingsSubtitle": "Notifications, language, security",
   "myProperties": "My properties",
   "householdMembers": "Household members",
-  "apartmentShort": "Apt. {unit}"
+  "apartmentShort": "Apt. {unit}",
+  "serviceCharges": "Service Charges",
+  "currentPeriod": "Current month",
+  "statusDue": "Due",
+  "totalDue": "Total amount due",
+  "chargeBreakdown": "Charge Breakdown",
+  "hideLabel": "Hide",
+  "showLabel": "Show",
+  "totalLabel": "Total",
+  "paymentHistory": "Payment History",
+  "emptyPaymentsTitle": "No Payments Yet",
+  "emptyPaymentsBody": "You have not made any charge payments yet.",
+  "affectedAreas": "Affected Areas",
+  "blockNamed": "Block {name}"
 }

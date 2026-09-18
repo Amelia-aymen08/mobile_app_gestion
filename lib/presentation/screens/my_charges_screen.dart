@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+// `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
+import 'package:intl/intl.dart' hide TextDirection;
+
 import '../../data/api_service.dart';
-import '../theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_header.dart';
+import '../widgets/gi_pressable.dart';
 
 class MyChargesScreen extends StatefulWidget {
   const MyChargesScreen({super.key});
@@ -13,7 +21,6 @@ class MyChargesScreen extends StatefulWidget {
 class _MyChargesScreenState extends State<MyChargesScreen> {
   final ApiService _api = ApiService();
   bool _loading = true;
-  String? _error;
   List<Map<String, dynamic>> _charges = [];
   Map<String, dynamic> _summary = const {};
 
@@ -26,7 +33,6 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
   Future<void> _load() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
     try {
       final results = await Future.wait([
@@ -44,7 +50,6 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
         _loading = false;
       });
     }
@@ -83,6 +88,8 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     return ((e.year - s.year) * 12 + (e.month - s.month)).clamp(1, 120);
   }
 
+  /// Montant reel d'une charge : une charge pluri-mensuelle vaut son montant
+  /// de base multiplie par le nombre de mois de la periode.
   int _amountValue(Map charge) {
     final base = int.tryParse((charge['amount'] ?? '0').toString()) ?? 0;
     final months = (charge['type'] ?? '').toString() == 'Charge' ? _periodMonths(charge) : 1;
@@ -91,205 +98,337 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
 
   String _formatAmount(int value) => '${NumberFormat.decimalPattern('fr_FR').format(value)} DZD';
 
+  /// Replie le detail des charges. Le Figma prevoit ce bouton « Masquer » :
+  /// la liste peut etre longue et l'historique se trouve juste en dessous.
+  bool _breakdownOpen = true;
+
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
 
-    final ownerStatus = (_summary['ownerStatus'] ?? _summary['status'] ?? 'Non Actif').toString();
-    final isActive = ownerStatus == 'Actif';
-    final message = (_summary['message'] ?? '').toString();
+    final due = _charges.where((e) => e['status'] != 'Payé').toList()
+      ..sort((a, b) => (a['periodEnd'] ?? '')
+          .toString()
+          .compareTo((b['periodEnd'] ?? '').toString()));
+    final paidHistory = _charges.where((e) => e['status'] == 'Payé').toList()
+      ..sort((a, b) => (b['periodEnd'] ?? '')
+          .toString()
+          .compareTo((a['periodEnd'] ?? '').toString()));
 
-    final due = _charges.where((c) => c['status'] != 'Payé').toList()
-      ..sort((a, b) => (a['periodEnd'] ?? '').toString().compareTo((b['periodEnd'] ?? '').toString()));
-    final currentDue = due.isNotEmpty ? due.first : null;
-    final paidHistory = _charges.where((c) => c['status'] == 'Payé').toList()
-      ..sort((a, b) => (b['periodEnd'] ?? '').toString().compareTo((a['periodEnd'] ?? '').toString()));
+    final totalDue = due.fold<int>(
+        0, (sum, e) => sum + _amountValue(e));
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
+        bottom: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _error != null
-                ? Center(
-                    child: Text(_error!,
-                        style: const TextStyle(color: Color(0xFFE0362B), fontWeight: FontWeight.w600)))
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                  color: brandAmber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.credit_card_outlined, color: brandAmber, size: 22),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Charges', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                                  Text('Suivez vos charges de copropriété', style: TextStyle(color: muted, fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-
-                        if (!isActive)
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            margin: const EdgeInsets.only(bottom: 14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.info_outline, color: Color(0xFFB45309)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    message.isNotEmpty
-                                        ? message
-                                        : "Votre compte est en attente d'activation par l'administration.",
-                                    style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600, fontSize: 13),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                        // ── Current due card ──────────────────
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text('MOIS EN COURS',
-                                      style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
-                                  const Spacer(),
-                                  if (currentDue != null)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                          color: brandAmber.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(20)),
-                                      child: const Text('Dû',
-                                          style: TextStyle(color: brandAmber, fontSize: 11, fontWeight: FontWeight.w700)),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                currentDue != null ? _monthLabel(currentDue) : 'À jour',
-                                style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18),
-                              ),
-                              Divider(height: 26, color: dark ? darkBorder : const Color(0xFFF0EBDD)),
-                              if (currentDue != null) ...[
-                                Text('MONTANT DÛ',
-                                    style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
-                                const SizedBox(height: 4),
-                                Text(_formatAmount(_amountValue(currentDue)),
-                                    style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w900, fontSize: 26)),
-                                const SizedBox(height: 4),
-                                if (currentDue['periodEnd'] != null)
-                                  Text('Échéance : ${_formatDate(currentDue['periodEnd'])}',
-                                      style: const TextStyle(color: brandAmber, fontSize: 12, fontWeight: FontWeight.w600)),
-                              ] else
-                                Text('Aucune charge en attente de paiement.',
-                                    style: TextStyle(color: muted, fontSize: 13)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-
-                        Text('Historique des paiements',
-                            style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
-                        const SizedBox(height: 12),
-
-                        if (paidHistory.isEmpty)
-                          _emptyHistory(dark, fg, muted)
-                        else
-                          ...paidHistory.map((c) => Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                  decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(16)),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 34,
-                                        height: 34,
-                                        decoration: BoxDecoration(
-                                            color: const Color(0xFF16A34A).withValues(alpha: 0.14),
-                                            borderRadius: BorderRadius.circular(10)),
-                                        alignment: Alignment.center,
-                                        child: const Icon(Icons.check_rounded, color: Color(0xFF16A34A), size: 18),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(_monthLabel(c).isNotEmpty
-                                                    ? '${_monthLabel(c)[0].toUpperCase()}${_monthLabel(c).substring(1)}'
-                                                    : 'Charge',
-                                                style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 14)),
-                                            if (c['periodEnd'] != null)
-                                              Text(_formatDate(c['periodEnd']),
-                                                  style: TextStyle(color: muted, fontSize: 12)),
-                                          ],
-                                        ),
-                                      ),
-                                      Text(_formatAmount(_amountValue(c)),
-                                          style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 14)),
-                                    ],
-                                  ),
-                                ),
-                              )),
-                      ],
+            ? const Center(
+                child: CircularProgressIndicator(color: FigBrand.amber))
+            : RefreshIndicator(
+                color: FigBrand.amber,
+                backgroundColor: c.card,
+                onRefresh: _load,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                      FigSpace.pagePadding,
+                      MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                      FigSpace.pagePadding,
+                      150),
+                  children: [
+                    GiScreenHeader(
+                      iconAsset: 'assets/figma/icons/payment_20.svg',
+                      accent: FigAccent.amber,
+                      title: t.serviceCharges,
+                      subtitle: _propertyLine(),
                     ),
-                  ),
+                    const SizedBox(height: FigSpace.xxl),
+                    _summaryCard(c, t, due, totalDue),
+                    const SizedBox(height: FigSpace.xl),
+                    _breakdown(c, t, due, totalDue),
+                    const SizedBox(height: FigSpace.xl),
+                    Text(t.paymentHistory,
+                        style: FigText.titleMd.copyWith(color: c.textBody)),
+                    const SizedBox(height: FigSpace.lg),
+                    if (paidHistory.isEmpty)
+                      _emptyHistory(c, t)
+                    else
+                      for (var i = 0; i < paidHistory.length; i++) ...[
+                        if (i > 0) const SizedBox(height: FigSpace.lg),
+                        _historyCard(c, paidHistory[i]),
+                      ],
+                  ],
+                ),
+              ),
       ),
     );
   }
 
-  Widget _emptyHistory(bool dark, Color fg, Color muted) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 36),
+  /// Sous-titre de l'en-tete : le bien concerne, comme dans la maquette
+  /// (« Apartment 3B — Résidence Les Pins »).
+  String _propertyLine() {
+    final res = (_summary['residenceName'] ?? '').toString();
+    return res.isEmpty ? '' : res;
+  }
+
+  /// Carte de resume — Figma 335 x 164 : periode et pastille d'etat en haut,
+  /// puis le total du et son echeance.
+  Widget _summaryCard(
+      GiColors c, AppL10n t, List<Map<String, dynamic>> due, int totalDue) {
+    final current = due.isNotEmpty ? due.first : null;
+    final deadlineRaw =
+        (current?['periodEnd'] ?? _summary['nextPaymentDate'])?.toString();
+    final deadline = deadlineRaw == null ? null : DateTime.tryParse(deadlineRaw);
+    final late = current != null && current['status'] == 'En retard';
+    final stateColor = late ? FigAlert.error : FigBrand.amber;
+
+    return GiCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: dark ? darkBorder : const Color(0xFFE2DDCF), width: 3),
-            ),
-            alignment: Alignment.center,
-            child: Icon(Icons.receipt_long_outlined, size: 44, color: dark ? darkBorder : const Color(0xFFE2DDCF)),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(t.currentPeriod,
+                        style: FigText.body.copyWith(color: c.textMuted)),
+                    const SizedBox(height: FigSpace.xs),
+                    Text(
+                      current == null ? '—' : _monthLabel(current),
+                      style: FigText.statValue.copyWith(color: c.textBody),
+                    ),
+                  ],
+                ),
+              ),
+              // Pastille d'etat : point de couleur puis libelle, comme le
+              // Figma (62 x 28).
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: FigAccent.chipFill(stateColor),
+                  border: Border.all(color: FigAccent.chipBorder(stateColor)),
+                  borderRadius: BorderRadius.circular(FigRadius.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                          color: stateColor, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: FigSpace.sm),
+                    Text(t.statusDue,
+                        style: FigText.body.copyWith(color: stateColor)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 18),
-          Text('Aucun paiement', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
-          const SizedBox(height: 6),
-          Text("Vous n'avez encore effectué aucun paiement de charges.",
-              textAlign: TextAlign.center, style: TextStyle(color: muted, fontSize: 13)),
+          const SizedBox(height: FigSpace.xl),
+          Text(t.totalDue, style: FigText.body.copyWith(color: c.textMuted)),
+          const SizedBox(height: FigSpace.xs),
+          Text(_formatAmount(totalDue),
+              style: FigText.greeting.copyWith(color: c.textBody)),
+          if (deadline != null) ...[
+            const SizedBox(height: FigSpace.xs),
+            Text(
+              t.paymentDeadline(_formatDate(deadline.toIso8601String())),
+              style: FigText.body.copyWith(color: stateColor),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  /// Detail des charges : un titre avec son bouton de repli, puis une carte
+  /// unique dont chaque ligne porte un libelle et un montant. La derniere
+  /// ligne est le total, mise en avant.
+  Widget _breakdown(
+      GiColors c, AppL10n t, List<Map<String, dynamic>> due, int totalDue) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(t.chargeBreakdown,
+                  style: FigText.titleMd.copyWith(color: c.textBody)),
+            ),
+            GiPressable(
+              pressedScale: 0.92,
+              onTap: () => setState(() => _breakdownOpen = !_breakdownOpen),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_breakdownOpen ? t.hideLabel : t.showLabel,
+                      style: FigText.caption.copyWith(color: c.textMuted)),
+                  const SizedBox(width: FigSpace.xs),
+                  AnimatedRotation(
+                    turns: _breakdownOpen ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 240),
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 16, color: c.textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: FigSpace.lg),
+        // Le repli se joue en hauteur : la liste glisse derriere le titre au
+        // lieu de disparaitre d'un coup.
+        AnimatedSize(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          child: !_breakdownOpen
+              ? const SizedBox(width: double.infinity)
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(FigRadius.card),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: c.card,
+                      borderRadius: BorderRadius.circular(FigRadius.card),
+                      border: Border.all(color: c.cardBorder),
+                    ),
+                    child: Column(
+                      children: [
+                        if (due.isEmpty)
+                          _breakdownRow(c, t.totalLabel, 0, total: true)
+                        else ...[
+                          for (final charge in due) ...[
+                            _breakdownRow(
+                              c,
+                              (charge['description'] ?? charge['type'] ?? '')
+                                  .toString(),
+                              _amountValue(charge),
+                            ),
+                            Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: c.innerBorder),
+                          ],
+                          _breakdownRow(c, t.totalLabel, totalDue,
+                              total: true),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _breakdownRow(GiColors c, String label, int amount,
+      {bool total = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: FigSpace.cardPadding, vertical: FigSpace.xl),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: total
+                    ? FigText.titleMd.copyWith(color: c.textBody)
+                    : FigText.body.copyWith(color: c.textMuted)),
+          ),
+          const SizedBox(width: FigSpace.lg),
+          Text(_formatAmount(amount),
+              style: total
+                  ? FigText.titleMd.copyWith(color: FigBrand.amber)
+                  : FigText.body.copyWith(color: c.textBody)),
+        ],
+      ),
+    );
+  }
+
+  /// Ligne d'historique — Figma 335 x 96 : mois et montant sur la premiere
+  /// ligne, date et moyen de paiement sur la seconde.
+  Widget _historyCard(GiColors c, Map<String, dynamic> charge) {
+    final amount = _amountValue(charge);
+    final paidOn = _formatDate(charge['periodEnd']);
+    final method = (charge['method'] ?? charge['type'] ?? '').toString();
+
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(_monthLabel(charge),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: FigText.statValue.copyWith(color: c.textBody)),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              Text(_formatAmount(amount),
+                  style: FigText.titleMd.copyWith(color: c.textBody)),
+            ],
+          ),
+          const SizedBox(height: FigSpace.md),
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                    color: FigAlert.success, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: FigSpace.md),
+              Expanded(
+                child: Text(
+                  method.isEmpty ? paidOn : '$paidOn · $method',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FigText.caption.copyWith(color: c.textMuted),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyHistory(GiColors c, AppL10n t) => GiCard(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: FigSpace.xl),
+          child: Column(
+            children: [
+              GiIconChip(
+                accent: FigAccent.amber,
+                size: 64,
+                radius: 32,
+                icon: SvgPicture.asset(
+                  'assets/figma/icons/payment_20.svg',
+                  colorFilter: ColorFilter.mode(
+                      FigBrand.amber.withValues(alpha: 0.6), BlendMode.srcIn),
+                ),
+              ),
+              const SizedBox(height: FigSpace.xl),
+              Text(t.emptyPaymentsTitle,
+                  textAlign: TextAlign.center,
+                  style: FigText.titleMd.copyWith(color: c.textBody)),
+              const SizedBox(height: FigSpace.md),
+              Text(t.emptyPaymentsBody,
+                  textAlign: TextAlign.center,
+                  style:
+                      FigText.body.copyWith(height: 1.36, color: c.textMuted)),
+            ],
+          ),
+        ),
+      );
 }

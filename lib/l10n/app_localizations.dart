@@ -746,6 +746,84 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Apt. {unit}'**
   String apartmentShort(String unit);
+
+  /// No description provided for @serviceCharges.
+  ///
+  /// In fr, this message translates to:
+  /// **'Charges'**
+  String get serviceCharges;
+
+  /// No description provided for @currentPeriod.
+  ///
+  /// In fr, this message translates to:
+  /// **'Période en cours'**
+  String get currentPeriod;
+
+  /// No description provided for @statusDue.
+  ///
+  /// In fr, this message translates to:
+  /// **'À régler'**
+  String get statusDue;
+
+  /// No description provided for @totalDue.
+  ///
+  /// In fr, this message translates to:
+  /// **'Total à régler'**
+  String get totalDue;
+
+  /// No description provided for @chargeBreakdown.
+  ///
+  /// In fr, this message translates to:
+  /// **'Détail des charges'**
+  String get chargeBreakdown;
+
+  /// No description provided for @hideLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Masquer'**
+  String get hideLabel;
+
+  /// No description provided for @showLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Afficher'**
+  String get showLabel;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Total'**
+  String get totalLabel;
+
+  /// No description provided for @paymentHistory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Historique des paiements'**
+  String get paymentHistory;
+
+  /// No description provided for @emptyPaymentsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun paiement'**
+  String get emptyPaymentsTitle;
+
+  /// No description provided for @emptyPaymentsBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous n\'avez encore réglé aucune charge.'**
+  String get emptyPaymentsBody;
+
+  /// No description provided for @affectedAreas.
+  ///
+  /// In fr, this message translates to:
+  /// **'Blocs concernés'**
+  String get affectedAreas;
+
+  /// No description provided for @blockNamed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bloc {name}'**
+  String blockNamed(String name);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

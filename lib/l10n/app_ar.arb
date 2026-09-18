@@ -107,5 +107,18 @@
   "settingsSubtitle": "الإشعارات واللغة والأمان",
   "myProperties": "ممتلكاتي",
   "householdMembers": "أفراد الأسرة",
-  "apartmentShort": "شقة {unit}"
+  "apartmentShort": "شقة {unit}",
+  "serviceCharges": "الأعباء",
+  "currentPeriod": "الشهر الجاري",
+  "statusDue": "مستحق",
+  "totalDue": "إجمالي المبلغ المستحق",
+  "chargeBreakdown": "تفصيل الأعباء",
+  "hideLabel": "إخفاء",
+  "showLabel": "إظهار",
+  "totalLabel": "المجموع",
+  "paymentHistory": "سجل المدفوعات",
+  "emptyPaymentsTitle": "لا توجد مدفوعات",
+  "emptyPaymentsBody": "لم تسدد أي أعباء بعد.",
+  "affectedAreas": "العمارات المعنية",
+  "blockNamed": "عمارة {name}"
 }
