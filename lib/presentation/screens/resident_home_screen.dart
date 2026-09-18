@@ -181,78 +181,16 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   Future<void> _confirmLogout() async {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
-    final confirmed = await showDialog<bool>(
+    final t = AppL10n.of(context);
+    await showGiAlert<void>(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: dark ? darkCard : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                    color: Color(0xFFE0362B), shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: const Icon(Icons.priority_high_rounded,
-                    color: Colors.white, size: 34),
-              ),
-              const SizedBox(height: 18),
-              Text('Se déconnecter ?',
-                  style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w800, color: fg)),
-              const SizedBox(height: 10),
-              Text(
-                  'Voulez-vous vraiment vous déconnecter ? Vous pourrez vous reconnecter à tout moment.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: muted, fontSize: 14)),
-              const SizedBox(height: 22),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: brandAmber,
-                        side: const BorderSide(color: brandAmber, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: const Text('Annuler',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: brandAmber,
-                        foregroundColor: brandNavy,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      child: const Text('Se déconnecter',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+      title: t.logoutTitle,
+      message: t.logoutBody,
+      hint: t.logoutHint,
+      closeLabel: t.cancel,
+      primaryLabel: t.logout,
+      onPrimary: _logout,
     );
-    if (confirmed == true) _logout();
   }
 
   void _logout() {
@@ -1084,7 +1022,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     required VoidCallback onTap,
     int badge = 0,
   }) {
-    return GestureDetector(
+    return GiPressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),

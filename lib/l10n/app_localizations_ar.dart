@@ -258,4 +258,19 @@ class AppL10nAr extends AppL10n {
   @override
   String get emptyNoticesBody =>
       'أنت على اطلاع كامل. لا توجد إعلانات لعرضها في الوقت الحالي.';
+
+  @override
+  String get logoutTitle => 'تسجيل الخروج؟';
+
+  @override
+  String get logoutBody => 'هل تريد فعلاً تسجيل الخروج من حسابك؟';
+
+  @override
+  String get logoutHint => 'يمكنك تسجيل الدخول مجددًا في أي وقت بنفس البيانات.';
+
+  @override
+  String get cancel => 'إلغاء';
+
+  @override
+  String get logout => 'تسجيل الخروج';
 }

@@ -251,4 +251,20 @@ class AppL10nFr extends AppL10n {
   @override
   String get emptyNoticesBody =>
       'Vous êtes à jour. Il n\'y a aucun avis à afficher pour le moment.';
+
+  @override
+  String get logoutTitle => 'Se déconnecter ?';
+
+  @override
+  String get logoutBody => 'Voulez-vous vraiment vous déconnecter ?';
+
+  @override
+  String get logoutHint =>
+      'Vous pourrez vous reconnecter à tout moment avec les mêmes identifiants.';
+
+  @override
+  String get cancel => 'Annuler';
+
+  @override
+  String get logout => 'Se déconnecter';
 }

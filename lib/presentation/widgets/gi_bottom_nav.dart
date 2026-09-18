@@ -88,6 +88,10 @@ class GiBottomNav extends StatelessWidget {
   }
 }
 
+/// Agrandissement commun des icones de la barre : rendues a leur taille
+/// d'export elles paraissent maigres sur fond sombre.
+const _iconBoost = 1.18;
+
 class _GiNavTab extends StatelessWidget {
   final GiNavItem item;
   final bool selected;
@@ -124,12 +128,17 @@ class _GiNavTab extends StatelessWidget {
                       clipBehavior: Clip.none,
                       children: [
                         // Pas de width/height : chaque SVG du Figma porte sa
-                        // taille exacte dans son attribut racine, et c'est
-                        // elle qui reproduit la maquette.
-                        SvgPicture.asset(
-                          item.asset,
-                          colorFilter:
-                              ColorFilter.mode(color, BlendMode.srcIn),
+                        // taille exacte dans son attribut racine. On se
+                        // contente de l'agrandir d'un facteur commun, ce qui
+                        // preserve les proportions tres differentes de ces
+                        // icones — « Plus » fait 24 x 4,8, « Accueil » 22 x 22.
+                        Transform.scale(
+                          scale: _iconBoost,
+                          child: SvgPicture.asset(
+                            item.asset,
+                            colorFilter:
+                                ColorFilter.mode(color, BlendMode.srcIn),
+                          ),
                         ),
                         if (item.badge > 0)
                           PositionedDirectional(

@@ -45,11 +45,22 @@ class GiCard extends StatelessWidget {
 
 /// Pastille d'icone teintee. Le Figma applique partout la meme recette :
 /// fond a 5 % de la teinte, trait a 10 %, dans les deux themes.
+///
+/// L'icone est mise a l'echelle de la pastille plutot que laissee a sa taille
+/// d'export. Les SVG exportes du Figma sont plus petits que leur cadre — l'art
+/// de `alert_20` mesure 17,8 et non 20 — et rendus tels quels ils paraissent
+/// maigres dans une pastille de 35. [iconRatio] fixe la part de la pastille
+/// occupee par l'icone ; c'est le seul reglage a toucher pour les grossir ou
+/// les reduire partout a la fois. Les proportions de chaque icone sont
+/// conservees, seule sa taille change.
 class GiIconChip extends StatelessWidget {
   final Widget icon;
   final Color accent;
   final double size;
   final double radius;
+
+  /// Part de la pastille occupee par l'icone.
+  static const iconRatio = 0.62;
 
   const GiIconChip({
     super.key,
@@ -61,6 +72,7 @@ class GiIconChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inner = size * iconRatio;
     return Container(
       width: size,
       height: size,
@@ -70,7 +82,11 @@ class GiIconChip extends StatelessWidget {
         border: Border.all(color: FigAccent.chipBorder(accent)),
         borderRadius: BorderRadius.circular(radius),
       ),
-      child: icon,
+      child: SizedBox(
+        width: inner,
+        height: inner,
+        child: FittedBox(fit: BoxFit.contain, child: icon),
+      ),
     );
   }
 }

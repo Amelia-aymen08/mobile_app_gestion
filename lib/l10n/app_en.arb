@@ -66,5 +66,10 @@
   "readMore": "Read more",
   "newCount": "{count, plural, =1{1 new} other{{count} new}}",
   "emptyNoticesTitle": "No Notices Yet",
-  "emptyNoticesBody": "You are all caught up. There are no notices to display at this moment."
+  "emptyNoticesBody": "You are all caught up. There are no notices to display at this moment.",
+  "logoutTitle": "Log Out?",
+  "logoutBody": "Are you sure you want to log out of your account?",
+  "logoutHint": "You can sign back in anytime with the same credentials.",
+  "cancel": "Cancel",
+  "logout": "Log out"
 }

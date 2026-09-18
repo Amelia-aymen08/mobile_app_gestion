@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
+import 'gi_pressable.dart';
 
 /// Champ de saisie du Figma — frames "Login LT" (721:7277), "Login Active LT"
 /// (721:7222) et "Login Error LT" (721:7253).
@@ -141,9 +142,10 @@ class _GiTextFieldState extends State<GiTextField> {
                   label: _obscure
                       ? 'Afficher le mot de passe'
                       : 'Masquer le mot de passe',
-                  child: GestureDetector(
+                  child: GiPressable(
                     onTap: () => setState(() => _obscure = !_obscure),
-                    behavior: HitTestBehavior.opaque,
+                    pressedScale: 0.82,
+                    ensureMinTapTarget: true,
                     child: SvgPicture.asset(
                       'assets/figma/icons/eye_light.svg',
                       width: 16,

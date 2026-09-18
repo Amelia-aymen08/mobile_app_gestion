@@ -126,5 +126,10 @@
         "type": "int"
       }
     }
-  }
+  },
+  "logoutTitle": "Se déconnecter ?",
+  "logoutBody": "Voulez-vous vraiment vous déconnecter ?",
+  "logoutHint": "Vous pourrez vous reconnecter à tout moment avec les mêmes identifiants.",
+  "cancel": "Annuler",
+  "logout": "Se déconnecter"
 }

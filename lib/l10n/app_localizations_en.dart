@@ -250,4 +250,20 @@ class AppL10nEn extends AppL10n {
   @override
   String get emptyNoticesBody =>
       'You are all caught up. There are no notices to display at this moment.';
+
+  @override
+  String get logoutTitle => 'Log Out?';
+
+  @override
+  String get logoutBody => 'Are you sure you want to log out of your account?';
+
+  @override
+  String get logoutHint =>
+      'You can sign back in anytime with the same credentials.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get logout => 'Log out';
 }

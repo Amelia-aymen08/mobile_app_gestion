@@ -500,6 +500,36 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Vous êtes à jour. Il n\'y a aucun avis à afficher pour le moment.'**
   String get emptyNoticesBody;
+
+  /// No description provided for @logoutTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter ?'**
+  String get logoutTitle;
+
+  /// No description provided for @logoutBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voulez-vous vraiment vous déconnecter ?'**
+  String get logoutBody;
+
+  /// No description provided for @logoutHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous pourrez vous reconnecter à tout moment avec les mêmes identifiants.'**
+  String get logoutHint;
+
+  /// No description provided for @cancel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get cancel;
+
+  /// No description provided for @logout.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter'**
+  String get logout;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
