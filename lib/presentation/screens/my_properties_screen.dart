@@ -1,15 +1,24 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../theme/residence_images.dart';
+import '../widgets/gi_empty_state.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../data/api_service.dart';
-import '../theme/app_theme.dart';
-import '../theme/residence_images.dart';
-import 'resident_create_ticket_screen.dart';
-import 'property_add_request_screen.dart';
 
 class MyPropertiesScreen extends StatefulWidget {
-  const MyPropertiesScreen({super.key});
+  /// Bien affiche au moment de l'ouverture : la selection demarre dessus
+  /// pour que l'ecran reflete ce que le resident voit sur l'accueil.
+  final int initialIndex;
+
+  const MyPropertiesScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MyPropertiesScreen> createState() => _MyPropertiesScreenState();
@@ -18,7 +27,6 @@ class MyPropertiesScreen extends StatefulWidget {
 class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   final ApiService _api = ApiService();
   List<dynamic> _properties = [];
-  List<Map<String, dynamic>> _charges = [];
   bool _loading = true;
   String? _error;
 
@@ -43,17 +51,10 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         });
         return;
       }
-      final results = await Future.wait([
-        _api.getMyProperties(email),
-        _api.getMyCharges(),
-      ]);
+      final properties = await _api.getMyProperties(email);
       if (!mounted) return;
       setState(() {
-        _properties = results[0];
-        _charges = results[1]
-            .whereType<Map>()
-            .map((c) => Map<String, dynamic>.from(c))
-            .toList();
+        _properties = properties;
         _loading = false;
       });
     } catch (e) {
@@ -67,21 +68,6 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   }
 
   // ─── Helpers ─────────────────────────────────────────────
-  String _aptNumber(dynamic lotNumber) {
-    final raw = (lotNumber ?? '').toString().trim();
-    if (raw.isEmpty) return '';
-    final parts = raw.split('-').where((p) => p.trim().isNotEmpty).toList();
-    return (parts.isNotEmpty ? parts.last : raw).trim();
-  }
-
-  String _typology(dynamic surface) {
-    final s = double.tryParse((surface ?? '').toString());
-    if (s == null) return 'F2';
-    if (s >= 100) return 'F4';
-    if (s >= 70) return 'F3';
-    return 'F2';
-  }
-
   String _residenceId(dynamic property) {
     if (property is! Map) return '';
     if (property['Residence'] is Map) {
@@ -108,372 +94,308 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     return '$base/${raw.startsWith('/') ? raw.substring(1) : raw}';
   }
 
-  // Returns charges associated with a property (matched by residenceId)
-  List<Map<String, dynamic>> _chargesFor(dynamic property) {
-    final resId = _residenceId(property);
-    if (resId.isEmpty) return [];
-    return _charges.where((c) {
-      final cResId = (c['Residence'] is Map)
-          ? (c['Residence']['id'] ?? '').toString()
-          : (c['residenceId'] ?? '').toString();
-      return cResId == resId;
-    }).toList();
-  }
-
   // ─── Build ────────────────────────────────────────────────
+  /// Bien mis en avant. Le Figma fait de cet ecran un selecteur : une carte
+  /// porte la selection, le bouton du bas la confirme.
+  late int _selected = widget.initialIndex;
+
   @override
   Widget build(BuildContext context) {
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.white,
-        title: const Text('Mes Biens',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFC2CAD2), Color(0xFF8E9AA6)],
-          ),
-        ),
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(color: Colors.white))
-            : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.white70),
-                        const SizedBox(height: 12),
-                        Text(_error!,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.white)),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                            onPressed: _fetchAll,
-                            child: const Text('Réessayer')),
-                      ],
-                    ),
-                  )
-                : _properties.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 72,
-                                height: 72,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.25),
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: const Icon(Icons.home_outlined,
-                                    size: 36, color: Colors.white),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text('Aucun bien associé à votre compte.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.white)),
-                              const SizedBox(height: 20),
-                              ElevatedButton.icon(
-                                onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const PropertyAddRequestScreen())),
-                                icon: const Icon(Icons.add_home_outlined),
-                                label: const Text('Demander ajout de bien'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 96, 16, 24),
-                        itemCount: _properties.length,
-                        itemBuilder: (_, i) => _propertyCard(_properties[i]),
-                      ),
-      ),
-    );
-  }
-
-  Widget _propertyCard(dynamic property) {
-    if (property is! Map) return const SizedBox.shrink();
-
-    final aptNum = _aptNumber(property['lotNumber']);
-    final title = aptNum.isNotEmpty
-        ? 'Appartement n° $aptNum'
-        : (property['title'] ?? 'Appartement').toString();
-    final typology = (property['type'] ?? '').toString().trim().isNotEmpty
-        ? property['type'].toString()
-        : _typology(property['surface']);
-    final floor = (property['floor'] ?? '').toString();
-    final block = (property['block'] ?? '').toString();
-    final residenceName = _residenceName(property);
-
-    final charges = _chargesFor(property);
-    final actives = charges.where((c) => (c['status'] ?? '') != 'Payé').length;
-    final soldees = charges.where((c) => (c['status'] ?? '') == 'Payé').length;
-
-    final localAsset = residenceImageAsset(id: _residenceId(property), name: residenceName);
-    final imageUrl = _propertyImage(property);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Image: local residence photo first, then network image, then placeholder
-          SizedBox(
-            height: 160,
-            child: localAsset != null
-                ? Image.asset(localAsset, fit: BoxFit.cover)
-                : imageUrl != null
-                    ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _imagePlaceholder(),
-                      )
-                    : _imagePlaceholder(),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title + status badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(title,
-                          style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              color: brandBlue)),
-                    ),
-                    const SizedBox(width: 8),
-                    _paymentBadge(actives, charges.length),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Infos grid
-                Row(
-                  children: [
-                    Expanded(child: _infoChip(Icons.bed_outlined, typology)),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: _infoChip(Icons.layers_outlined,
-                            floor.isNotEmpty ? 'Étage $floor' : 'RDC')),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: _infoChip(Icons.grid_view_outlined,
-                            block.isNotEmpty ? 'Bloc $block' : 'N/A')),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Charges section
-                if (charges.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: brandBackground,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Charges',
-                            style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF64748B),
-                                letterSpacing: 0.5)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            if (actives > 0) ...[
-                              _chargeChip(
-                                  '$actives active${actives > 1 ? 's' : ''}',
-                                  const Color(0xFFDC2626),
-                                  Icons.radio_button_unchecked),
-                              const SizedBox(width: 8),
-                            ],
-                            if (soldees > 0)
-                              _chargeChip(
-                                  '$soldees soldée${soldees > 1 ? 's' : ''}',
-                                  const Color(0xFF15803D),
-                                  Icons.check_circle_outline),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ] else if (_charges.isNotEmpty) ...[
-                  // Charges loaded but none for this property
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF15803D).withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Row(children: [
-                      Icon(Icons.check_circle_outline,
-                          size: 14, color: Color(0xFF15803D)),
-                      SizedBox(width: 6),
-                      Text('Aucune charge en cours',
-                          style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF15803D),
-                              fontWeight: FontWeight.w600)),
-                    ]),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Residence name at bottom
-                if (residenceName.isNotEmpty) ...[
-                  Row(children: [
-                    const Icon(Icons.apartment_outlined,
-                        size: 14, color: Color(0xFF94A3B8)),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(residenceName,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF64748B),
-                              fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                  ]),
-                  const SizedBox(height: 12),
-                ],
-
-                // Ticket button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ResidentCreateTicketScreen(
-                            property: Map<String, dynamic>.from(property),
-                          ),
-                        ),
-                      );
-                      if (result == true && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Ticket envoyé.')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.report_problem_outlined, size: 18),
-                    label: const Text('Signaler un problème'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB91C1C),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                      minimumSize: const Size.fromHeight(44),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _imagePlaceholder() => Container(
-        color: const Color(0xFFF1F5F9),
-        alignment: Alignment.center,
-        child: const Icon(Icons.apartment_outlined,
-            size: 56, color: Color(0xFFCBD5E1)),
-      );
-
-  Widget _paymentBadge(int actives, int total) {
-    final String label;
-    final Color color;
-    if (total == 0) {
-      label = 'À jour';
-      color = const Color(0xFF15803D);
-    } else if (actives == 0) {
-      label = 'À jour';
-      color = const Color(0xFF15803D);
-    } else {
-      label = 'Impayé';
-      color = const Color(0xFFDC2626);
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style:
-            TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
-      ),
-    );
-  }
-
-  Widget _infoChip(IconData icon, String label) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: brandBlue.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+      backgroundColor: c.scaffold,
+      body: SafeArea(
+        child: Column(
           children: [
-            Icon(icon, size: 13, color: brandBlue),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: brandBlue),
-                  overflow: TextOverflow.ellipsis),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                  FigSpace.pagePadding,
+                  0),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: GiPressable(
+                  onTap: () => Navigator.pop(context),
+                  pressedScale: 0.88,
+                  child: Container(
+                    width: FigSize.chipMd,
+                    height: FigSize.chipMd,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.headerChipBg,
+                      border: Border.all(color: c.headerChipBorder),
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
+                    ),
+                    child: Transform.flip(
+                      flipX: Directionality.of(context) == TextDirection.rtl,
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/back_14.svg',
+                        colorFilter:
+                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: FigSpace.xxl),
+            // Titre centre du Figma, sur 295 de large.
+            SizedBox(
+              width: 295,
+              child: Column(
+                children: [
+                  Text(t.changeResidence,
+                      textAlign: TextAlign.center,
+                      style: FigText.greeting.copyWith(color: c.textBody)),
+                  const SizedBox(height: 9),
+                  Text(t.switchResidenceSubtitle,
+                      textAlign: TextAlign.center,
+                      style:
+                          FigText.field.copyWith(height: 1.2, color: c.textMuted)),
+                ],
+              ),
+            ),
+            const SizedBox(height: FigSpace.xxl),
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  : RefreshIndicator(
+                      color: FigBrand.amber,
+                      backgroundColor: c.card,
+                      onRefresh: _fetchAll,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(
+                            FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
+                        children: [
+                          Text(t.yourProperties(_properties.length),
+                              style:
+                                  FigText.field.copyWith(color: c.textMuted)),
+                          const SizedBox(height: FigSpace.lg),
+                          if (_properties.isEmpty)
+                            GiEmptyState(
+                              illustration:
+                                  'assets/figma/empty/payments.svg',
+                              title: t.myProperties,
+                              message: _error ?? t.noPropertyYet,
+                            )
+                          else
+                            for (var i = 0; i < _properties.length; i++) ...[
+                              if (i > 0) const SizedBox(height: FigSpace.lg),
+                              _residenceCard(c, t, _properties[i] as Map, i),
+                            ],
+                        ],
+                      ),
+                    ),
+            ),
+            if (_properties.length > 1)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+                    FigSpace.pagePadding, FigSpace.xxl),
+                child: GiPrimaryButton(
+                  label: t.switchAction,
+                  onPressed: () => Navigator.pop(context, _selected),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Carte de residence, reprise de l'accueil et rendue selectionnable.
+  /// Selectionnee : fond ambre a 20 %, trait ambre plein et coche.
+  /// Sinon : surface de carte, trait ambre discret et case vide.
+  Widget _residenceCard(GiColors c, AppL10n t, Map property, int index) {
+    final isSelected = index == _selected;
+    final residence = property['Residence'] is Map
+        ? Map<String, dynamic>.from(property['Residence'] as Map)
+        : <String, dynamic>{};
+    final resName = _residenceName(property);
+    final address = (residence['address'] ?? '').toString();
+    final asset = residenceImageAsset(
+        id: _residenceId(property), name: resName);
+    final url = _propertyImage(Map<String, dynamic>.from(property));
+    final floor = (property['floor'] ?? '').toString();
+    final surface = (property['surface'] ?? '').toString();
+    final lot = (property['lotNumber'] ?? '').toString();
+
+    return GiPressable(
+      pressedScale: 0.985,
+      onTap: () => setState(() => _selected = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+        height: FigSize.heroH,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? FigBrand.amber.withValues(alpha: 0.20)
+              : c.card,
+          borderRadius: BorderRadius.circular(FigRadius.card),
+          border: Border.all(
+              color: isSelected ? FigBrand.amber : c.heroBorder),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (rect) => LinearGradient(
+                  begin: AlignmentDirectional.centerStart,
+                  end: AlignmentDirectional.centerEnd,
+                  colors: [
+                    Colors.white.withValues(alpha: 0),
+                    Colors.white.withValues(alpha: 0.10),
+                    Colors.white.withValues(alpha: 0.45),
+                    Colors.white.withValues(alpha: 0.78),
+                  ],
+                  stops: const [0.12, 0.42, 0.72, 1.0],
+                ).createShader(rect,
+                    textDirection: Directionality.of(context)),
+                child: asset != null
+                    ? Image.asset(asset,
+                        fit: BoxFit.cover, alignment: Alignment.centerRight)
+                    : (url != null
+                        ? Image.network(url,
+                            fit: BoxFit.cover,
+                            alignment: Alignment.centerRight,
+                            errorBuilder: (_, __, ___) =>
+                                ColoredBox(color: c.card))
+                        : ColoredBox(color: c.card)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(FigSpace.heroPadding),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(t.myResidence,
+                                    style: FigText.body
+                                        .copyWith(color: c.textFaint)),
+                                const SizedBox(height: FigSpace.xs),
+                                Text(resName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: FigText.titleMd
+                                        .copyWith(color: c.textBody)),
+                              ],
+                            ),
+                          ),
+                          // Indicateur de selection : coche pleine quand la
+                          // carte est choisie, case vide sinon.
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: isSelected
+                                ? const Icon(Icons.check_circle_rounded,
+                                    key: ValueKey(true),
+                                    size: 20,
+                                    color: FigBrand.amber)
+                                : Container(
+                                    key: const ValueKey(false),
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: c.innerBorder,
+                                      borderRadius:
+                                          BorderRadius.circular(4),
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: FigSpace.lg),
+                      Row(
+                        children: [
+                          SvgPicture.asset(
+                              'assets/figma/icons/pin_location.svg',
+                              colorFilter: const ColorFilter.mode(
+                                  FigBrand.amber, BlendMode.srcIn)),
+                          const SizedBox(width: FigSpace.md),
+                          Expanded(
+                            child: Text(address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    FigText.body.copyWith(color: c.textBody)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  _stats(c, t, floor, surface, lot, isSelected),
+                ],
+              ),
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
 
-  Widget _chargeChip(String label, Color color, IconData icon) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(20),
+  /// Bandeau du Figma : etage, surface et numero de lot, separes par un trait.
+  /// La troisieme colonne porte le lot et non le statut, contrairement a la
+  /// carte de l'accueil.
+  Widget _stats(GiColors c, AppL10n t, String floor, String surface,
+      String lot, bool isSelected) {
+    Widget cell(String label, String value) => Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: FigText.label.copyWith(color: c.textFaint)),
+              Text(value.isEmpty ? '—' : value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FigText.statValue.copyWith(color: c.textBody)),
+            ],
+          ),
+        );
+
+    final divider = Container(width: 1, height: 37, color: c.innerBorder);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(FigRadius.card),
+        border: Border.all(
+            color: isSelected ? c.heroBorder : c.innerBorder),
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.centerStart,
+          end: AlignmentDirectional.centerEnd,
+          colors: [c.card.withValues(alpha: 0), c.card],
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: color)),
-        ]),
-      );
+      ),
+      child: SizedBox(
+        height: 40,
+        child: Row(
+          children: [
+            cell(t.floor, floor),
+            divider,
+            const SizedBox(width: FigSpace.lg),
+            cell(t.area, surface.isEmpty ? '' : '$surface m²'),
+            divider,
+            const SizedBox(width: FigSpace.lg),
+            cell(t.unitLabel, lot),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

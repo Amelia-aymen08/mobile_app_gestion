@@ -161,5 +161,10 @@
   "typeMessage": "اكتب رسالة…",
   "noMessages": "لا توجد رسائل بعد.",
   "today": "اليوم",
-  "yesterday": "أمس"
+  "yesterday": "أمس",
+  "switchResidenceSubtitle": "انتقل بين ممتلكاتك المسجلة",
+  "yourProperties": "ممتلكاتك ({count})",
+  "switchAction": "تغيير",
+  "unitLabel": "الشقة",
+  "noPropertyYet": "لا يوجد أي عقار مرتبط بحسابك بعد."
 }

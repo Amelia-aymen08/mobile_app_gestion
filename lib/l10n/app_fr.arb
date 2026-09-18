@@ -249,5 +249,17 @@
   "typeMessage": "Écrivez un message…",
   "noMessages": "Aucun message pour le moment.",
   "today": "Aujourd'hui",
-  "yesterday": "Hier"
+  "yesterday": "Hier",
+  "switchResidenceSubtitle": "Passez d'un bien à l'autre",
+  "yourProperties": "Vos biens ({count})",
+  "switchAction": "Changer",
+  "unitLabel": "Lot",
+  "noPropertyYet": "Aucun bien n'est encore rattaché à votre compte.",
+  "@yourProperties": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

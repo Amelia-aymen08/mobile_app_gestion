@@ -545,4 +545,22 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get yesterday => 'Yesterday';
+
+  @override
+  String get switchResidenceSubtitle =>
+      'Switch between your registered properties';
+
+  @override
+  String yourProperties(int count) {
+    return 'Your properties ($count)';
+  }
+
+  @override
+  String get switchAction => 'Switch';
+
+  @override
+  String get unitLabel => 'Unit';
+
+  @override
+  String get noPropertyYet => 'No property is linked to your account yet.';
 }

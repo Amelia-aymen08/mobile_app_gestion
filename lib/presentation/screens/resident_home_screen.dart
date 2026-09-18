@@ -174,6 +174,27 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     return '$base/${s.startsWith('/') ? s.substring(1) : s}';
   }
 
+  /// Ouvre le selecteur de bien et aligne le carrousel sur le choix
+  /// rapporte par l'ecran.
+  Future<void> _openSwitch() async {
+    final picked = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(
+          builder: (_) => MyPropertiesScreen(initialIndex: _carouselPage)),
+    );
+    if (!mounted) return;
+    _fetchUnread();
+    if (picked != null &&
+        picked != _carouselPage &&
+        picked < _properties.length) {
+      _residenceCarouselController.animateToPage(
+        picked,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
   Future<void> _push(Widget screen) async {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
     if (mounted) _fetchUnread();
@@ -435,7 +456,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
     return GiPressable(
       pressedScale: 0.985,
-      onTap: () => _push(const MyPropertiesScreen()),
+      onTap: () => _openSwitch(),
       child: Container(
         height: FigSize.heroH,
         decoration: BoxDecoration(
@@ -724,7 +745,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         null,
         FigAccent.blue,
         t.documents,
-        () => _push(const MyPropertiesScreen())
+        () => _openSwitch()
       ),
       (
         'assets/figma/icons/profile_20.svg',
@@ -900,7 +921,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           _identityCard(c, t, name, lot, resName, block),
           const SizedBox(height: FigSpace.lg),
           GiCard(
-            onTap: () => _push(const MyPropertiesScreen()),
+            onTap: () => _openSwitch(),
             child: Row(
               children: [
                 Expanded(
@@ -969,7 +990,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               GiSettingsRow(
                 icon: Icon(Icons.apartment_rounded, color: c.textBody),
                 label: t.myProperties,
-                onTap: () => _push(const MyPropertiesScreen()),
+                onTap: () => _openSwitch(),
               ),
               GiSettingsRow(
                 icon: Icon(Icons.groups_outlined, color: c.textBody),

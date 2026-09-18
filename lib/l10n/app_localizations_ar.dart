@@ -552,4 +552,21 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get yesterday => 'أمس';
+
+  @override
+  String get switchResidenceSubtitle => 'انتقل بين ممتلكاتك المسجلة';
+
+  @override
+  String yourProperties(int count) {
+    return 'ممتلكاتك ($count)';
+  }
+
+  @override
+  String get switchAction => 'تغيير';
+
+  @override
+  String get unitLabel => 'الشقة';
+
+  @override
+  String get noPropertyYet => 'لا يوجد أي عقار مرتبط بحسابك بعد.';
 }

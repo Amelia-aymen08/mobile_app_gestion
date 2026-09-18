@@ -546,4 +546,22 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get yesterday => 'Hier';
+
+  @override
+  String get switchResidenceSubtitle => 'Passez d\'un bien à l\'autre';
+
+  @override
+  String yourProperties(int count) {
+    return 'Vos biens ($count)';
+  }
+
+  @override
+  String get switchAction => 'Changer';
+
+  @override
+  String get unitLabel => 'Lot';
+
+  @override
+  String get noPropertyYet =>
+      'Aucun bien n\'est encore rattaché à votre compte.';
 }

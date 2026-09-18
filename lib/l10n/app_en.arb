@@ -161,5 +161,10 @@
   "typeMessage": "Type a message…",
   "noMessages": "No messages yet.",
   "today": "Today",
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "switchResidenceSubtitle": "Switch between your registered properties",
+  "yourProperties": "Your properties ({count})",
+  "switchAction": "Switch",
+  "unitLabel": "Unit",
+  "noPropertyYet": "No property is linked to your account yet."
 }

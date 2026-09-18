@@ -1070,6 +1070,36 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Hier'**
   String get yesterday;
+
+  /// No description provided for @switchResidenceSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passez d\'un bien à l\'autre'**
+  String get switchResidenceSubtitle;
+
+  /// No description provided for @yourProperties.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vos biens ({count})'**
+  String yourProperties(int count);
+
+  /// No description provided for @switchAction.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer'**
+  String get switchAction;
+
+  /// No description provided for @unitLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lot'**
+  String get unitLabel;
+
+  /// No description provided for @noPropertyYet.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun bien n\'est encore rattaché à votre compte.'**
+  String get noPropertyYet;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
