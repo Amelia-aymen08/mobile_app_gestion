@@ -574,4 +574,62 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get continueAction => 'Continuer';
+
+  @override
+  String get residenceLabel => 'Résidence';
+
+  @override
+  String get apartmentLabel => 'Appartement';
+
+  @override
+  String get chooseResidence => 'Choisir une résidence';
+
+  @override
+  String get chooseFloor => 'Choisir un étage';
+
+  @override
+  String get chooseApartment => 'Choisir un appartement';
+
+  @override
+  String get selectResidenceFirst => 'Sélectionnez d\'abord une résidence';
+
+  @override
+  String get selectFloorFirst => 'Sélectionnez d\'abord un étage';
+
+  @override
+  String get noFloorAvailable => 'Aucun étage disponible';
+
+  @override
+  String get noApartmentAvailable => 'Aucun appartement libre';
+
+  @override
+  String get groundFloor => 'Rez-de-chaussée';
+
+  @override
+  String floorNumber(String floor) {
+    return 'Étage $floor';
+  }
+
+  @override
+  String get loadingEllipsis => 'Chargement…';
+
+  @override
+  String get accountLabel => 'Compte';
+
+  @override
+  String get sendRequest => 'Envoyer la demande';
+
+  @override
+  String get addPropertyNotice =>
+      'Votre demande est transmise au gestionnaire de la résidence. Le bien apparaîtra dans vos biens une fois la demande validée.';
+
+  @override
+  String get requestSentTitle => 'Demande envoyée';
+
+  @override
+  String get requestSentBody =>
+      'Le gestionnaire de la résidence a reçu votre demande. Vous serez notifié dès qu\'elle sera traitée.';
+
+  @override
+  String get errorTitle => 'Une erreur est survenue';
 }

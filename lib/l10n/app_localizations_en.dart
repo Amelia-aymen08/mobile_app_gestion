@@ -573,4 +573,62 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get continueAction => 'Continue';
+
+  @override
+  String get residenceLabel => 'Residence';
+
+  @override
+  String get apartmentLabel => 'Apartment';
+
+  @override
+  String get chooseResidence => 'Choose a residence';
+
+  @override
+  String get chooseFloor => 'Choose a floor';
+
+  @override
+  String get chooseApartment => 'Choose an apartment';
+
+  @override
+  String get selectResidenceFirst => 'Select a residence first';
+
+  @override
+  String get selectFloorFirst => 'Select a floor first';
+
+  @override
+  String get noFloorAvailable => 'No floor available';
+
+  @override
+  String get noApartmentAvailable => 'No apartment available';
+
+  @override
+  String get groundFloor => 'Ground floor';
+
+  @override
+  String floorNumber(String floor) {
+    return 'Floor $floor';
+  }
+
+  @override
+  String get loadingEllipsis => 'Loading…';
+
+  @override
+  String get accountLabel => 'Account';
+
+  @override
+  String get sendRequest => 'Send request';
+
+  @override
+  String get addPropertyNotice =>
+      'Your request goes to the residence manager. The property will appear in your properties once it is approved.';
+
+  @override
+  String get requestSentTitle => 'Request sent';
+
+  @override
+  String get requestSentBody =>
+      'The residence manager has received your request. You will be notified as soon as it is processed.';
+
+  @override
+  String get errorTitle => 'Something went wrong';
 }

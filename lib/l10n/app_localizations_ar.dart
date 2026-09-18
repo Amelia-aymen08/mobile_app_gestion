@@ -578,4 +578,62 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get continueAction => 'متابعة';
+
+  @override
+  String get residenceLabel => 'الإقامة';
+
+  @override
+  String get apartmentLabel => 'الشقة';
+
+  @override
+  String get chooseResidence => 'اختر إقامة';
+
+  @override
+  String get chooseFloor => 'اختر طابقًا';
+
+  @override
+  String get chooseApartment => 'اختر شقة';
+
+  @override
+  String get selectResidenceFirst => 'اختر إقامة أولاً';
+
+  @override
+  String get selectFloorFirst => 'اختر طابقًا أولاً';
+
+  @override
+  String get noFloorAvailable => 'لا يوجد طابق متاح';
+
+  @override
+  String get noApartmentAvailable => 'لا توجد شقة متاحة';
+
+  @override
+  String get groundFloor => 'الطابق الأرضي';
+
+  @override
+  String floorNumber(String floor) {
+    return 'الطابق $floor';
+  }
+
+  @override
+  String get loadingEllipsis => 'جارٍ التحميل…';
+
+  @override
+  String get accountLabel => 'الحساب';
+
+  @override
+  String get sendRequest => 'إرسال الطلب';
+
+  @override
+  String get addPropertyNotice =>
+      'يُرسل طلبك إلى مسيّر الإقامة. سيظهر العقار ضمن ممتلكاتك بمجرد الموافقة عليه.';
+
+  @override
+  String get requestSentTitle => 'تم إرسال الطلب';
+
+  @override
+  String get requestSentBody =>
+      'استلم مسيّر الإقامة طلبك. سيتم إشعارك فور معالجته.';
+
+  @override
+  String get errorTitle => 'حدث خطأ';
 }

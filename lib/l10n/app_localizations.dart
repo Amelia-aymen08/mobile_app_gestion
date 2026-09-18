@@ -1118,6 +1118,114 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Continuer'**
   String get continueAction;
+
+  /// No description provided for @residenceLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Résidence'**
+  String get residenceLabel;
+
+  /// No description provided for @apartmentLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appartement'**
+  String get apartmentLabel;
+
+  /// No description provided for @chooseResidence.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir une résidence'**
+  String get chooseResidence;
+
+  /// No description provided for @chooseFloor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un étage'**
+  String get chooseFloor;
+
+  /// No description provided for @chooseApartment.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir un appartement'**
+  String get chooseApartment;
+
+  /// No description provided for @selectResidenceFirst.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionnez d\'abord une résidence'**
+  String get selectResidenceFirst;
+
+  /// No description provided for @selectFloorFirst.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionnez d\'abord un étage'**
+  String get selectFloorFirst;
+
+  /// No description provided for @noFloorAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun étage disponible'**
+  String get noFloorAvailable;
+
+  /// No description provided for @noApartmentAvailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun appartement libre'**
+  String get noApartmentAvailable;
+
+  /// No description provided for @groundFloor.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rez-de-chaussée'**
+  String get groundFloor;
+
+  /// No description provided for @floorNumber.
+  ///
+  /// In fr, this message translates to:
+  /// **'Étage {floor}'**
+  String floorNumber(String floor);
+
+  /// No description provided for @loadingEllipsis.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chargement…'**
+  String get loadingEllipsis;
+
+  /// No description provided for @accountLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte'**
+  String get accountLabel;
+
+  /// No description provided for @sendRequest.
+  ///
+  /// In fr, this message translates to:
+  /// **'Envoyer la demande'**
+  String get sendRequest;
+
+  /// No description provided for @addPropertyNotice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre demande est transmise au gestionnaire de la résidence. Le bien apparaîtra dans vos biens une fois la demande validée.'**
+  String get addPropertyNotice;
+
+  /// No description provided for @requestSentTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demande envoyée'**
+  String get requestSentTitle;
+
+  /// No description provided for @requestSentBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le gestionnaire de la résidence a reçu votre demande. Vous serez notifié dès qu\'elle sera traitée.'**
+  String get requestSentBody;
+
+  /// No description provided for @errorTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une erreur est survenue'**
+  String get errorTitle;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

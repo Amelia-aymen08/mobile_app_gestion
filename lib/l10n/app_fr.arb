@@ -264,5 +264,30 @@
   },
   "selectResidenceTitle": "Sélectionnez votre résidence",
   "selectResidenceSubtitle": "Choisissez la résidence à laquelle accéder",
-  "continueAction": "Continuer"
+  "continueAction": "Continuer",
+  "residenceLabel": "Résidence",
+  "apartmentLabel": "Appartement",
+  "chooseResidence": "Choisir une résidence",
+  "chooseFloor": "Choisir un étage",
+  "chooseApartment": "Choisir un appartement",
+  "selectResidenceFirst": "Sélectionnez d'abord une résidence",
+  "selectFloorFirst": "Sélectionnez d'abord un étage",
+  "noFloorAvailable": "Aucun étage disponible",
+  "noApartmentAvailable": "Aucun appartement libre",
+  "groundFloor": "Rez-de-chaussée",
+  "floorNumber": "Étage {floor}",
+  "loadingEllipsis": "Chargement…",
+  "accountLabel": "Compte",
+  "sendRequest": "Envoyer la demande",
+  "addPropertyNotice": "Votre demande est transmise au gestionnaire de la résidence. Le bien apparaîtra dans vos biens une fois la demande validée.",
+  "requestSentTitle": "Demande envoyée",
+  "requestSentBody": "Le gestionnaire de la résidence a reçu votre demande. Vous serez notifié dès qu'elle sera traitée.",
+  "errorTitle": "Une erreur est survenue",
+  "@floorNumber": {
+    "placeholders": {
+      "floor": {
+        "type": "String"
+      }
+    }
+  }
 }
