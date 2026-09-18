@@ -120,5 +120,12 @@
   "emptyPaymentsTitle": "لا توجد مدفوعات",
   "emptyPaymentsBody": "لم تسدد أي أعباء بعد.",
   "affectedAreas": "العمارات المعنية",
-  "blockNamed": "عمارة {name}"
+  "blockNamed": "عمارة {name}",
+  "timelineTitle": "التسلسل الزمني",
+  "dateLabel": "التاريخ",
+  "timeLabel": "التوقيت",
+  "whatToDo": "ماذا عليك أن تفعل؟",
+  "shareNotice": "مشاركة الإعلان",
+  "markAsRead": "تعليم كمقروء",
+  "estimated": "تقديري"
 }

@@ -427,4 +427,25 @@ class AppL10nAr extends AppL10n {
   String blockNamed(String name) {
     return 'عمارة $name';
   }
+
+  @override
+  String get timelineTitle => 'التسلسل الزمني';
+
+  @override
+  String get dateLabel => 'التاريخ';
+
+  @override
+  String get timeLabel => 'التوقيت';
+
+  @override
+  String get whatToDo => 'ماذا عليك أن تفعل؟';
+
+  @override
+  String get shareNotice => 'مشاركة الإعلان';
+
+  @override
+  String get markAsRead => 'تعليم كمقروء';
+
+  @override
+  String get estimated => 'تقديري';
 }

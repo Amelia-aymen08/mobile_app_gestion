@@ -420,4 +420,25 @@ class AppL10nEn extends AppL10n {
   String blockNamed(String name) {
     return 'Block $name';
   }
+
+  @override
+  String get timelineTitle => 'Timeline';
+
+  @override
+  String get dateLabel => 'Date';
+
+  @override
+  String get timeLabel => 'Time';
+
+  @override
+  String get whatToDo => 'What should you do?';
+
+  @override
+  String get shareNotice => 'Share notice';
+
+  @override
+  String get markAsRead => 'Mark as read';
+
+  @override
+  String get estimated => 'estimated';
 }

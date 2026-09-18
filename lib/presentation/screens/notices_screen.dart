@@ -11,6 +11,7 @@ import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_header.dart';
+import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_pressable.dart';
 
 class NoticesScreen extends StatefulWidget {
@@ -51,16 +52,6 @@ class _NoticesScreenState extends State<NoticesScreen> {
     }
   }
 
-  Color _categoryColor(String cat) {
-    switch (cat) {
-      case 'URGENT':
-        return const Color(0xFFDC2626);
-      case 'EVENT':
-        return const Color(0xFF8B5CF6);
-      default:
-        return const Color(0xFF3B82F6);
-    }
-  }
 
   String _dayTimeLabel(String? iso) {
     if (iso == null) return '';
@@ -174,9 +165,10 @@ class _NoticesScreenState extends State<NoticesScreen> {
   /// Padding 16, ecart 16 entre les trois blocs, ecart 6 dans le texte.
   /// Une fois lu, titre et corps passent au gris et la pastille disparait.
   Widget _noticeCard(GiColors c, AppL10n t, Map<String, dynamic> n) {
-    final category = (n['category'] ?? 'INFO').toString().toUpperCase();
     final isRead = n['isRead'] == true;
-    final accent = _categoryColor(category);
+    // Le Figma emploie la meme teinte ambree sur toutes les cartes : la
+    // categorie pilote le filtre, pas la couleur de la pastille.
+    const accent = FigBrand.amber;
     final titleColor = isRead ? c.textFaint : c.textBody;
     final bodyColor = isRead ? c.textFaint : c.textBody;
 
@@ -211,10 +203,8 @@ class _NoticesScreenState extends State<NoticesScreen> {
                     radius: FigRadius.pill,
                     icon: SvgPicture.asset(
                       'assets/figma/icons/notice_card_20.svg',
-                      width: 17,
-                      height: 12,
                       colorFilter:
-                          ColorFilter.mode(accent, BlendMode.srcIn),
+                          const ColorFilter.mode(accent, BlendMode.srcIn),
                     ),
                   ),
                   if (!isRead)
@@ -281,46 +271,24 @@ class _NoticesScreenState extends State<NoticesScreen> {
     );
   }
 
-  /// Etat vide — frame "Empty Notices" du Figma.
+  /// Etat vide — frame "Empty Notices" du Figma (837:1963).
   Widget _emptyState(GiColors c, AppL10n t) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GiIconChip(
-              accent: FigAccent.amber,
-              size: 88,
-              radius: 44,
-              icon: SvgPicture.asset(
-                'assets/figma/icons/notice_20.svg',
-                width: 36,
-                height: 36,
-                colorFilter: ColorFilter.mode(
-                    FigBrand.amber.withValues(alpha: 0.6), BlendMode.srcIn),
-              ),
-            ),
-            const SizedBox(height: FigSpace.xxl),
-            Text(t.emptyNoticesTitle,
-                textAlign: TextAlign.center,
-                style: FigText.titleMd
-                    .copyWith(fontSize: 18, color: c.textBody)),
-            const SizedBox(height: FigSpace.md),
-            Text(
-              t.emptyNoticesBody,
-              textAlign: TextAlign.center,
-              style: FigText.body.copyWith(height: 1.36, color: c.textMuted),
-            ),
-          ],
+        padding: const EdgeInsets.only(top: 24),
+        child: GiEmptyState(
+          title: t.emptyNoticesTitle,
+          message: t.emptyNoticesBody,
         ),
       );
 }
 
 /// Detail d'un avis — frame Figma "Notice Detail LT" (837:1712).
 ///
-/// La maquette prevoit en plus une chronologie d'intervention, des horaires et
-/// des consignes. L'API ne renvoie que titre, corps, categorie, date et blocs
-/// concernes : ces blocs sont donc laisses de cote plutot que remplis de
-/// donnees inventees.
+/// La maquette prevoit quatre blocs : le contenu avec sa fenetre
+/// d'intervention, la chronologie, les blocs concernes et les consignes.
+/// L'API ne sert pour l'instant que titre, corps, categorie, date et blocs ;
+/// les autres champs suivent le contrat propose a l'equipe back-end
+/// (`scheduledDate`, `scheduledFrom`, `scheduledTo`, `timeline[]`,
+/// `instructions[]`) et chaque bloc n'apparait que si sa donnee est presente.
 class NoticeDetailScreen extends StatelessWidget {
   final Map<String, dynamic> notice;
   const NoticeDetailScreen({super.key, required this.notice});
@@ -342,16 +310,25 @@ class NoticeDetailScreen extends StatelessWidget {
       'EVENT' => t.filterEvent,
       _ => t.filterInfo,
     };
-    final accent = switch (category) {
-      'URGENT' => FigAlert.error,
-      'EVENT' => FigAccent.violet,
-      _ => FigAccent.blue,
-    };
 
     final blocks = notice['blocks'];
     final blockList = blocks is List
         ? blocks.map((e) => e.toString()).where((e) => e.isNotEmpty).toList()
-        : <String>[];
+        : const <String>[];
+
+    final steps = notice['timeline'] is List
+        ? (notice['timeline'] as List).whereType<Map>().toList()
+        : const <Map>[];
+    final instructions = notice['instructions'] is List
+        ? (notice['instructions'] as List)
+            .map((e) => e.toString())
+            .where((e) => e.isNotEmpty)
+            .toList()
+        : const <String>[];
+
+    final scheduledDate = (notice['scheduledDate'] ?? '').toString();
+    final from = (notice['scheduledFrom'] ?? '').toString();
+    final to = (notice['scheduledTo'] ?? '').toString();
 
     return Scaffold(
       backgroundColor: c.scaffold,
@@ -363,112 +340,378 @@ class NoticeDetailScreen extends StatelessWidget {
               FigSpace.pagePadding,
               40),
           children: [
-            // En-tete : pastille de retour de 32, puis la categorie et
-            // l'horodatage, comme dans la maquette.
-            Row(
-              children: [
-                GiPressable(
-                  onTap: () => Navigator.pop(context),
-                  pressedScale: 0.88,
-                  child: Container(
-                    width: FigSize.chipMd,
-                    height: FigSize.chipMd,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.headerChipBg,
-                      border: Border.all(color: c.headerChipBorder),
-                      borderRadius: BorderRadius.circular(FigRadius.chip),
-                    ),
-                    child: Transform.flip(
-                      flipX: Directionality.of(context) == TextDirection.rtl,
-                      child: SvgPicture.asset(
-                        'assets/figma/icons/back_14.svg',
-                        colorFilter:
-                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: FigSpace.xl),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(label,
-                          style: FigText.titleMd
-                              .copyWith(fontSize: 18, color: c.textBody)),
-                      if (publishAt != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          DateFormat("dd/MM/yyyy 'à' HH:mm")
-                              .format(publishAt),
-                          style: FigText.body.copyWith(color: c.textMuted),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: FigSpace.xxl),
-            GiCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: FigAccent.chipFill(accent),
-                      border: Border.all(color: FigAccent.chipBorder(accent)),
-                      borderRadius: BorderRadius.circular(FigRadius.pill),
-                    ),
-                    child: Text(label,
-                        style: FigText.body.copyWith(color: accent)),
-                  ),
-                  const SizedBox(height: FigSpace.lg),
-                  Text(title,
-                      style: FigText.greeting.copyWith(
-                          fontSize: 20, color: c.textBody)),
-                  const SizedBox(height: FigSpace.lg),
-                  Text(body,
-                      style: FigText.field
-                          .copyWith(height: 1.5, color: c.textMuted)),
-                ],
-              ),
-            ),
-            if (blockList.isNotEmpty) ...[
-              const SizedBox(height: FigSpace.xl),
-              Text(t.affectedAreas,
-                  style: FigText.titleMd.copyWith(color: c.textBody)),
+            _header(context, c, t, label, publishAt),
+            const SizedBox(height: FigSpace.xl),
+            _contentCard(c, t, title, body, scheduledDate, from, to),
+            if (steps.isNotEmpty) ...[
               const SizedBox(height: FigSpace.lg),
-              GiCard(
-                child: Wrap(
-                  spacing: FigSpace.md,
-                  runSpacing: FigSpace.md,
-                  children: [
-                    for (final b in blockList)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: FigAccent.chipFill(FigBrand.amber),
-                          border: Border.all(
-                              color: FigAccent.chipBorder(FigBrand.amber)),
-                          borderRadius: BorderRadius.circular(FigRadius.pill),
-                        ),
-                        child: Text(t.blockNamed(b),
-                            style: FigText.body
-                                .copyWith(color: FigBrand.amber)),
-                      ),
-                  ],
-                ),
-              ),
+              _timelineCard(c, t, steps),
             ],
+            if (blockList.isNotEmpty) ...[
+              const SizedBox(height: FigSpace.lg),
+              _blocksCard(c, t, blockList),
+            ],
+            if (instructions.isNotEmpty) ...[
+              const SizedBox(height: FigSpace.lg),
+              _instructionsCard(c, t, instructions),
+            ],
+            const SizedBox(height: FigSpace.xxl),
+            _actions(context, t),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _header(BuildContext context, GiColors c, AppL10n t, String label,
+      DateTime? publishAt) {
+    return Row(
+      children: [
+        GiPressable(
+          onTap: () => Navigator.pop(context),
+          pressedScale: 0.88,
+          child: Container(
+            width: FigSize.chipMd,
+            height: FigSize.chipMd,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: c.headerChipBg,
+              border: Border.all(color: c.headerChipBorder),
+              borderRadius: BorderRadius.circular(FigRadius.chip),
+            ),
+            child: Transform.flip(
+              flipX: Directionality.of(context) == TextDirection.rtl,
+              child: SvgPicture.asset(
+                'assets/figma/icons/back_14.svg',
+                colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: FigSpace.xl),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                  style: FigText.titleMd
+                      .copyWith(fontSize: 18, color: c.textBody)),
+              if (publishAt != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  DateFormat("dd/MM/yyyy 'à' HH:mm").format(publishAt),
+                  style: FigText.body.copyWith(color: c.textMuted),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Carte de contenu, avec le bandeau Date / Horaire du Figma quand la
+  /// fenetre d'intervention est renseignee.
+  Widget _contentCard(GiColors c, AppL10n t, String title, String body,
+      String date, String from, String to) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: FigText.statValue.copyWith(height: 1.2, color: c.textBody)),
+          const SizedBox(height: FigSpace.lg),
+          Text(body,
+              style: FigText.body.copyWith(height: 1.5, color: c.textMuted)),
+          if (date.isNotEmpty || from.isNotEmpty) ...[
+            const SizedBox(height: FigSpace.xl),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: FigSpace.lg),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(FigRadius.card),
+                border: Border.all(color: c.innerBorder),
+              ),
+              child: Row(
+                children: [
+                  Expanded(child: _pair(c, t.dateLabel, _prettyDate(date))),
+                  Expanded(
+                    child: _pair(
+                      c,
+                      t.timeLabel,
+                      from.isEmpty ? '' : (to.isEmpty ? from : '$from - $to'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _pair(GiColors c, String label, String value) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: FigText.label.copyWith(color: c.textMuted)),
+          const SizedBox(height: FigSpace.sm),
+          Text(value.isEmpty ? '—' : value,
+              style: FigText.statValue.copyWith(color: c.textBody)),
+        ],
+      );
+
+  static String _prettyDate(String iso) {
+    final d = DateTime.tryParse(iso);
+    return d == null ? iso : DateFormat('dd/MM/yyyy').format(d);
+  }
+
+  /// Chronologie : une pastille par etape, reliees par un trait pointille.
+  /// La derniere etape passe au vert, c'est le retablissement ; celles
+  /// marquees « estime » le signalent a cote de l'heure.
+  Widget _timelineCard(GiColors c, AppL10n t, List<Map> steps) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(t.timelineTitle,
+              style: FigText.statValue.copyWith(color: c.textBody)),
+          const SizedBox(height: FigSpace.xl),
+          for (var i = 0; i < steps.length; i++)
+            _step(c, t, steps[i], i, i == steps.length - 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _step(GiColors c, AppL10n t, Map step, int index, bool last) {
+    final color = last
+        ? FigAlert.success
+        : index == 0
+            ? FigAlert.error
+            : FigBrand.amber;
+    final estimated = step['estimated'] == true;
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Icon(Icons.place, size: 16, color: color),
+              if (!last)
+                Expanded(
+                  child: _DashedLine(color: c.innerBorder),
+                ),
+            ],
+          ),
+          const SizedBox(width: FigSpace.lg),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: last ? 0 : FigSpace.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text((step['label'] ?? '').toString(),
+                      style: FigText.body.copyWith(color: c.textMuted)),
+                  const SizedBox(height: FigSpace.xs),
+                  Row(
+                    children: [
+                      Text((step['time'] ?? '').toString(),
+                          style: FigText.statValue
+                              .copyWith(color: c.textBody)),
+                      if (estimated) ...[
+                        const SizedBox(width: FigSpace.md),
+                        Text('(${t.estimated})',
+                            style:
+                                FigText.caption.copyWith(color: c.textFaint)),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _blocksCard(GiColors c, AppL10n t, List<String> blocks) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GiIconChip(
+                accent: FigBrand.amber,
+                size: FigSize.chipSm,
+                radius: FigRadius.pill,
+                icon: SvgPicture.asset('assets/figma/icons/pin_location.svg',
+                    colorFilter: const ColorFilter.mode(
+                        FigBrand.amber, BlendMode.srcIn)),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              Text(t.affectedAreas,
+                  style: FigText.statValue.copyWith(color: c.textBody)),
+            ],
+          ),
+          const SizedBox(height: FigSpace.lg),
+          Wrap(
+            spacing: FigSpace.md,
+            runSpacing: FigSpace.md,
+            children: [
+              for (final b in blocks)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: FigAccent.chipFill(FigBrand.amber),
+                    border:
+                        Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
+                    borderRadius: BorderRadius.circular(FigRadius.pill),
+                  ),
+                  child: Text(t.blockNamed(b),
+                      style: FigText.body.copyWith(color: FigBrand.amber)),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _instructionsCard(GiColors c, AppL10n t, List<String> lines) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              GiIconChip(
+                accent: FigAccent.blue,
+                size: FigSize.chipSm,
+                radius: FigRadius.pill,
+                icon: SvgPicture.asset(
+                    'assets/figma/icons/documents_20.svg',
+                    colorFilter: const ColorFilter.mode(
+                        FigAccent.blue, BlendMode.srcIn)),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              Expanded(
+                child: Text(t.whatToDo,
+                    style: FigText.statValue.copyWith(color: c.textBody)),
+              ),
+            ],
+          ),
+          const SizedBox(height: FigSpace.lg),
+          for (final line in lines)
+            Padding(
+              padding: const EdgeInsets.only(bottom: FigSpace.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(top: 7, end: 10),
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: c.textFaint, shape: BoxShape.circle),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(line,
+                        style: FigText.body
+                            .copyWith(height: 1.45, color: c.textMuted)),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Deux actions cote a cote, comme la maquette : partage en trait ambre,
+  /// « marquer comme lu » en plein.
+  Widget _actions(BuildContext context, AppL10n t) {
+    return Row(
+      children: [
+        Expanded(
+          child: GiPressable(
+            pressedScale: 0.96,
+            onTap: () {},
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: FigBrand.amber, width: 1.5),
+                borderRadius: BorderRadius.circular(FigRadius.cta),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(t.shareNotice,
+                    style: FigText.button
+                        .copyWith(fontSize: 14, color: FigBrand.amber)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: FigSpace.md),
+        Expanded(
+          child: GiPressable(
+            pressedScale: 0.96,
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: FigBrand.amber,
+                borderRadius: BorderRadius.circular(FigRadius.cta),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(t.markAsRead,
+                    style: FigText.button
+                        .copyWith(fontSize: 14, color: Colors.black)),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Trait pointille vertical reliant les etapes de la chronologie.
+class _DashedLine extends StatelessWidget {
+  final Color color;
+  const _DashedLine({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const dash = 3.0, gap = 3.0;
+        final count = (constraints.maxHeight / (dash + gap)).floor();
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: List.generate(
+            count < 0 ? 0 : count,
+            (_) => Container(
+              width: 1.5,
+              height: dash,
+              margin: const EdgeInsets.only(bottom: gap),
+              color: color,
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -824,6 +824,48 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Bloc {name}'**
   String blockNamed(String name);
+
+  /// No description provided for @timelineTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chronologie'**
+  String get timelineTitle;
+
+  /// No description provided for @dateLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Date'**
+  String get dateLabel;
+
+  /// No description provided for @timeLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horaire'**
+  String get timeLabel;
+
+  /// No description provided for @whatToDo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Que devez-vous faire ?'**
+  String get whatToDo;
+
+  /// No description provided for @shareNotice.
+  ///
+  /// In fr, this message translates to:
+  /// **'Partager l\'avis'**
+  String get shareNotice;
+
+  /// No description provided for @markAsRead.
+  ///
+  /// In fr, this message translates to:
+  /// **'Marquer comme lu'**
+  String get markAsRead;
+
+  /// No description provided for @estimated.
+  ///
+  /// In fr, this message translates to:
+  /// **'estimé'**
+  String get estimated;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

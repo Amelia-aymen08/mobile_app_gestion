@@ -120,5 +120,12 @@
   "emptyPaymentsTitle": "No Payments Yet",
   "emptyPaymentsBody": "You have not made any charge payments yet.",
   "affectedAreas": "Affected Areas",
-  "blockNamed": "Block {name}"
+  "blockNamed": "Block {name}",
+  "timelineTitle": "Timeline",
+  "dateLabel": "Date",
+  "timeLabel": "Time",
+  "whatToDo": "What should you do?",
+  "shareNotice": "Share notice",
+  "markAsRead": "Mark as read",
+  "estimated": "estimated"
 }

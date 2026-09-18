@@ -165,6 +165,21 @@ final demoSingle = DemoProfile(
       'publishAt': _iso(1),
       'isRead': false,
       'blocks': ['A', 'B'],
+      // Champs proposes a l'equipe back-end, pas encore servis par l'API.
+      // Presents ici pour que l'ecran de detail soit visible et testable.
+      'scheduledDate': '2026-06-02',
+      'scheduledFrom': '08:00',
+      'scheduledTo': '14:00',
+      'timeline': [
+        {'label': "Début de l'intervention", 'time': '08:00'},
+        {'label': "Coupure de l'eau", 'time': '08:15'},
+        {'label': 'Rétablissement', 'time': '14:00', 'estimated': true},
+      ],
+      'instructions': [
+        "Stockez l'eau nécessaire avant 8 h.",
+        'Évitez toute consommation non indispensable.',
+        'Rétablissement prévu vers 14 h.',
+      ],
     },
     {
       'id': 'a2',

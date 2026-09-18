@@ -201,5 +201,12 @@
         "type": "String"
       }
     }
-  }
+  },
+  "timelineTitle": "Chronologie",
+  "dateLabel": "Date",
+  "timeLabel": "Horaire",
+  "whatToDo": "Que devez-vous faire ?",
+  "shareNotice": "Partager l'avis",
+  "markAsRead": "Marquer comme lu",
+  "estimated": "estimé"
 }

@@ -421,4 +421,25 @@ class AppL10nFr extends AppL10n {
   String blockNamed(String name) {
     return 'Bloc $name';
   }
+
+  @override
+  String get timelineTitle => 'Chronologie';
+
+  @override
+  String get dateLabel => 'Date';
+
+  @override
+  String get timeLabel => 'Horaire';
+
+  @override
+  String get whatToDo => 'Que devez-vous faire ?';
+
+  @override
+  String get shareNotice => 'Partager l\'avis';
+
+  @override
+  String get markAsRead => 'Marquer comme lu';
+
+  @override
+  String get estimated => 'estimé';
 }
