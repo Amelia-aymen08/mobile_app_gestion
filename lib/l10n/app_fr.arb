@@ -131,5 +131,16 @@
   "logoutBody": "Voulez-vous vraiment vous déconnecter ?",
   "logoutHint": "Vous pourrez vous reconnecter à tout moment avec les mêmes identifiants.",
   "cancel": "Annuler",
-  "logout": "Se déconnecter"
+  "logout": "Se déconnecter",
+  "myAccount": "Mon compte",
+  "services": "Services",
+  "changePassword": "Changer le mot de passe",
+  "darkTheme": "Thème sombre",
+  "language": "Langue",
+  "phoneLabel": "Téléphone",
+  "notProvided": "Non renseigné",
+  "selectLanguage": "Choisir la langue",
+  "langFrench": "Français",
+  "langEnglish": "English",
+  "langArabic": "العربية"
 }

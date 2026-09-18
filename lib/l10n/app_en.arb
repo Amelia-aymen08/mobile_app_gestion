@@ -71,5 +71,16 @@
   "logoutBody": "Are you sure you want to log out of your account?",
   "logoutHint": "You can sign back in anytime with the same credentials.",
   "cancel": "Cancel",
-  "logout": "Log out"
+  "logout": "Log out",
+  "myAccount": "My account",
+  "services": "Services",
+  "changePassword": "Change password",
+  "darkTheme": "Dark theme",
+  "language": "Language",
+  "phoneLabel": "Phone",
+  "notProvided": "Not provided",
+  "selectLanguage": "Choose a language",
+  "langFrench": "Français",
+  "langEnglish": "English",
+  "langArabic": "العربية"
 }

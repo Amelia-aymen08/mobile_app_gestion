@@ -267,4 +267,37 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get logout => 'Se déconnecter';
+
+  @override
+  String get myAccount => 'Mon compte';
+
+  @override
+  String get services => 'Services';
+
+  @override
+  String get changePassword => 'Changer le mot de passe';
+
+  @override
+  String get darkTheme => 'Thème sombre';
+
+  @override
+  String get language => 'Langue';
+
+  @override
+  String get phoneLabel => 'Téléphone';
+
+  @override
+  String get notProvided => 'Non renseigné';
+
+  @override
+  String get selectLanguage => 'Choisir la langue';
+
+  @override
+  String get langFrench => 'Français';
+
+  @override
+  String get langEnglish => 'English';
+
+  @override
+  String get langArabic => 'العربية';
 }

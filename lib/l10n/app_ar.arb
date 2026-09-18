@@ -71,5 +71,16 @@
   "logoutBody": "هل تريد فعلاً تسجيل الخروج من حسابك؟",
   "logoutHint": "يمكنك تسجيل الدخول مجددًا في أي وقت بنفس البيانات.",
   "cancel": "إلغاء",
-  "logout": "تسجيل الخروج"
+  "logout": "تسجيل الخروج",
+  "myAccount": "حسابي",
+  "services": "الخدمات",
+  "changePassword": "تغيير كلمة المرور",
+  "darkTheme": "الوضع الداكن",
+  "language": "اللغة",
+  "phoneLabel": "الهاتف",
+  "notProvided": "غير محدد",
+  "selectLanguage": "اختر اللغة",
+  "langFrench": "Français",
+  "langEnglish": "English",
+  "langArabic": "العربية"
 }

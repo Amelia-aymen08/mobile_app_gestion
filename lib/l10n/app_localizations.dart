@@ -530,6 +530,72 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Se déconnecter'**
   String get logout;
+
+  /// No description provided for @myAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mon compte'**
+  String get myAccount;
+
+  /// No description provided for @services.
+  ///
+  /// In fr, this message translates to:
+  /// **'Services'**
+  String get services;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer le mot de passe'**
+  String get changePassword;
+
+  /// No description provided for @darkTheme.
+  ///
+  /// In fr, this message translates to:
+  /// **'Thème sombre'**
+  String get darkTheme;
+
+  /// No description provided for @language.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue'**
+  String get language;
+
+  /// No description provided for @phoneLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Téléphone'**
+  String get phoneLabel;
+
+  /// No description provided for @notProvided.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non renseigné'**
+  String get notProvided;
+
+  /// No description provided for @selectLanguage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisir la langue'**
+  String get selectLanguage;
+
+  /// No description provided for @langFrench.
+  ///
+  /// In fr, this message translates to:
+  /// **'Français'**
+  String get langFrench;
+
+  /// No description provided for @langEnglish.
+  ///
+  /// In fr, this message translates to:
+  /// **'English'**
+  String get langEnglish;
+
+  /// No description provided for @langArabic.
+  ///
+  /// In fr, this message translates to:
+  /// **'العربية'**
+  String get langArabic;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

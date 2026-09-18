@@ -266,4 +266,37 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get logout => 'Log out';
+
+  @override
+  String get myAccount => 'My account';
+
+  @override
+  String get services => 'Services';
+
+  @override
+  String get changePassword => 'Change password';
+
+  @override
+  String get darkTheme => 'Dark theme';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get phoneLabel => 'Phone';
+
+  @override
+  String get notProvided => 'Not provided';
+
+  @override
+  String get selectLanguage => 'Choose a language';
+
+  @override
+  String get langFrench => 'Français';
+
+  @override
+  String get langEnglish => 'English';
+
+  @override
+  String get langArabic => 'العربية';
 }

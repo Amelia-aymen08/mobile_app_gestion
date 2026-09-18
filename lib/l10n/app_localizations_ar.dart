@@ -273,4 +273,37 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get logout => 'تسجيل الخروج';
+
+  @override
+  String get myAccount => 'حسابي';
+
+  @override
+  String get services => 'الخدمات';
+
+  @override
+  String get changePassword => 'تغيير كلمة المرور';
+
+  @override
+  String get darkTheme => 'الوضع الداكن';
+
+  @override
+  String get language => 'اللغة';
+
+  @override
+  String get phoneLabel => 'الهاتف';
+
+  @override
+  String get notProvided => 'غير محدد';
+
+  @override
+  String get selectLanguage => 'اختر اللغة';
+
+  @override
+  String get langFrench => 'Français';
+
+  @override
+  String get langEnglish => 'English';
+
+  @override
+  String get langArabic => 'العربية';
 }
