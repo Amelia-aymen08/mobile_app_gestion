@@ -1,49 +1,79 @@
 {
   "@@locale": "fr",
-
   "navHome": "Accueil",
   "navNotice": "Avis",
   "navReport": "Signaler",
   "navPayment": "Paiements",
   "navMore": "Plus",
-
   "greeting": "Bonjour {name}",
   "@greeting": {
     "description": "Titre du header de l'accueil",
-    "placeholders": { "name": { "type": "String", "example": "Mehdi" } }
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Mehdi"
+      }
+    }
   },
-
   "myResidence": "Ma résidence",
   "apartmentBadge": "Apt. {unit}",
   "@apartmentBadge": {
-    "placeholders": { "unit": { "type": "String", "example": "3B" } }
+    "placeholders": {
+      "unit": {
+        "type": "String",
+        "example": "3B"
+      }
+    }
   },
-
   "floor": "Étage",
   "area": "Surface",
   "status": "Statut",
   "statusActive": "Actif",
-
   "nextPayment": "Prochain paiement",
   "paymentDeadline": "Échéance : {date}",
   "@paymentDeadline": {
-    "placeholders": { "date": { "type": "String", "example": "1 juin 2026" } }
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "1 juin 2026"
+      }
+    }
   },
-
   "reports": "Signalements",
   "reportsOpen": "{count, plural, =0{Aucun ouvert} =1{1 ouvert} other{{count} ouverts}}",
   "@reportsOpen": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "reportsInProgress": "{count, plural, =1{1 en cours} other{{count} en cours}}",
   "@reportsInProgress": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
-
   "quickActions": "Actions rapides",
   "notices": "Avis",
   "payments": "Paiements",
   "documents": "Documents",
   "profile": "Profil",
-  "recentActivity": "Activité récente"
+  "recentActivity": "Activité récente",
+  "loginTitle": "Bienvenue chez vous",
+  "loginSubtitle": "Connectez-vous à votre résidence.",
+  "emailLabel": "Adresse e-mail",
+  "emailHint": "nom@exemple.com",
+  "passwordLabel": "Mot de passe",
+  "passwordHint": "Entrez votre mot de passe",
+  "forgotPassword": "Mot de passe oublié ?",
+  "loginCta": "Se connecter",
+  "firstLoginQuestion": "Première connexion ?",
+  "firstLoginHelp": " Utilisez les identifiants remis à la livraison des clés.",
+  "emailRequired": "Adresse e-mail requise",
+  "passwordRequired": "Mot de passe requis",
+  "noAccountQuestion": "Vous êtes résident et n'avez pas encore de compte ?",
+  "signUp": "S'inscrire"
 }

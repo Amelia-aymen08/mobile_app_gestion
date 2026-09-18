@@ -1,9 +1,18 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
+import '../widgets/gi_text_field.dart';
 import 'change_password_screen.dart';
+import 'forgot_password_screen.dart';
 import 'gestionnaire_tag_home_screen.dart';
 import 'intervenant_home_screen.dart';
 import 'manager_home_screen.dart';
@@ -11,6 +20,12 @@ import 'recouvrement_home_screen.dart';
 import 'resident_home_screen.dart';
 import 'registration_screen.dart';
 
+/// Ecran de connexion — frames Figma "Login LT" (721:7277), "Login Active LT"
+/// (721:7222), "Login Error LT" (721:7253) et "Login DT" (34:96).
+///
+/// Le Figma dessine une saisie par numero d'appartement ; l'API attend
+/// `{email, password}`. Conformement a la regle du projet, on garde le
+/// fonctionnement du code et on reprend l'habillage du Figma.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -21,11 +36,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
-  bool _obscure = true;
   String? _error;
+
+  // Pilote l'etat actif du bouton : le Figma distingue nettement un CTA gris
+  // d'un CTA ambre, il faut donc savoir si les deux champs sont remplis.
+  bool _canSubmit = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _email.addListener(_refreshSubmitState);
+    _password.addListener(_refreshSubmitState);
+  }
+
+  void _refreshSubmitState() {
+    final ready = _email.text.trim().isNotEmpty && _password.text.isNotEmpty;
+    if (ready != _canSubmit) setState(() => _canSubmit = ready);
+  }
 
   @override
   void dispose() {
+    _email.removeListener(_refreshSubmitState);
+    _password.removeListener(_refreshSubmitState);
     _email.dispose();
     _password.dispose();
     super.dispose();
@@ -61,184 +93,206 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final auth = context.watch<AuthProvider>();
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(children: [
-        Positioned.fill(
-          bottom: MediaQuery.sizeOf(context).height * .38,
-          child: Stack(fit: StackFit.expand, children: [
-            Image.asset('assets/onboarding-who-we-are.png', fit: BoxFit.cover),
-            Container(color: Colors.black.withValues(alpha: .26)),
-            SafeArea(
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                  Image.asset('assets/global_immo_logo_light.png', width: 118),
-                  const SizedBox(height: 20),
-                  const Text('Bienvenue chez vous',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 25,
-                          height: 1.05,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 12),
-                  const Text(
-                      'Accédez à votre résidence et à tous vos services.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: Colors.white70, fontSize: 11, height: 1.45)),
-                ])),
-          ]),
-        ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            height: MediaQuery.sizeOf(context).height * .55,
-            decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(34))),
-            child: SafeArea(
-                top: false,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                      26, 28, 26, 18 + MediaQuery.viewInsetsOf(context).bottom),
-                  child: Form(
-                      key: _form,
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: c.scaffold,
+      body: Stack(
+        children: [
+          _Watermark(isDark: isDark),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: FigSpace.pagePadding),
+                      child: Form(
+                        key: _form,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text('Connexion',
-                                style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: brandNavy)),
-                            const SizedBox(height: 6),
-                            const Text(
-                                'Saisissez les identifiants associés à votre compte.',
-                                style: TextStyle(
-                                    fontSize: 11, color: brandGoldDark)),
-                            const SizedBox(height: 20),
-                            const _Label('ADRESSE E-MAIL'),
-                            TextFormField(
-                                controller: _email,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: _decoration('nom@aymenpromotion.dz',
-                                    error: _error),
-                                validator: (value) =>
-                                    value == null || value.trim().isEmpty
-                                        ? 'Adresse requise'
-                                        : null),
-                            const SizedBox(height: 14),
-                            const _Label('MOT DE PASSE'),
-                            TextFormField(
-                                controller: _password,
-                                obscureText: _obscure,
-                                onFieldSubmitted: (_) => _submit(),
-                                decoration: _decoration('••••••••').copyWith(
-                                    suffixIcon: IconButton(
-                                        onPressed: () => setState(
-                                            () => _obscure = !_obscure),
-                                        icon: Icon(
-                                            _obscure
-                                                ? Icons.visibility_outlined
-                                                : Icons.visibility_off_outlined,
-                                            size: 17,
-                                            color: brandGoldDark))),
-                                validator: (value) =>
-                                    value == null || value.isEmpty
-                                        ? 'Mot de passe requis'
-                                        : null),
-                            const SizedBox(height: 20),
-                            Consumer<AuthProvider>(
-                                builder: (_, auth, __) => SizedBox(
-                                    width: double.infinity,
-                                    height: 48,
-                                    child: FilledButton(
-                                        onPressed:
-                                            auth.isLoading ? null : _submit,
-                                        style: FilledButton.styleFrom(
-                                            backgroundColor: brandAmber,
-                                            foregroundColor: brandNavy,
-                                            shape:
-                                                const RoundedRectangleBorder()),
-                                        child: auth.isLoading
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                        strokeWidth: 2))
-                                            : const Text('Se connecter',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w700))))),
-                            const SizedBox(height: 18),
-                            const Center(
-                                child: Text(
-                                    'Le type de compte est détecté automatiquement',
-                                    style: TextStyle(
-                                        fontSize: 9,
-                                        color: Color(0xFFB8B8B8)))),
-                            const SizedBox(height: 14),
+                            // Rythme vertical du Figma, mesure depuis le haut de
+                            // la frame : logo a 67, titre a 193, champs a 303.
+                            // La barre d'etat est deja retiree par le SafeArea,
+                            // d'ou le 23.
+                            const SizedBox(height: 23),
                             Center(
-                              child: GestureDetector(
+                              child: Image.asset(
+                                isDark
+                                    ? 'assets/figma/logo_dark.png'
+                                    : 'assets/figma/logo_light.png',
+                                width: 87,
+                                height: 98,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            Text(
+                              t.loginTitle,
+                              textAlign: TextAlign.center,
+                              style:
+                                  FigText.display.copyWith(color: c.loginTitle),
+                            ),
+                            const SizedBox(height: 9),
+                            Text(
+                              t.loginSubtitle,
+                              textAlign: TextAlign.center,
+                              style: FigText.field.copyWith(
+                                  color: c.loginSubtitle, height: 1.2),
+                            ),
+                            const SizedBox(height: 48),
+                            GiTextField(
+                              label: t.emailLabel,
+                              hint: t.emailHint,
+                              controller: _email,
+                              errorText: _error,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: (v) => v == null || v.trim().isEmpty
+                                  ? t.emailRequired
+                                  : null,
+                            ),
+                            const SizedBox(height: FigSpace.xl),
+                            GiTextField(
+                              label: t.passwordLabel,
+                              hint: t.passwordHint,
+                              controller: _password,
+                              isPassword: true,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _submit(),
+                              validator: (v) => v == null || v.isEmpty
+                                  ? t.passwordRequired
+                                  : null,
+                            ),
+                            const SizedBox(height: FigSpace.xl),
+                            Align(
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: GiPressable(
+                                pressedScale: 0.94,
                                 onTap: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const RegistrationScreen()),
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ForgotPasswordScreen()),
                                 ),
-                                child: RichText(
-                                  text: const TextSpan(
-                                    style: TextStyle(fontSize: 12, color: brandGoldDark),
-                                    children: [
-                                      TextSpan(text: "Vous êtes résident et n'avez pas encore de compte ? "),
-                                      TextSpan(
-                                        text: "S'inscrire",
-                                        style: TextStyle(fontWeight: FontWeight.w800, color: brandAmber),
-                                      ),
-                                    ],
-                                  ),
+                                child: Text(
+                                  t.forgotPassword,
+                                  style: FigText.field
+                                      .copyWith(color: FigBrand.amber),
                                 ),
                               ),
                             ),
-                          ])),
-                )),
+                            // Espace souple : il absorbe l'ecart entre la frame
+                            // de 812 du Figma et la hauteur reelle de l'ecran,
+                            // sans deformer les blocs.
+                            const Expanded(child: SizedBox(height: 48)),
+                            GiPrimaryButton(
+                              label: t.loginCta,
+                              isLoading: auth.isLoading,
+                              onPressed: _canSubmit ? _submit : null,
+                            ),
+                            const SizedBox(height: 17),
+                            Center(
+                              child: SizedBox(
+                                width: 285,
+                                child: Text.rich(
+                                  TextSpan(children: [
+                                    TextSpan(
+                                      text: t.firstLoginQuestion,
+                                      style: FigText.field
+                                          .copyWith(color: FigBrand.amber),
+                                    ),
+                                    TextSpan(
+                                      text: t.firstLoginHelp,
+                                      style: FigText.field
+                                          .copyWith(color: c.footerText),
+                                    ),
+                                  ]),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: FigSpace.xl),
+                            // Absent du Figma, mais l'inscription existe dans
+                            // l'app : c'est une fonctionnalite, donc elle reste.
+                            Center(
+                              child: GiPressable(
+                                pressedScale: 0.96,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) =>
+                                          const RegistrationScreen()),
+                                ),
+                                child: Text.rich(
+                                  TextSpan(children: [
+                                    TextSpan(
+                                      text: '${t.noAccountQuestion} ',
+                                      style: FigText.body
+                                          .copyWith(color: c.footerText),
+                                    ),
+                                    TextSpan(
+                                      text: t.signUp,
+                                      style: FigText.body.copyWith(
+                                        color: FigBrand.amber,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ]),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: FigSpace.xxl),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
-
-  InputDecoration _decoration(String hint, {String? error}) => InputDecoration(
-        hintText: hint,
-        errorText: error,
-        filled: true,
-        fillColor: Colors.white,
-        isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-        border: const OutlineInputBorder(
-            borderRadius: BorderRadius.zero,
-            borderSide: BorderSide(color: Color(0xFFD9D9D9))),
-        enabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.zero,
-            borderSide: BorderSide(color: Color(0xFFD9D9D9))),
-        focusedBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.zero,
-            borderSide: BorderSide(color: brandAmber)),
-      );
 }
 
-class _Label extends StatelessWidget {
-  final String text;
-  const _Label(this.text);
+/// Filigrane du logo en haut de l'ecran, a 6 % d'opacite.
+/// Le Figma le pose differemment selon le theme : -12,82 degres en clair,
+/// -24,56 degres en sombre, avec des tailles distinctes.
+class _Watermark extends StatelessWidget {
+  final bool isDark;
+  const _Watermark({required this.isDark});
+
   @override
-  Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(text,
-          style: const TextStyle(
-              fontSize: 9,
-              letterSpacing: 1,
-              color: brandGoldDark,
-              fontWeight: FontWeight.w700)));
+  Widget build(BuildContext context) {
+    return PositionedDirectional(
+      start: isDark ? -122 : -128,
+      top: isDark ? -69 : -56.7,
+      child: IgnorePointer(
+        child: Transform.rotate(
+          angle: (isDark ? -24.56 : -12.82) * math.pi / 180,
+          child: Opacity(
+            opacity: 0.06,
+            child: Image.asset(
+              isDark
+                  ? 'assets/figma/logo_dark.png'
+                  : 'assets/figma/logo_light.png',
+              width: isDark ? 243.406 : 256.511,
+              height: isDark ? 180.316 : 194.426,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

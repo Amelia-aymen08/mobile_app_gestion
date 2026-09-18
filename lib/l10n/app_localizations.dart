@@ -236,6 +236,90 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Activité récente'**
   String get recentActivity;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bienvenue chez vous'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez-vous à votre résidence.'**
+  String get loginSubtitle;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail'**
+  String get emailLabel;
+
+  /// No description provided for @emailHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'nom@exemple.com'**
+  String get emailHint;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe'**
+  String get passwordLabel;
+
+  /// No description provided for @passwordHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez votre mot de passe'**
+  String get passwordHint;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe oublié ?'**
+  String get forgotPassword;
+
+  /// No description provided for @loginCta.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se connecter'**
+  String get loginCta;
+
+  /// No description provided for @firstLoginQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Première connexion ?'**
+  String get firstLoginQuestion;
+
+  /// No description provided for @firstLoginHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **' Utilisez les identifiants remis à la livraison des clés.'**
+  String get firstLoginHelp;
+
+  /// No description provided for @emailRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Adresse e-mail requise'**
+  String get emailRequired;
+
+  /// No description provided for @passwordRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe requis'**
+  String get passwordRequired;
+
+  /// No description provided for @noAccountQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous êtes résident et n\'avez pas encore de compte ?'**
+  String get noAccountQuestion;
+
+  /// No description provided for @signUp.
+  ///
+  /// In fr, this message translates to:
+  /// **'S\'inscrire'**
+  String get signUp;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

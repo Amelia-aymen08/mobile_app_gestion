@@ -12,10 +12,13 @@ import 'package:flutter/material.dart';
 /// Neutres — styles nommés "Neutral/xx" dans Figma.
 abstract final class FigNeutral {
   static const n10  = Color(0xFFE5E5E5); // Neutral/10  — texte principal (dark)
+  static const n20  = Color(0xFFCCCCCC); // Neutral/20  — bordure de champ focus (light)
+  static const n30  = Color(0xFFB2B2B2); // Neutral/30  — placeholder (light)
   static const n40  = Color(0xFF999999); // Neutral/40  — labels secondaires
   static const n50  = Color(0xFF7F7F7F); // Neutral/50  — texte atténué (dark)
   static const n60  = Color(0xFF666666); // Neutral/60
   static const n70  = Color(0xFF4C4C4C); // Neutral/70  — texte secondaire (light)
+  static const n80  = Color(0xFF333333); // Neutral/80  — bordure de champ (dark)
   static const n100 = Color(0xFF000000); // Neutral/100 — texte principal (light)
 }
 
@@ -84,7 +87,9 @@ abstract final class FigRadius {
   static const chip    = 8.0;   // pastille d'icône, avatar, bouton header
   static const chipLg  = 8.75;  // pastille 35px de la 1re Quick Action
   static const handle  = 12.0;  // gesture bar
+  static const field   = 8.0;   // champ de saisie
   static const card    = 16.0;  // cartes, hero, stat fill
+  static const cta     = 28.0;  // bouton principal
   static const navbar  = 40.0;  // bottom nav flottante
 }
 
@@ -131,6 +136,22 @@ abstract final class FigText {
 
   static const _h  = 1.2;
   static const _hv = 1.36;
+
+  /// 28 / Bold — titre d'accueil du login ("Bienvenue chez vous")
+  static const display = TextStyle(
+    fontFamily: family, fontSize: 28, fontWeight: FontWeight.w700, height: _h);
+
+  /// 16 / Regular — sous-titre du login, valeur et placeholder de champ
+  static const field = TextStyle(
+    fontFamily: family, fontSize: 16, fontWeight: FontWeight.w400);
+
+  /// 16 / Medium — libelle du bouton principal
+  static const button = TextStyle(
+    fontFamily: family, fontSize: 16, fontWeight: FontWeight.w500);
+
+  /// 14 / Regular — libelle au-dessus d'un champ
+  static const fieldLabel = TextStyle(
+    fontFamily: family, fontSize: 14, fontWeight: FontWeight.w400);
 
   /// 24 / SemiBold — "Welcome Mehdi"
   static const greeting = TextStyle(

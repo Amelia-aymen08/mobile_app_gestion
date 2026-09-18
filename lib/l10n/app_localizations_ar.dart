@@ -105,4 +105,47 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get recentActivity => 'النشاط الأخير';
+
+  @override
+  String get loginTitle => 'أهلًا بك في بيتك';
+
+  @override
+  String get loginSubtitle => 'سجّل الدخول إلى إقامتك.';
+
+  @override
+  String get emailLabel => 'البريد الإلكتروني';
+
+  @override
+  String get emailHint => 'name@example.com';
+
+  @override
+  String get passwordLabel => 'كلمة المرور';
+
+  @override
+  String get passwordHint => 'أدخل كلمة المرور';
+
+  @override
+  String get forgotPassword => 'هل نسيت كلمة المرور؟';
+
+  @override
+  String get loginCta => 'تسجيل الدخول';
+
+  @override
+  String get firstLoginQuestion => 'تسجيل الدخول لأول مرة؟';
+
+  @override
+  String get firstLoginHelp =>
+      ' استخدم بيانات الدخول المسلّمة عند تسليم المفاتيح.';
+
+  @override
+  String get emailRequired => 'البريد الإلكتروني مطلوب';
+
+  @override
+  String get passwordRequired => 'كلمة المرور مطلوبة';
+
+  @override
+  String get noAccountQuestion => 'أنت مقيم وليس لديك حساب بعد؟';
+
+  @override
+  String get signUp => 'إنشاء حساب';
 }

@@ -99,4 +99,47 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get recentActivity => 'Recent Activity';
+
+  @override
+  String get loginTitle => 'Welcome home';
+
+  @override
+  String get loginSubtitle => 'Connect to your residence.';
+
+  @override
+  String get emailLabel => 'Email address';
+
+  @override
+  String get emailHint => 'name@example.com';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get passwordHint => 'Enter Password';
+
+  @override
+  String get forgotPassword => 'Forgot password?';
+
+  @override
+  String get loginCta => 'Login';
+
+  @override
+  String get firstLoginQuestion => 'First login?';
+
+  @override
+  String get firstLoginHelp => ' Use the credentials provided at key handover.';
+
+  @override
+  String get emailRequired => 'Email address required';
+
+  @override
+  String get passwordRequired => 'Password required';
+
+  @override
+  String get noAccountQuestion =>
+      'You are a resident and don\'t have an account yet?';
+
+  @override
+  String get signUp => 'Sign up';
 }
