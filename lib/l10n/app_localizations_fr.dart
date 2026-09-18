@@ -315,4 +315,69 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get notifPayments => 'Paiements';
+
+  @override
+  String get reportsSubtitle => 'Suivez vos demandes de maintenance';
+
+  @override
+  String get filterInProgress => 'En cours';
+
+  @override
+  String get filterDone => 'Terminés';
+
+  @override
+  String get tabMyReports => 'Mes signalements';
+
+  @override
+  String get tabCommonAreas => 'Copropriété';
+
+  @override
+  String get newReport => 'Nouveau signalement';
+
+  @override
+  String get emptyReportsTitle => 'Aucun signalement';
+
+  @override
+  String get emptyReportsBody =>
+      'Vous n\'avez encore signalé aucun problème. Utilisez le bouton ci-dessous pour en créer un.';
+
+  @override
+  String get roleResident => 'Résident';
+
+  @override
+  String get verified => 'Vérifié';
+
+  @override
+  String get changeResidence => 'Changer de résidence';
+
+  @override
+  String currentResidenceIs(String name) {
+    return 'Résidence actuelle : $name';
+  }
+
+  @override
+  String get residenceUpper => 'RÉSIDENCE';
+
+  @override
+  String get blockUpper => 'BLOC';
+
+  @override
+  String get memberSinceUpper => 'MEMBRE DEPUIS';
+
+  @override
+  String get settingsTitle => 'Réglages';
+
+  @override
+  String get settingsSubtitle => 'Notifications, langue, sécurité';
+
+  @override
+  String get myProperties => 'Mes biens';
+
+  @override
+  String get householdMembers => 'Membres du foyer';
+
+  @override
+  String apartmentShort(String unit) {
+    return 'Apt. $unit';
+  }
 }

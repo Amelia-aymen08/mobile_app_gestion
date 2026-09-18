@@ -626,6 +626,126 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Paiements'**
   String get notifPayments;
+
+  /// No description provided for @reportsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivez vos demandes de maintenance'**
+  String get reportsSubtitle;
+
+  /// No description provided for @filterInProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours'**
+  String get filterInProgress;
+
+  /// No description provided for @filterDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminés'**
+  String get filterDone;
+
+  /// No description provided for @tabMyReports.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes signalements'**
+  String get tabMyReports;
+
+  /// No description provided for @tabCommonAreas.
+  ///
+  /// In fr, this message translates to:
+  /// **'Copropriété'**
+  String get tabCommonAreas;
+
+  /// No description provided for @newReport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau signalement'**
+  String get newReport;
+
+  /// No description provided for @emptyReportsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun signalement'**
+  String get emptyReportsTitle;
+
+  /// No description provided for @emptyReportsBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous n\'avez encore signalé aucun problème. Utilisez le bouton ci-dessous pour en créer un.'**
+  String get emptyReportsBody;
+
+  /// No description provided for @roleResident.
+  ///
+  /// In fr, this message translates to:
+  /// **'Résident'**
+  String get roleResident;
+
+  /// No description provided for @verified.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vérifié'**
+  String get verified;
+
+  /// No description provided for @changeResidence.
+  ///
+  /// In fr, this message translates to:
+  /// **'Changer de résidence'**
+  String get changeResidence;
+
+  /// No description provided for @currentResidenceIs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Résidence actuelle : {name}'**
+  String currentResidenceIs(String name);
+
+  /// No description provided for @residenceUpper.
+  ///
+  /// In fr, this message translates to:
+  /// **'RÉSIDENCE'**
+  String get residenceUpper;
+
+  /// No description provided for @blockUpper.
+  ///
+  /// In fr, this message translates to:
+  /// **'BLOC'**
+  String get blockUpper;
+
+  /// No description provided for @memberSinceUpper.
+  ///
+  /// In fr, this message translates to:
+  /// **'MEMBRE DEPUIS'**
+  String get memberSinceUpper;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications, langue, sécurité'**
+  String get settingsSubtitle;
+
+  /// No description provided for @myProperties.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes biens'**
+  String get myProperties;
+
+  /// No description provided for @householdMembers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Membres du foyer'**
+  String get householdMembers;
+
+  /// No description provided for @apartmentShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apt. {unit}'**
+  String apartmentShort(String unit);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

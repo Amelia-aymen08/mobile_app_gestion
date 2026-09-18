@@ -314,4 +314,69 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get notifPayments => 'Payments';
+
+  @override
+  String get reportsSubtitle => 'Track your maintenance requests';
+
+  @override
+  String get filterInProgress => 'In progress';
+
+  @override
+  String get filterDone => 'Resolved';
+
+  @override
+  String get tabMyReports => 'My reports';
+
+  @override
+  String get tabCommonAreas => 'Common areas';
+
+  @override
+  String get newReport => 'New report';
+
+  @override
+  String get emptyReportsTitle => 'No Reports Yet';
+
+  @override
+  String get emptyReportsBody =>
+      'You have not submitted any reports yet. Use the button below to create one.';
+
+  @override
+  String get roleResident => 'Resident';
+
+  @override
+  String get verified => 'Verified';
+
+  @override
+  String get changeResidence => 'Change residence';
+
+  @override
+  String currentResidenceIs(String name) {
+    return 'Current residence: $name';
+  }
+
+  @override
+  String get residenceUpper => 'RESIDENCE';
+
+  @override
+  String get blockUpper => 'BLOCK';
+
+  @override
+  String get memberSinceUpper => 'MEMBER SINCE';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsSubtitle => 'Notifications, language, security';
+
+  @override
+  String get myProperties => 'My properties';
+
+  @override
+  String get householdMembers => 'Household members';
+
+  @override
+  String apartmentShort(String unit) {
+    return 'Apt. $unit';
+  }
 }

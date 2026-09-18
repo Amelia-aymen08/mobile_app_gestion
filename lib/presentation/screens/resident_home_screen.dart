@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/design_tokens.dart';
@@ -14,13 +13,13 @@ import '../widgets/gi_bottom_nav.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_settings.dart';
 import '../theme/residence_images.dart';
 import 'login_screen.dart';
 import 'my_properties_screen.dart';
 import 'my_charges_screen.dart';
 import 'notifications_screen.dart';
 import 'resident_profile_screen.dart';
-import 'change_password_screen.dart';
 import 'property_add_request_screen.dart';
 import 'resident_tickets_screen.dart';
 import 'household_members_screen.dart';
@@ -870,146 +869,142 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     );
   }
 
-  // ─── Tab 4 — More ────────────────────────────────────────
+  // ─── Tab 4 — Plus ────────────────────────────────────────
+  // Frame Figma "More LT" (837:4435) : carte d'identite avec son bandeau de
+  // trois colonnes, ligne de changement de residence, sections en listes
+  // groupees, puis le bouton de deconnexion.
   Widget _moreTab(Map? user, bool dark) {
-    final fg = dark ? Colors.white : brandNavy;
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+    final name = (user?['name'] ?? user?['fullName'] ?? '').toString();
+
+    final property = _properties.isNotEmpty && _properties.first is Map
+        ? Map<String, dynamic>.from(_properties.first as Map)
+        : <String, dynamic>{};
+    final residence = property['Residence'] is Map
+        ? Map<String, dynamic>.from(property['Residence'] as Map)
+        : <String, dynamic>{};
+    final resName = (residence['name'] ?? '').toString();
+    final lot = (property['lotNumber'] ?? '').toString();
+    final block = (property['block'] ?? '').toString();
+
     return SafeArea(
+      bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        padding: EdgeInsets.fromLTRB(
+            FigSpace.pagePadding,
+            MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+            FigSpace.pagePadding,
+            150),
         children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: dark ? darkCard : Colors.white,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      (dark ? Colors.white : brandNavy).withValues(alpha: 0.08),
-                  border: Border.all(color: brandAmber, width: 2.5),
+          _identityCard(c, t, name, lot, resName, block),
+          const SizedBox(height: FigSpace.lg),
+          GiCard(
+            onTap: () => _push(const MyPropertiesScreen()),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(t.changeResidence,
+                          style: FigText.statValue
+                              .copyWith(height: 1.2, color: c.textBody)),
+                      const SizedBox(height: FigSpace.xs),
+                      Text(
+                        t.currentResidenceIs(
+                            resName.isEmpty ? '—' : resName),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FigText.label.copyWith(color: c.textMuted),
+                      ),
+                    ],
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Icon(Icons.person_rounded, size: 40, color: fg),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                user?['name']?.toString() ?? '',
-                style: TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w900, color: fg),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                decoration: BoxDecoration(
-                    color: brandAmber, borderRadius: BorderRadius.circular(20)),
-                child: const Text('Résident',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700)),
-              ),
-              if (user?['email'] != null) ...[
-                const SizedBox(height: 8),
-                Text(user!['email'].toString(),
-                    style: TextStyle(
-                        color: dark ? darkMuted : const Color(0xFF6B7280),
-                        fontSize: 12)),
+                const SizedBox(width: FigSpace.md),
+                const GiChevron(),
               ],
-            ]),
+            ),
           ),
-          const SizedBox(height: 20),
-          Text('Services',
-              style: TextStyle(
-                  color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-          const SizedBox(height: 10),
-          _profileItem(
-              icon: Icons.person_outline,
-              label: 'Mon profil',
-              dark: dark,
-              onTap: () => _push(const ResidentProfileScreen())),
-          const SizedBox(height: 10),
-          _profileItem(
-              icon: Icons.lock_outline,
-              label: 'Changer le mot de passe',
-              dark: dark,
-              onTap: () => _push(const ChangePasswordScreen())),
-          const SizedBox(height: 10),
-          _profileItem(
-              icon: Icons.notifications_outlined,
-              label: 'Notifications',
-              dark: dark,
-              badge: _unreadCount,
-              onTap: () => _push(const NotificationsScreen())),
-          const SizedBox(height: 10),
-          _profileItem(
-              icon: Icons.business_outlined,
-              label: 'Mes biens',
-              dark: dark,
-              onTap: () => _push(const MyPropertiesScreen())),
-          const SizedBox(height: 10),
-          _profileItem(
-              icon: Icons.groups_outlined,
-              label: 'Membres du foyer',
-              dark: dark,
-              onTap: () => _push(const HouseholdMembersScreen())),
-          const SizedBox(height: 24),
-          Text('Apparence',
-              style: TextStyle(
-                  color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-          const SizedBox(height: 10),
-          Consumer<ThemeProvider>(
-            builder: (_, theme, __) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          const SizedBox(height: FigSpace.xl),
+          GiSettingsGroup(
+            title: t.services,
+            rows: [
+              GiSettingsRow(
+                icon: Icon(Icons.tune_rounded, color: c.textBody),
+                label: t.settingsTitle,
+                value: t.settingsSubtitle,
+                onTap: () => _push(const ResidentProfileScreen()),
+              ),
+              GiSettingsRow(
+                icon: SvgPicture.asset('assets/figma/icons/bell_16.svg',
+                    colorFilter:
+                        ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                label: t.notificationsTitle,
+                onTap: () => _push(const NotificationsScreen()),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_unreadCount > 0)
+                      Container(
+                        constraints: const BoxConstraints(minWidth: 20),
+                        height: 20,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        decoration: BoxDecoration(
+                          color: FigAlert.error,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text('$_unreadCount',
+                            style: FigText.caption.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600)),
+                      ),
+                    const SizedBox(width: FigSpace.md),
+                    GiChevron(color: c.textMuted),
+                  ],
+                ),
+              ),
+              GiSettingsRow(
+                icon: Icon(Icons.apartment_rounded, color: c.textBody),
+                label: t.myProperties,
+                onTap: () => _push(const MyPropertiesScreen()),
+              ),
+              GiSettingsRow(
+                icon: Icon(Icons.groups_outlined, color: c.textBody),
+                label: t.householdMembers,
+                onTap: () => _push(const HouseholdMembersScreen()),
+              ),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xxl),
+          // Le Figma place ici un bouton plein ; en rouge plutot qu'en ambre,
+          // la deconnexion n'etant pas une action que l'on veut mettre en
+          // avant comme les autres.
+          GiPressable(
+            onTap: _confirmLogout,
+            pressedScale: 0.97,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                  color: dark ? darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(16)),
+                color: FigAlert.error.withValues(alpha: 0.08),
+                border: Border.all(
+                    color: FigAlert.error.withValues(alpha: 0.30)),
+                borderRadius: BorderRadius.circular(FigRadius.cta),
+              ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                        color: brandAmber.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12)),
-                    alignment: Alignment.center,
-                    child: Icon(
-                        theme.isDark
-                            ? Icons.dark_mode_outlined
-                            : Icons.light_mode_outlined,
-                        color: brandAmber,
-                        size: 20),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text('Thème sombre',
-                        style:
-                            TextStyle(fontWeight: FontWeight.w700, color: fg)),
-                  ),
-                  Switch(value: theme.isDark, onChanged: theme.setDark),
+                  const Icon(Icons.logout_rounded,
+                      size: 18, color: FigAlert.error),
+                  const SizedBox(width: FigSpace.md),
+                  Text(t.logout,
+                      style: FigText.button.copyWith(color: FigAlert.error)),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 30),
-          OutlinedButton.icon(
-            icon: const Icon(Icons.logout_rounded),
-            label: const Text('Se déconnecter'),
-            onPressed: _confirmLogout,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: fg,
-              side: BorderSide(
-                  color: dark ? darkBorder : const Color(0xFFCBD5E1),
-                  width: 1.5),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
-              minimumSize: const Size.fromHeight(52),
             ),
           ),
         ],
@@ -1017,55 +1012,104 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     );
   }
 
-  Widget _profileItem({
-    required IconData icon,
-    required String label,
-    required bool dark,
-    required VoidCallback onTap,
-    int badge = 0,
-  }) {
-    return GiPressable(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          color: dark ? darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-                color: brandAmber.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12)),
-            alignment: Alignment.center,
-            child: Icon(icon, color: brandAmber, size: 20),
+  /// Carte d'identite du Figma : ligne avatar + nom + badge, puis un bandeau
+  /// de trois colonnes separees par des traits, identique a celui de la carte
+  /// residence de l'accueil.
+  Widget _identityCard(GiColors c, AppL10n t, String name, String lot,
+      String resName, String block) {
+    Widget cell(String label, String value) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FigText.label.copyWith(
+                      fontSize: 10, letterSpacing: 0.4, color: c.textFaint)),
+              const SizedBox(height: FigSpace.xs),
+              Text(value.isEmpty ? '—' : value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FigText.statValue.copyWith(color: c.textBody)),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-              child: Text(label,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: dark ? Colors.white : brandNavy))),
-          if (badge > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626),
-                  borderRadius: BorderRadius.circular(20)),
-              child: Text('$badge',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold)),
+        );
+
+    return GiCard(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: FigSize.chipMd,
+                height: FigSize.chipMd,
+                decoration: BoxDecoration(
+                  border: Border.all(color: FigBrand.amber),
+                  borderRadius: BorderRadius.circular(FigRadius.chip),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child:
+                    Image.asset('assets/figma/avatar.png', fit: BoxFit.cover),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FigText.titleMd.copyWith(color: c.textBody)),
+                    const SizedBox(height: 2),
+                    Text(
+                      lot.isEmpty
+                          ? t.roleResident
+                          : '${t.roleResident} · ${t.apartmentShort(lot)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.body.copyWith(color: c.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: FigSpace.md),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: FigAccent.chipFill(FigAlert.success),
+                  border: Border.all(
+                      color: FigAccent.chipBorder(FigAlert.success)),
+                  borderRadius: BorderRadius.circular(FigRadius.pill),
+                ),
+                child: Text(t.verified,
+                    style: FigText.caption.copyWith(color: FigAlert.success)),
+              ),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xl),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(FigRadius.card),
+              border: Border.all(color: c.innerBorder),
             ),
-          const SizedBox(width: 4),
-          Icon(Icons.arrow_forward_ios_rounded,
-              size: 14, color: dark ? darkMuted : const Color(0xFFCBD5E1)),
-        ]),
+            child: Row(
+              children: [
+                cell(t.residenceUpper, resName),
+                Container(width: 1, height: 35, color: c.innerBorder),
+                const SizedBox(width: FigSpace.lg),
+                cell(t.blockUpper, block),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+
 }
 

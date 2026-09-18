@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -49,6 +50,7 @@ class GeranceImmoServiceApp extends StatelessWidget {
           theme: buildAppTheme(),
           darkTheme: buildAppThemeDark(),
           themeMode: theme.mode,
+          scrollBehavior: const GiScrollBehavior(),
           locale: locale.locale,
           supportedLocales: AppL10n.supportedLocales,
           localizationsDelegates: const [
@@ -74,4 +76,29 @@ class GeranceImmoServiceApp extends StatelessWidget {
       ),
     );
   }
+}
+
+
+/// Physique de defilement commune a toute l'app.
+///
+/// Par defaut Flutter applique le rebond iOS : arrive en bout de liste, le
+/// contenu continue puis revient en arriere. Cet effet elastique gene la
+/// lecture des listes longues, on lui prefere un arret net.
+///
+/// Les appareils de pointage sont ajoutes pour que le defilement a la souris
+/// fonctionne dans le navigateur, ou l'app est testee.
+class GiScrollBehavior extends MaterialScrollBehavior {
+  const GiScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const ClampingScrollPhysics();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+      };
 }

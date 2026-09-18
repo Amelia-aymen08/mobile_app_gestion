@@ -321,4 +321,69 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get notifPayments => 'المدفوعات';
+
+  @override
+  String get reportsSubtitle => 'تابع طلبات الصيانة';
+
+  @override
+  String get filterInProgress => 'قيد المعالجة';
+
+  @override
+  String get filterDone => 'منتهية';
+
+  @override
+  String get tabMyReports => 'بلاغاتي';
+
+  @override
+  String get tabCommonAreas => 'الأجزاء المشتركة';
+
+  @override
+  String get newReport => 'بلاغ جديد';
+
+  @override
+  String get emptyReportsTitle => 'لا توجد بلاغات';
+
+  @override
+  String get emptyReportsBody =>
+      'لم تقم بأي بلاغ بعد. استخدم الزر أدناه لإنشاء واحد.';
+
+  @override
+  String get roleResident => 'مقيم';
+
+  @override
+  String get verified => 'موثّق';
+
+  @override
+  String get changeResidence => 'تغيير الإقامة';
+
+  @override
+  String currentResidenceIs(String name) {
+    return 'الإقامة الحالية: $name';
+  }
+
+  @override
+  String get residenceUpper => 'الإقامة';
+
+  @override
+  String get blockUpper => 'العمارة';
+
+  @override
+  String get memberSinceUpper => 'عضو منذ';
+
+  @override
+  String get settingsTitle => 'الإعدادات';
+
+  @override
+  String get settingsSubtitle => 'الإشعارات واللغة والأمان';
+
+  @override
+  String get myProperties => 'ممتلكاتي';
+
+  @override
+  String get householdMembers => 'أفراد الأسرة';
+
+  @override
+  String apartmentShort(String unit) {
+    return 'شقة $unit';
+  }
 }

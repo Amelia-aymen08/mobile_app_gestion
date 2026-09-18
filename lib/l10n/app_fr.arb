@@ -147,5 +147,39 @@
   "notifAnnouncements": "Annonces",
   "notifMaintenance": "Suivi des interventions",
   "notifBookings": "Réservations",
-  "notifPayments": "Paiements"
+  "notifPayments": "Paiements",
+  "reportsSubtitle": "Suivez vos demandes de maintenance",
+  "filterInProgress": "En cours",
+  "filterDone": "Terminés",
+  "tabMyReports": "Mes signalements",
+  "tabCommonAreas": "Copropriété",
+  "newReport": "Nouveau signalement",
+  "emptyReportsTitle": "Aucun signalement",
+  "emptyReportsBody": "Vous n'avez encore signalé aucun problème. Utilisez le bouton ci-dessous pour en créer un.",
+  "roleResident": "Résident",
+  "verified": "Vérifié",
+  "changeResidence": "Changer de résidence",
+  "currentResidenceIs": "Résidence actuelle : {name}",
+  "residenceUpper": "RÉSIDENCE",
+  "blockUpper": "BLOC",
+  "memberSinceUpper": "MEMBRE DEPUIS",
+  "settingsTitle": "Réglages",
+  "settingsSubtitle": "Notifications, langue, sécurité",
+  "myProperties": "Mes biens",
+  "householdMembers": "Membres du foyer",
+  "apartmentShort": "Apt. {unit}",
+  "@currentResidenceIs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@apartmentShort": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  }
 }
