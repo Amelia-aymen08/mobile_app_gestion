@@ -1,5 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'design_tokens.dart';
+import 'gi_colors.dart';
 
 // ─── Brand Palette ────────────────────────────────────────────────────────────
 const brandNavy  = Color(0xFF0C1620); // dark navy
@@ -65,6 +67,8 @@ ThemeData buildAppTheme() {
 
   return ThemeData(
     useMaterial3: true,
+    fontFamily: FigText.family,
+    extensions: <ThemeExtension<dynamic>>[GiColors.light],
     colorScheme: scheme,
     scaffoldBackgroundColor: brandBackground,
 
@@ -191,6 +195,8 @@ ThemeData buildAppThemeDark() {
 
   return ThemeData(
     useMaterial3: true,
+    fontFamily: FigText.family,
+    extensions: <ThemeExtension<dynamic>>[GiColors.dark],
     colorScheme: scheme,
     scaffoldBackgroundColor: darkSurface,
 

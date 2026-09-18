@@ -1,0 +1,108 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Arabic (`ar`).
+class AppL10nAr extends AppL10n {
+  AppL10nAr([String locale = 'ar']) : super(locale);
+
+  @override
+  String get navHome => 'الرئيسية';
+
+  @override
+  String get navNotice => 'الإعلانات';
+
+  @override
+  String get navReport => 'إبلاغ';
+
+  @override
+  String get navPayment => 'المدفوعات';
+
+  @override
+  String get navMore => 'المزيد';
+
+  @override
+  String greeting(String name) {
+    return 'مرحبًا $name';
+  }
+
+  @override
+  String get myResidence => 'إقامتي';
+
+  @override
+  String apartmentBadge(String unit) {
+    return 'شقة $unit';
+  }
+
+  @override
+  String get floor => 'الطابق';
+
+  @override
+  String get area => 'المساحة';
+
+  @override
+  String get status => 'الحالة';
+
+  @override
+  String get statusActive => 'نشط';
+
+  @override
+  String get nextPayment => 'الدفعة القادمة';
+
+  @override
+  String paymentDeadline(String date) {
+    return 'آخر أجل: $date';
+  }
+
+  @override
+  String get reports => 'البلاغات';
+
+  @override
+  String reportsOpen(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count بلاغ مفتوح',
+      many: '$count بلاغًا مفتوحًا',
+      few: '$count بلاغات مفتوحة',
+      two: 'بلاغان مفتوحان',
+      one: 'بلاغ واحد مفتوح',
+      zero: 'لا يوجد بلاغ مفتوح',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String reportsInProgress(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count بلاغ قيد المعالجة',
+      many: '$count بلاغًا قيد المعالجة',
+      few: '$count بلاغات قيد المعالجة',
+      two: 'بلاغان قيد المعالجة',
+      one: 'بلاغ واحد قيد المعالجة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get quickActions => 'إجراءات سريعة';
+
+  @override
+  String get notices => 'الإعلانات';
+
+  @override
+  String get payments => 'المدفوعات';
+
+  @override
+  String get documents => 'المستندات';
+
+  @override
+  String get profile => 'الملف الشخصي';
+
+  @override
+  String get recentActivity => 'النشاط الأخير';
+}

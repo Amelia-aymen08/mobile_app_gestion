@@ -1,0 +1,32 @@
+{
+  "@@locale": "ar",
+
+  "navHome": "الرئيسية",
+  "navNotice": "الإعلانات",
+  "navReport": "إبلاغ",
+  "navPayment": "المدفوعات",
+  "navMore": "المزيد",
+
+  "greeting": "مرحبًا {name}",
+  "myResidence": "إقامتي",
+  "apartmentBadge": "شقة {unit}",
+
+  "floor": "الطابق",
+  "area": "المساحة",
+  "status": "الحالة",
+  "statusActive": "نشط",
+
+  "nextPayment": "الدفعة القادمة",
+  "paymentDeadline": "آخر أجل: {date}",
+
+  "reports": "البلاغات",
+  "reportsOpen": "{count, plural, =0{لا يوجد بلاغ مفتوح} =1{بلاغ واحد مفتوح} =2{بلاغان مفتوحان} few{{count} بلاغات مفتوحة} many{{count} بلاغًا مفتوحًا} other{{count} بلاغ مفتوح}}",
+  "reportsInProgress": "{count, plural, =1{بلاغ واحد قيد المعالجة} =2{بلاغان قيد المعالجة} few{{count} بلاغات قيد المعالجة} many{{count} بلاغًا قيد المعالجة} other{{count} بلاغ قيد المعالجة}}",
+
+  "quickActions": "إجراءات سريعة",
+  "notices": "الإعلانات",
+  "payments": "المدفوعات",
+  "documents": "المستندات",
+  "profile": "الملف الشخصي",
+  "recentActivity": "النشاط الأخير"
+}
