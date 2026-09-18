@@ -1,8 +1,17 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../theme/app_theme.dart';
+// `intl` exporte aussi un type TextDirection, qui masque celui de Flutter et
+// casse la lecture du sens d'ecriture.
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../data/api_service.dart';
+import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_header.dart';
 
 class NoticesScreen extends StatefulWidget {
   const NoticesScreen({super.key});
@@ -68,197 +77,92 @@ class _NoticesScreenState extends State<NoticesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
+
+    final labels = {
+      'ALL': t.filterAll,
+      'URGENT': t.filterUrgent,
+      'INFO': t.filterInfo,
+      'EVENT': t.filterEvent,
+    };
 
     final filtered = _notices.whereType<Map>().where((n) {
       if (_filter == 'ALL') return true;
       return (n['category'] ?? '').toString().toUpperCase() == _filter;
     }).toList();
-    final unreadCount = _notices.whereType<Map>().where((n) => n['isRead'] != true).length;
+    final unreadCount =
+        _notices.whereType<Map>().where((n) => n['isRead'] != true).length;
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            // Figma : en-tete a 66, filtres a 126, liste a 174.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                        color: brandAmber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.campaign_rounded, color: brandAmber, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                        Text('Communications officielles', style: TextStyle(color: muted, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  if (unreadCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(color: brandAmber, borderRadius: BorderRadius.circular(20)),
-                      child: Text('$unreadCount nouveau${unreadCount > 1 ? 'x' : ''}',
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                    ),
-                ],
+              padding: const EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding, 22, FigSpace.pagePadding, 0),
+              child: GiScreenHeader(
+                iconAsset: 'assets/figma/icons/notice_20.svg',
+                accent: FigAccent.amber,
+                title: t.notices,
+                subtitle: t.noticesSubtitle,
+                badge: unreadCount > 0 ? t.newCount(unreadCount) : null,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 25),
             SizedBox(
-              height: 40,
-              child: ListView(
+              height: 28,
+              child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: _categories.entries.map((e) {
-                  final active = _filter == e.key;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _filter = e.key),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                        decoration: BoxDecoration(
-                          color: active ? (dark ? brandAmber : brandNavy) : (dark ? darkCard : Colors.white),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(e.value,
-                            style: TextStyle(
-                                color: active ? (dark ? brandNavy : Colors.white) : fg,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13)),
-                      ),
-                    ),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: FigSpace.pagePadding),
+                itemCount: _categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: FigSpace.xs),
+                itemBuilder: (_, i) {
+                  final key = _categories.keys.elementAt(i);
+                  return GiFilterChip(
+                    label: labels[key] ?? key,
+                    selected: _filter == key,
+                    onTap: () => setState(() => _filter = key),
                   );
-                }).toList(),
+                },
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: FigSpace.xl),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : filtered.isEmpty
-                      ? _emptyState(fg, muted)
-                      : RefreshIndicator(
-                          onRefresh: _load,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: filtered.length,
-                            itemBuilder: (context, i) {
-                              final n = Map<String, dynamic>.from(filtered[i]);
-                              final category = (n['category'] ?? 'INFO').toString().toUpperCase();
-                              final isRead = n['isRead'] == true;
-                              final color = _categoryColor(category);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    if (!isRead) {
-                                      _api.markAnnouncementRead(n['id'].toString()).catchError((_) {});
-                                    }
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => NoticeDetailScreen(notice: n)),
-                                    );
-                                    _load();
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: dark ? darkCard : Colors.white,
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Stack(
-                                          children: [
-                                            Container(
-                                              width: 40,
-                                              height: 40,
-                                              decoration: BoxDecoration(
-                                                  color: color.withValues(alpha: 0.14),
-                                                  borderRadius: BorderRadius.circular(12)),
-                                              alignment: Alignment.center,
-                                              child: Icon(
-                                                category == 'URGENT'
-                                                    ? Icons.warning_amber_rounded
-                                                    : category == 'EVENT'
-                                                        ? Icons.event_rounded
-                                                        : Icons.info_outline_rounded,
-                                                color: color,
-                                                size: 20,
-                                              ),
-                                            ),
-                                            if (!isRead)
-                                              Positioned(
-                                                top: 0,
-                                                right: 0,
-                                                child: Container(
-                                                  width: 9,
-                                                  height: 9,
-                                                  decoration: BoxDecoration(
-                                                    color: brandAmber,
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(color: dark ? darkCard : Colors.white, width: 2),
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(_dayTimeLabel((n['publishAt'] ?? n['createdAt'])?.toString()),
-                                                  style: TextStyle(color: muted, fontSize: 11)),
-                                              const SizedBox(height: 4),
-                                              Text((n['title'] ?? '').toString(),
-                                                  style: TextStyle(
-                                                      color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-                                              const SizedBox(height: 4),
-                                              Text((n['body'] ?? '').toString(),
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: TextStyle(color: muted, fontSize: 13, height: 1.4)),
-                                              const SizedBox(height: 8),
-                                              const Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text('Lire la suite',
-                                                      style: TextStyle(
-                                                          color: brandAmber,
-                                                          fontWeight: FontWeight.w700,
-                                                          fontSize: 12)),
-                                                  Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                  ? const Center(
+                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  : RefreshIndicator(
+                      color: FigBrand.amber,
+                      backgroundColor: c.card,
+                      onRefresh: _load,
+                      child: filtered.isEmpty
+                          ? ListView(
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(
+                                    height: MediaQuery.sizeOf(context).height *
+                                        0.12),
+                                _emptyState(c, t),
+                              ],
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(
+                                  FigSpace.pagePadding, 0,
+                                  FigSpace.pagePadding, 150),
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: FigSpace.lg),
+                              itemBuilder: (context, i) => _noticeCard(
+                                  c, t, Map<String, dynamic>.from(filtered[i])),
+                            ),
+                    ),
             ),
           ],
         ),
@@ -266,30 +170,147 @@ class _NoticesScreenState extends State<NoticesScreen> {
     );
   }
 
-  Widget _emptyState(Color fg, Color muted) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+  /// Carte d'avis — composant "Notice Card" du Figma (837:1940).
+  /// Padding 16, ecart 16 entre les trois blocs, ecart 6 dans le texte.
+  /// Une fois lu, titre et corps passent au gris et la pastille disparait.
+  Widget _noticeCard(GiColors c, AppL10n t, Map<String, dynamic> n) {
+    final category = (n['category'] ?? 'INFO').toString().toUpperCase();
+    final isRead = n['isRead'] == true;
+    final accent = _categoryColor(category);
+    final titleColor = isRead ? c.textFaint : c.textBody;
+    final bodyColor = isRead ? c.textFaint : c.textBody;
+
+    return GiCard(
+      onTap: () async {
+        if (!isRead) {
+          _api.markAnnouncementRead(n['id'].toString()).catchError((_) {});
+        }
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => NoticeDetailScreen(notice: n)),
+        );
+        _load();
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            _dayTimeLabel((n['publishAt'] ?? n['createdAt'])?.toString()),
+            style: FigText.caption.copyWith(color: c.textMuted),
+          ),
+          const SizedBox(height: FigSpace.xl),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: muted.withValues(alpha: 0.10)),
-                alignment: Alignment.center,
-                child: Icon(Icons.priority_high_rounded, size: 52, color: muted.withValues(alpha: 0.5)),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  GiIconChip(
+                    accent: accent,
+                    size: FigSize.chipSm,
+                    radius: FigRadius.pill,
+                    icon: SvgPicture.asset(
+                      'assets/figma/icons/notice_card_20.svg',
+                      width: 17,
+                      height: 12,
+                      colorFilter:
+                          ColorFilter.mode(accent, BlendMode.srcIn),
+                    ),
+                  ),
+                  if (!isRead)
+                    PositionedDirectional(
+                      top: -3,
+                      start: 21,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                            color: FigBrand.amber, shape: BoxShape.circle),
+                      ),
+                    ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Text('Aucun avis pour le moment',
-                  style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 17)),
-              const SizedBox(height: 8),
-              Text(
-                "Vous êtes à jour. Il n'y a aucun avis à afficher pour l'instant.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: muted, fontSize: 13, height: 1.5),
+              const SizedBox(width: FigSpace.xl),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (n['title'] ?? '').toString(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.statValue
+                          .copyWith(height: 1.2, color: titleColor),
+                    ),
+                    const SizedBox(height: FigSpace.sm),
+                    Text(
+                      (n['body'] ?? '').toString(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.body.copyWith(color: bodyColor),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          const SizedBox(height: FigSpace.xl),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(t.readMore,
+                    style: FigText.caption.copyWith(color: c.textBody)),
+                const SizedBox(width: FigSpace.xs),
+                Transform.flip(
+                  flipX: Directionality.of(context) == TextDirection.rtl,
+                  child: SvgPicture.asset(
+                    'assets/figma/icons/arrow_readmore.svg',
+                    width: 9,
+                    height: 8,
+                    colorFilter:
+                        ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Etat vide — frame "Empty Notices" du Figma.
+  Widget _emptyState(GiColors c, AppL10n t) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GiIconChip(
+              accent: FigAccent.amber,
+              size: 88,
+              radius: 44,
+              icon: SvgPicture.asset(
+                'assets/figma/icons/notice_20.svg',
+                width: 36,
+                height: 36,
+                colorFilter: ColorFilter.mode(
+                    FigBrand.amber.withValues(alpha: 0.6), BlendMode.srcIn),
+              ),
+            ),
+            const SizedBox(height: FigSpace.xxl),
+            Text(t.emptyNoticesTitle,
+                textAlign: TextAlign.center,
+                style: FigText.titleMd
+                    .copyWith(fontSize: 18, color: c.textBody)),
+            const SizedBox(height: FigSpace.md),
+            Text(
+              t.emptyNoticesBody,
+              textAlign: TextAlign.center,
+              style: FigText.body.copyWith(height: 1.36, color: c.textMuted),
+            ),
+          ],
         ),
       );
 }

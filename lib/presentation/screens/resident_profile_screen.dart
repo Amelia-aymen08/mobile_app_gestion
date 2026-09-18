@@ -48,8 +48,11 @@ class ResidentProfileScreen extends StatelessWidget {
       backgroundColor: c.scaffold,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              FigSpace.pagePadding, 22, FigSpace.pagePadding, 40),
+          padding: EdgeInsets.fromLTRB(
+              FigSpace.pagePadding,
+              MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+              FigSpace.pagePadding,
+              40),
           children: [
             // En-tete du Figma : pastille de retour de 32 puis le titre, ecart 16.
             Row(
@@ -150,19 +153,17 @@ class ResidentProfileScreen extends StatelessWidget {
     return GiCard(
       child: Row(
         children: [
+          // Trait ambre de 1 seulement : une bordure epaisse rogne la photo
+          // et alourdit la carte.
           Container(
             width: 56,
             height: 56,
-            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: FigAccent.chipFill(FigBrand.amber),
               border: Border.all(color: FigBrand.amber),
               borderRadius: BorderRadius.circular(FigRadius.card),
             ),
-            child: Text(
-              name.isEmpty ? '?' : name.trim()[0].toUpperCase(),
-              style: FigText.greeting.copyWith(color: FigBrand.amber),
-            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset('assets/figma/avatar.png', fit: BoxFit.cover),
           ),
           const SizedBox(width: FigSpace.xl),
           Expanded(

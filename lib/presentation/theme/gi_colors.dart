@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'design_tokens.dart';
 
 // Teintes semi-transparentes recurrentes du Figma.
-final _amber20 = FigBrand.amber.withValues(alpha: 0.20);
+// Le Figma pose la bordure de la carte residence a 20 % d'ambre, ce qui la
+// rend presque invisible a l'ecran. Elle est montee a 55 % pour que le liere
+// dore se voie, comme demande.
+final _amber20 = FigBrand.amber.withValues(alpha: 0.55);
 final _black05 = Colors.black.withValues(alpha: 0.05);
 final _black02 = Colors.black.withValues(alpha: 0.02);
 final _white05 = Colors.white.withValues(alpha: 0.05);

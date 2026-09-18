@@ -275,8 +275,15 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           await _fetchUnread();
         },
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              FigSpace.pagePadding, 22, FigSpace.pagePadding, 150),
+          // Le Figma pose l'en-tete a 66 dans une frame de 812, soit 22 sous
+          // la barre d'etat. Sur un ecran sans encoche, SafeArea ne retire
+          // rien et 22 colle au bord : on garde 22 comme minimum et on laisse
+          // respirer davantage quand il n'y a pas d'encoche.
+          padding: EdgeInsets.fromLTRB(
+              FigSpace.pagePadding,
+              MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+              FigSpace.pagePadding,
+              150),
           children: [
             _header(c, t, firstName),
             const SizedBox(height: 20),
@@ -353,17 +360,19 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               GiPressable(
                 pressedScale: 0.88,
                 onTap: () => _push(const ResidentProfileScreen()),
+                // Figma : photo dans un carre de 32, rayon 8, cercle d'un
+                // trait ambre de 1. La bordure reste fine a dessein, elle ne
+                // doit pas manger la photo.
                 child: Container(
                   width: FigSize.chipMd,
                   height: FigSize.chipMd,
-                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: c.headerChipBg,
                     border: Border.all(color: FigBrand.amber),
                     borderRadius: BorderRadius.circular(FigRadius.chip),
                   ),
-                  child:
-                      Icon(Icons.person_rounded, size: 18, color: c.textBody),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset('assets/figma/avatar.png',
+                      fit: BoxFit.cover),
                 ),
               ),
             ],
