@@ -501,4 +501,13 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get remove => 'Remove';
+
+  @override
+  String get statusOpen => 'Open';
+
+  @override
+  String get statusInProgress => 'In progress';
+
+  @override
+  String get statusResolved => 'Resolved';
 }

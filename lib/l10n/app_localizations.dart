@@ -986,6 +986,24 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Retirer'**
   String get remove;
+
+  /// No description provided for @statusOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvert'**
+  String get statusOpen;
+
+  /// No description provided for @statusInProgress.
+  ///
+  /// In fr, this message translates to:
+  /// **'En cours'**
+  String get statusInProgress;
+
+  /// No description provided for @statusResolved.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminé'**
+  String get statusResolved;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

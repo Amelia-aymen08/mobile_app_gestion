@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -8,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
+import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
 import '../widgets/gi_pressable.dart';
 
@@ -403,32 +403,13 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     );
   }
 
-  Widget _emptyHistory(GiColors c, AppL10n t) => GiCard(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: FigSpace.xl),
-          child: Column(
-            children: [
-              GiIconChip(
-                accent: FigAccent.amber,
-                size: 64,
-                radius: 32,
-                icon: SvgPicture.asset(
-                  'assets/figma/icons/payment_20.svg',
-                  colorFilter: ColorFilter.mode(
-                      FigBrand.amber.withValues(alpha: 0.6), BlendMode.srcIn),
-                ),
-              ),
-              const SizedBox(height: FigSpace.xl),
-              Text(t.emptyPaymentsTitle,
-                  textAlign: TextAlign.center,
-                  style: FigText.titleMd.copyWith(color: c.textBody)),
-              const SizedBox(height: FigSpace.md),
-              Text(t.emptyPaymentsBody,
-                  textAlign: TextAlign.center,
-                  style:
-                      FigText.body.copyWith(height: 1.36, color: c.textMuted)),
-            ],
-          ),
+  /// Etat vide — frame "Empty Payment" du Figma.
+  Widget _emptyHistory(GiColors c, AppL10n t) => Padding(
+        padding: const EdgeInsets.only(top: FigSpace.xl),
+        child: GiEmptyState(
+          illustration: 'assets/figma/empty/payments.svg',
+          title: t.emptyPaymentsTitle,
+          message: t.emptyPaymentsBody,
         ),
       );
 }

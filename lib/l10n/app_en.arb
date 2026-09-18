@@ -147,5 +147,8 @@
   "customAccess": "Custom Access",
   "addMember": "Add member",
   "edit": "Edit",
-  "remove": "Remove"
+  "remove": "Remove",
+  "statusOpen": "Open",
+  "statusInProgress": "In progress",
+  "statusResolved": "Resolved"
 }

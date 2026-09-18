@@ -147,5 +147,8 @@
   "customAccess": "وصول مخصص",
   "addMember": "إضافة فرد",
   "edit": "تعديل",
-  "remove": "إزالة"
+  "remove": "إزالة",
+  "statusOpen": "مفتوح",
+  "statusInProgress": "قيد المعالجة",
+  "statusResolved": "منتهٍ"
 }

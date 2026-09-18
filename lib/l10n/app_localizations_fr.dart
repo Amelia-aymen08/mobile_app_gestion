@@ -502,4 +502,13 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get remove => 'Retirer';
+
+  @override
+  String get statusOpen => 'Ouvert';
+
+  @override
+  String get statusInProgress => 'En cours';
+
+  @override
+  String get statusResolved => 'Terminé';
 }

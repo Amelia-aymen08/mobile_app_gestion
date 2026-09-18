@@ -508,4 +508,13 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get remove => 'إزالة';
+
+  @override
+  String get statusOpen => 'مفتوح';
+
+  @override
+  String get statusInProgress => 'قيد المعالجة';
+
+  @override
+  String get statusResolved => 'منتهٍ';
 }

@@ -228,5 +228,8 @@
   "customAccess": "Accès personnalisé",
   "addMember": "Ajouter un membre",
   "edit": "Modifier",
-  "remove": "Retirer"
+  "remove": "Retirer",
+  "statusOpen": "Ouvert",
+  "statusInProgress": "En cours",
+  "statusResolved": "Terminé"
 }

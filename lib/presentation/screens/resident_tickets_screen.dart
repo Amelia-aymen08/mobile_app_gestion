@@ -1,8 +1,18 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_empty_state.dart';
+import '../widgets/gi_header.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+// `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
+import 'package:intl/intl.dart' hide TextDirection;
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../../data/api_service.dart';
@@ -138,47 +148,6 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
     }
   }
 
-  String? _ticketSvg(String? title, String? cat) {
-    switch (title) {
-      case 'Peinture Escalier':
-      case 'Peinture écaillée':
-      case 'Peinture escaliers':
-      case 'Retouches peinture couloir':
-        return 'assets/icones/pbm_peinture.svg';
-      case 'Rideau parking défaillant':
-      case 'Demande de télécommande parking':
-        return 'assets/icones/pbm_rideau.svg';
-      case "Problème TAG d'accès":
-      case "Demande de TAG d'accès":
-        return 'assets/icones/pbm_tag.svg';
-    }
-    switch (cat) {
-      case 'Peinture (Partie Commune)':     return 'assets/icones/pbm_peinture.svg';
-      case 'Commande Télécommande Parking': return 'assets/icones/pbm_rideau.svg';
-      case "Commande TAG d'accès":          return 'assets/icones/pbm_tag.svg';
-      default:                              return null;
-    }
-  }
-
-  IconData _categoryIcon(String? cat) {
-    switch (cat) {
-      case 'Plomberie (Partie Commune)': return Icons.water_drop_outlined;
-      case 'Ascenseurs & Accès':         return Icons.elevator_outlined;
-      case 'Hygiène & Sécurité':         return Icons.shield_outlined;
-      case 'Espaces Extérieurs':         return Icons.park_outlined;
-      case 'Problème Bâche à eau':       return Icons.water_outlined;
-      default:                           return Icons.build_outlined;
-    }
-  }
-
-  Widget _categoryWidget(String? title, String? cat, Color color, double size) {
-    final svg = _ticketSvg(title, cat);
-    if (svg != null) {
-      return SvgPicture.asset(svg, width: size, height: size, colorFilter: ColorFilter.mode(color, BlendMode.srcIn));
-    }
-    return Icon(_categoryIcon(cat), color: color, size: size);
-  }
-
   bool _matchesFilter(Map t) {
     final status = (t['status'] ?? '').toString();
     if (_filter == 'progress') return status != 'Terminé';
@@ -201,223 +170,126 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
   }
 
   // ─── List builder ─────────────────────────────────────────
-  Widget _buildList(List<dynamic> tickets, bool dark, Color fg, Color muted) {
-    final filtered = tickets.whereType<Map>().where(_matchesFilter).toList();
-    if (filtered.isEmpty) {
-      return Center(
-        child: Text('Aucun signalement.', style: TextStyle(color: muted, fontSize: 15)),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: () => Future.wait([_fetchMy(), _fetchCopro()]),
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        physics: const AlwaysScrollableScrollPhysics(),
-        itemCount: filtered.length,
-        itemBuilder: (context, i) {
-          final t = filtered[i];
-          final title = _ticketTitle(t);
-          final status = (t['status'] ?? '').toString();
-          final category = (t['category'] ?? '').toString();
-          final desc = (t['description'] ?? '').toString();
-          final date = _fmt(t['createdAt']);
-          final ref = _ref(t);
-          final sc = _statusColor(status);
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: () => _openDetails(t),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: dark ? darkCard : Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (category.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(category,
-                                style: const TextStyle(
-                                    color: Color(0xFF3B82F6), fontSize: 11, fontWeight: FontWeight.w700)),
-                          ),
-                        const Spacer(),
-                        const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Lire la suite',
-                                style: TextStyle(color: brandAmber, fontWeight: FontWeight.w700, fontSize: 12)),
-                            Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                              color: sc.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-                          alignment: Alignment.center,
-                          child: _categoryWidget(title, category, sc, 20),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(title,
-                                  style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-                              if (desc.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(desc,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(color: muted, fontSize: 13, height: 1.4)),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        if (ref.isNotEmpty)
-                          Text(ref, style: TextStyle(color: muted, fontSize: 11)),
-                        if (ref.isNotEmpty && date.isNotEmpty)
-                          Text(' · ', style: TextStyle(color: muted, fontSize: 11)),
-                        if (date.isNotEmpty)
-                          Text(date, style: TextStyle(color: muted, fontSize: 11)),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: sc.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: sc.withValues(alpha: 0.4)),
-                          ),
-                          child: Text(status, style: TextStyle(color: sc, fontSize: 11, fontWeight: FontWeight.w700)),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ─── Build ────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final c = GiColors.of(context);
+    final t = AppL10n.of(context);
 
     return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
+      backgroundColor: c.scaffold,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
+            // En-tete du Figma : pastille 35, titre 18, sous-titre 13, et le
+            // bouton rond d'ajout a l'oppose.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                  FigSpace.pagePadding,
+                  0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                        color: brandAmber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(14)),
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.error_outline_rounded, color: brandAmber, size: 22),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Signalements', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                        Text('Suivez vos demandes de maintenance', style: TextStyle(color: muted, fontSize: 12)),
-                      ],
+                    child: GiScreenHeader(
+                      iconAsset: 'assets/figma/icons/alert_20.svg',
+                      accent: FigAccent.amber,
+                      title: t.reports,
+                      subtitle: t.reportsSubtitle,
                     ),
                   ),
-                  GestureDetector(
+                  const SizedBox(width: FigSpace.lg),
+                  GiPressable(
+                    pressedScale: 0.88,
                     onTap: _createNew,
                     child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(color: brandAmber, shape: BoxShape.circle),
+                      width: 40,
+                      height: 40,
                       alignment: Alignment.center,
-                      child: const Icon(Icons.add_rounded, color: brandNavy, size: 26),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                          color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-                      padding: const EdgeInsets.all(4),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicator: BoxDecoration(
-                            color: dark ? brandAmber : brandNavy, borderRadius: BorderRadius.circular(16)),
-                        dividerColor: Colors.transparent,
-                        labelColor: dark ? brandNavy : Colors.white,
-                        unselectedLabelColor: muted,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                        tabs: const [Tab(text: 'Mes signalements'), Tab(text: 'Copropriété')],
+                      decoration: const BoxDecoration(
+                        color: FigBrand.amber,
+                        shape: BoxShape.circle,
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/plus_16.svg',
+                        colorFilter: const ColorFilter.mode(
+                            Colors.black, BlendMode.srcIn),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
+            const SizedBox(height: 25),
+            SizedBox(
+              height: 28,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: FigSpace.pagePadding),
                 children: [
-                  _chip('Tout', 'all', dark, fg, muted),
-                  const SizedBox(width: 8),
-                  _chip('En cours', 'progress', dark, fg, muted),
-                  const SizedBox(width: 8),
-                  _chip('Terminé', 'done', dark, fg, muted),
+                  GiFilterChip(
+                      label: t.filterAll,
+                      selected: _filter == 'all',
+                      onTap: () => setState(() => _filter = 'all')),
+                  const SizedBox(width: FigSpace.xs),
+                  GiFilterChip(
+                      label: t.filterInProgress,
+                      selected: _filter == 'progress',
+                      onTap: () => setState(() => _filter = 'progress')),
+                  const SizedBox(width: FigSpace.xs),
+                  GiFilterChip(
+                      label: t.filterDone,
+                      selected: _filter == 'done',
+                      onTap: () => setState(() => _filter = 'done')),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: FigSpace.lg),
+            // Onglets absents du Figma, conserves : la maquette ne montre que
+            // les signalements du resident, l'app distingue aussi ceux de la
+            // copropriete.
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: FigSpace.pagePadding),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: c.card,
+                  border: Border.all(color: c.cardBorder),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: c.navbarBg,
+                    borderRadius: BorderRadius.circular(FigRadius.chip * 2),
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: c.textMuted,
+                  labelStyle: FigText.bodyActive,
+                  unselectedLabelStyle: FigText.body,
+                  tabs: [
+                    Tab(text: t.tabMyReports),
+                    Tab(text: t.tabCommonAreas),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: FigSpace.xl),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: FigBrand.amber))
                   : TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildList(_myTickets, dark, fg, muted),
-                        _buildList(_coproTickets, dark, fg, muted),
+                        _buildList(c, t, _myTickets),
+                        _buildList(c, t, _coproTickets),
                       ],
                     ),
             ),
@@ -427,25 +299,150 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
     );
   }
 
-  Widget _chip(String label, String value, bool dark, Color fg, Color muted) {
-    final active = _filter == value;
-    return GestureDetector(
-      onTap: () => setState(() => _filter = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? (dark ? brandAmber : brandNavy) : (dark ? darkCard : Colors.white),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(label,
-            style: TextStyle(
-                color: active ? (dark ? brandNavy : Colors.white) : fg,
-                fontWeight: FontWeight.w600,
-                fontSize: 13)),
+  Widget _buildList(GiColors c, AppL10n t, List<dynamic> tickets) {
+    final filtered = tickets.whereType<Map>().where(_matchesFilter).toList();
+    return RefreshIndicator(
+      color: FigBrand.amber,
+      backgroundColor: c.card,
+      onRefresh: () => Future.wait([_fetchMy(), _fetchCopro()]),
+      child: filtered.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding, 24, FigSpace.pagePadding, 150),
+              children: [
+                GiEmptyState(
+                  illustration: 'assets/figma/empty/reports.svg',
+                  title: t.emptyReportsTitle,
+                  message: t.emptyReportsBody,
+                  action: SizedBox(
+                    width: 187,
+                    child: GiPrimaryButton(
+                      label: t.newReport,
+                      onPressed: _createNew,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding, 0, FigSpace.pagePadding, 150),
+              itemCount: filtered.length,
+              separatorBuilder: (_, __) => const SizedBox(height: FigSpace.lg),
+              itemBuilder: (context, i) => _reportCard(c, t, filtered[i]),
+            ),
+    );
+  }
+
+  /// Carte de signalement — composant "Report Card" du Figma (0:4930).
+  /// Padding 16, trois blocs espaces de 16 : categorie et lien de lecture,
+  /// titre et description, puis reference, date et statut.
+  Widget _reportCard(GiColors c, AppL10n t, Map ticket) {
+    final title = _ticketTitle(ticket);
+    final status = (ticket['status'] ?? '').toString();
+    final category = (ticket['category'] ?? '').toString();
+    final desc = (ticket['description'] ?? '').toString();
+
+    return GiCard(
+      onTap: () => _openDetails(ticket),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              if (category.isNotEmpty)
+                Flexible(child: _badge(category, _reportBlue)),
+              const Spacer(),
+              const SizedBox(width: FigSpace.md),
+              Text(t.readMore,
+                  style: FigText.caption.copyWith(color: c.textBody)),
+              const SizedBox(width: FigSpace.xs),
+              Transform.flip(
+                flipX: Directionality.of(context) == TextDirection.rtl,
+                child: SvgPicture.asset(
+                  'assets/figma/icons/arrow_readmore.svg',
+                  colorFilter:
+                      ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xl),
+          Text(title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  FigText.statValue.copyWith(height: 1.2, color: c.textBody)),
+          if (desc.isNotEmpty) ...[
+            const SizedBox(height: FigSpace.sm),
+            Text(desc,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: FigText.body.copyWith(color: c.textMuted)),
+          ],
+          const SizedBox(height: FigSpace.xl),
+          Row(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(_ref(ticket),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              FigText.caption.copyWith(color: c.textFaint)),
+                    ),
+                    const SizedBox(width: FigSpace.xs),
+                    Container(
+                      width: 3,
+                      height: 3,
+                      decoration: BoxDecoration(
+                          color: c.textFaint, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: FigSpace.xs),
+                    Text(_fmt(ticket['createdAt']),
+                        style: FigText.caption.copyWith(color: c.textFaint)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: FigSpace.xl),
+              _badge(_statusLabel(t, status), _statusColor(status)),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+  /// Pastille de statut ou de categorie : fond a 5 %, trait a 10 %, texte 10.
+  Widget _badge(String label, Color accent) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: FigAccent.chipFill(accent),
+        border: Border.all(color: FigAccent.chipBorder(accent)),
+        borderRadius: BorderRadius.circular(FigRadius.pill),
+      ),
+      child: Text(label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: FigText.caption.copyWith(color: accent)),
+    );
+  }
+
+  String _statusLabel(AppL10n t, String status) {
+    final s = status.toUpperCase();
+    if (s.startsWith('TERMIN') || s == 'RESOLU') return t.statusResolved;
+    if (s == 'EN_COURS' || s == 'EN COURS') return t.statusInProgress;
+    return t.statusOpen;
+  }
 }
+
+/// Bleu des pastilles de categorie, propre aux cartes de signalement.
+const _reportBlue = Color(0xFF0088FF);
 
 // ─── Report detail ──────────────────────────────────────────────────────────
 class _ReportDetailScreen extends StatelessWidget {
