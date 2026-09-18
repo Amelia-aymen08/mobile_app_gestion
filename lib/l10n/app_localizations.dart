@@ -320,6 +320,60 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'S\'inscrire'**
   String get signUp;
+
+  /// No description provided for @onbTitle1.
+  ///
+  /// In fr, this message translates to:
+  /// **'QUI NOUS SOMMES'**
+  String get onbTitle1;
+
+  /// No description provided for @onbBody1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Des résidences d\'exception où le luxe, le confort et la vie moderne se rejoignent pour créer un art de vivre au-delà des attentes.'**
+  String get onbBody1;
+
+  /// No description provided for @onbTitle2.
+  ///
+  /// In fr, this message translates to:
+  /// **'CE QUE NOUS OFFRONS'**
+  String get onbTitle2;
+
+  /// No description provided for @onbBody2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Des actualités de la résidence aux paiements, réservations et demandes d\'intervention : tout ce dont vous avez besoin, réuni dans une expérience fluide.'**
+  String get onbBody2;
+
+  /// No description provided for @onbTitle3.
+  ///
+  /// In fr, this message translates to:
+  /// **'VIVRE L\'ESPRIT TRANQUILLE'**
+  String get onbTitle3;
+
+  /// No description provided for @onbBody3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Restez connecté, informé et pleinement maître de votre quotidien, avec des services haut de gamme pensés pour la vie moderne.'**
+  String get onbBody3;
+
+  /// No description provided for @skip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer'**
+  String get skip;
+
+  /// No description provided for @next.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
+  String get next;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commencer'**
+  String get getStarted;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

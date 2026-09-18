@@ -36,5 +36,14 @@
   "emailRequired": "Email address required",
   "passwordRequired": "Password required",
   "noAccountQuestion": "You are a resident and don't have an account yet?",
-  "signUp": "Sign up"
+  "signUp": "Sign up",
+  "onbTitle1": "WHO WE ARE",
+  "onbBody1": "Crafting exceptional residences where luxury, comfort, and modern living come together to create a lifestyle beyond expectations.",
+  "onbTitle2": "WHAT WE PROVIDE",
+  "onbBody2": "From residence updates to payments, bookings, and maintenance requests, everything you need is beautifully organized in one seamless experience.",
+  "onbTitle3": "EXPERIENCE PEACE OF MIND",
+  "onbBody3": "Stay connected, informed, and fully in control with premium services designed for modern living.",
+  "skip": "Skip",
+  "next": "Next",
+  "getStarted": "Get Started"
 }

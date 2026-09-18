@@ -1,6 +1,6 @@
 {
-    "name": "gestimou_mobile",
-    "short_name": "gestimou_mobile",
+    "name": "Gérance Immo Service",
+    "short_name": "Gérance Immo Service",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

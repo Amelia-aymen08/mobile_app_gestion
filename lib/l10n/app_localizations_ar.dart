@@ -148,4 +148,34 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get signUp => 'إنشاء حساب';
+
+  @override
+  String get onbTitle1 => 'من نحن';
+
+  @override
+  String get onbBody1 =>
+      'إقامات استثنائية يلتقي فيها الفخامة والراحة والحياة العصرية لتصنع أسلوب حياة يفوق التوقعات.';
+
+  @override
+  String get onbTitle2 => 'ما نقدّمه';
+
+  @override
+  String get onbBody2 =>
+      'من أخبار الإقامة إلى المدفوعات والحجوزات وطلبات الصيانة: كل ما تحتاجه مجتمعًا في تجربة واحدة سلسة.';
+
+  @override
+  String get onbTitle3 => 'عِش براحة بال';
+
+  @override
+  String get onbBody3 =>
+      'ابقَ على اتصال ومطّلعًا ومتحكّمًا بالكامل في يومياتك، مع خدمات راقية مصمّمة للحياة العصرية.';
+
+  @override
+  String get skip => 'تخطٍّ';
+
+  @override
+  String get next => 'التالي';
+
+  @override
+  String get getStarted => 'ابدأ';
 }

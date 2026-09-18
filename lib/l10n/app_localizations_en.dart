@@ -142,4 +142,34 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get signUp => 'Sign up';
+
+  @override
+  String get onbTitle1 => 'WHO WE ARE';
+
+  @override
+  String get onbBody1 =>
+      'Crafting exceptional residences where luxury, comfort, and modern living come together to create a lifestyle beyond expectations.';
+
+  @override
+  String get onbTitle2 => 'WHAT WE PROVIDE';
+
+  @override
+  String get onbBody2 =>
+      'From residence updates to payments, bookings, and maintenance requests, everything you need is beautifully organized in one seamless experience.';
+
+  @override
+  String get onbTitle3 => 'EXPERIENCE PEACE OF MIND';
+
+  @override
+  String get onbBody3 =>
+      'Stay connected, informed, and fully in control with premium services designed for modern living.';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get getStarted => 'Get Started';
 }

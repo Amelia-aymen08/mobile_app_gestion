@@ -88,7 +88,11 @@ class _GiTextFieldState extends State<GiTextField> {
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.all(FigSpace.xl),
+          // Figma : le champ mesure 52 de haut, padding 16 et texte de 20.
+          // Le trait de 1,5 n'y consomme aucune place, alors que dans Flutter
+          // une bordure decale le contenu. On retire donc 1,5 au padding pour
+          // retomber sur 16 depuis le bord exterieur, et sur 52 au total.
+          padding: const EdgeInsets.all(FigSpace.xl - 1.5),
           decoration: BoxDecoration(
             color: c.fieldBg,
             borderRadius: BorderRadius.circular(FigRadius.field),

@@ -24,8 +24,8 @@ class SystemNotificationService {
 
       const androidChannel = AndroidNotificationChannel(
         'gestimou_default',
-        'Gestimou',
-        description: 'Notifications Gestimou',
+        'Gérance Immo Service',
+        description: 'Notifications Gérance Immo Service',
         importance: Importance.high,
       );
 
@@ -72,8 +72,8 @@ class SystemNotificationService {
 
     const androidDetails = AndroidNotificationDetails(
       'gestimou_default',
-      'Gestimou',
-      channelDescription: 'Notifications Gestimou',
+      'Gérance Immo Service',
+      channelDescription: 'Notifications Gérance Immo Service',
       importance: Importance.high,
       priority: Priority.high,
     );
@@ -91,7 +91,7 @@ class SystemNotificationService {
         title: const Text('Notifications désactivées'),
         content: const Text(
           'Les notifications sont désactivées pour cette application.\n\n'
-          'Pour les recevoir, allez dans Paramètres > Applications > Gestimou > Notifications et activez-les.',
+          'Pour les recevoir, allez dans Paramètres > Applications > Gérance Immo Service > Notifications et activez-les.',
         ),
         actions: [
           TextButton(

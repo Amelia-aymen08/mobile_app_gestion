@@ -75,5 +75,14 @@
   "emailRequired": "Adresse e-mail requise",
   "passwordRequired": "Mot de passe requis",
   "noAccountQuestion": "Vous êtes résident et n'avez pas encore de compte ?",
-  "signUp": "S'inscrire"
+  "signUp": "S'inscrire",
+  "onbTitle1": "QUI NOUS SOMMES",
+  "onbBody1": "Des résidences d'exception où le luxe, le confort et la vie moderne se rejoignent pour créer un art de vivre au-delà des attentes.",
+  "onbTitle2": "CE QUE NOUS OFFRONS",
+  "onbBody2": "Des actualités de la résidence aux paiements, réservations et demandes d'intervention : tout ce dont vous avez besoin, réuni dans une expérience fluide.",
+  "onbTitle3": "VIVRE L'ESPRIT TRANQUILLE",
+  "onbBody3": "Restez connecté, informé et pleinement maître de votre quotidien, avec des services haut de gamme pensés pour la vie moderne.",
+  "skip": "Passer",
+  "next": "Suivant",
+  "getStarted": "Commencer"
 }

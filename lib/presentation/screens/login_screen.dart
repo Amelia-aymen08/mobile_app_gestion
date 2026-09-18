@@ -123,13 +123,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             // d'ou le 23.
                             const SizedBox(height: 23),
                             Center(
+                              // Le Figma reserve 87 x 98. Le logo Gerance Immo
+                              // Service est carre : on garde la hauteur du
+                              // Figma et on laisse la largeur suivre, plutot
+                              // que de rogner la marque pour tenir dans la
+                              // boite.
                               child: Image.asset(
                                 isDark
-                                    ? 'assets/figma/logo_dark.png'
-                                    : 'assets/figma/logo_light.png',
-                                width: 87,
+                                    ? 'assets/brand/gis_logo_vertical_dark.png'
+                                    : 'assets/brand/gis_logo_vertical_light.png',
                                 height: 98,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                               ),
                             ),
                             const SizedBox(height: 28),
@@ -282,13 +286,26 @@ class _Watermark extends StatelessWidget {
           angle: (isDark ? -24.56 : -12.82) * math.pi / 180,
           child: Opacity(
             opacity: 0.06,
-            child: Image.asset(
-              isDark
-                  ? 'assets/figma/logo_dark.png'
-                  : 'assets/figma/logo_light.png',
+            // Dans le Figma l'image deborde de sa boite vers le bas : seule la
+            // partie haute reste visible, c'est-a-dire le monogramme, sans le
+            // texte de la marque. On reproduit ce cadrage plutot que d'afficher
+            // le logo entier.
+            child: SizedBox(
               width: isDark ? 243.406 : 256.511,
               height: isDark ? 180.316 : 194.426,
-              fit: BoxFit.cover,
+              child: ClipRect(
+                child: OverflowBox(
+                  maxHeight: double.infinity,
+                  alignment: Alignment.topCenter,
+                  child: Image.asset(
+                    isDark
+                        ? 'assets/brand/gis_logo_vertical_dark.png'
+                        : 'assets/brand/gis_logo_vertical_light.png',
+                    width: isDark ? 243.406 : 256.511,
+                    fit: BoxFit.fitWidth,
+                  ),
+                ),
+              ),
             ),
           ),
         ),

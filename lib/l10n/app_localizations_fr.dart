@@ -143,4 +143,34 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get signUp => 'S\'inscrire';
+
+  @override
+  String get onbTitle1 => 'QUI NOUS SOMMES';
+
+  @override
+  String get onbBody1 =>
+      'Des résidences d\'exception où le luxe, le confort et la vie moderne se rejoignent pour créer un art de vivre au-delà des attentes.';
+
+  @override
+  String get onbTitle2 => 'CE QUE NOUS OFFRONS';
+
+  @override
+  String get onbBody2 =>
+      'Des actualités de la résidence aux paiements, réservations et demandes d\'intervention : tout ce dont vous avez besoin, réuni dans une expérience fluide.';
+
+  @override
+  String get onbTitle3 => 'VIVRE L\'ESPRIT TRANQUILLE';
+
+  @override
+  String get onbBody3 =>
+      'Restez connecté, informé et pleinement maître de votre quotidien, avec des services haut de gamme pensés pour la vie moderne.';
+
+  @override
+  String get skip => 'Passer';
+
+  @override
+  String get next => 'Suivant';
+
+  @override
+  String get getStarted => 'Commencer';
 }
