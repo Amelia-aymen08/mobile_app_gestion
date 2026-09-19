@@ -731,4 +731,56 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get saveLabel => 'Save';
+
+  @override
+  String get registerTitle => 'Create your account';
+
+  @override
+  String get registerSubtitle => 'Join your residence in a few fields.';
+
+  @override
+  String get firstNameLabel => 'First name';
+
+  @override
+  String get firstNameHint => 'Your first name';
+
+  @override
+  String get lastNameLabel => 'Last name';
+
+  @override
+  String get lastNameHint => 'Your last name';
+
+  @override
+  String get phoneHint => 'Your phone number';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get registrationSentTitle => 'Request sent';
+
+  @override
+  String get registrationSentBody =>
+      'Your registration request has been received. You will get your credentials by email once it is approved.';
+
+  @override
+  String get firstNameRequired => 'First name required';
+
+  @override
+  String get lastNameRequired => 'Last name required';
+
+  @override
+  String get phoneRequired => 'Phone number required';
+
+  @override
+  String get residenceRequired => 'Choose a residence';
+
+  @override
+  String get floorRequired => 'Choose a floor';
+
+  @override
+  String get apartmentRequired => 'Choose an apartment';
 }

@@ -736,4 +736,56 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get saveLabel => 'حفظ';
+
+  @override
+  String get registerTitle => 'أنشئ حسابك';
+
+  @override
+  String get registerSubtitle => 'انضم إلى إقامتك بملء بعض الحقول.';
+
+  @override
+  String get firstNameLabel => 'الاسم';
+
+  @override
+  String get firstNameHint => 'اسمك';
+
+  @override
+  String get lastNameLabel => 'اللقب';
+
+  @override
+  String get lastNameHint => 'لقبك';
+
+  @override
+  String get phoneHint => 'رقم هاتفك';
+
+  @override
+  String get alreadyHaveAccount => 'لديك حساب بالفعل؟';
+
+  @override
+  String get signIn => 'سجّل الدخول';
+
+  @override
+  String get registrationSentTitle => 'تم إرسال الطلب';
+
+  @override
+  String get registrationSentBody =>
+      'تم استلام طلب التسجيل. ستصلك بيانات الدخول عبر البريد بعد الموافقة.';
+
+  @override
+  String get firstNameRequired => 'الاسم مطلوب';
+
+  @override
+  String get lastNameRequired => 'اللقب مطلوب';
+
+  @override
+  String get phoneRequired => 'رقم الهاتف مطلوب';
+
+  @override
+  String get residenceRequired => 'اختر إقامة';
+
+  @override
+  String get floorRequired => 'اختر طابقًا';
+
+  @override
+  String get apartmentRequired => 'اختر شقة';
 }

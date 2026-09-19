@@ -732,4 +732,57 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get saveLabel => 'Enregistrer';
+
+  @override
+  String get registerTitle => 'Créer votre compte';
+
+  @override
+  String get registerSubtitle =>
+      'Rejoignez votre résidence en quelques champs.';
+
+  @override
+  String get firstNameLabel => 'Prénom';
+
+  @override
+  String get firstNameHint => 'Votre prénom';
+
+  @override
+  String get lastNameLabel => 'Nom';
+
+  @override
+  String get lastNameHint => 'Votre nom';
+
+  @override
+  String get phoneHint => 'Votre numéro de téléphone';
+
+  @override
+  String get alreadyHaveAccount => 'Vous avez déjà un compte ?';
+
+  @override
+  String get signIn => 'Connectez-vous';
+
+  @override
+  String get registrationSentTitle => 'Demande envoyée';
+
+  @override
+  String get registrationSentBody =>
+      'Votre demande d\'inscription a bien été reçue. Vous recevrez vos accès par e-mail après validation.';
+
+  @override
+  String get firstNameRequired => 'Prénom requis';
+
+  @override
+  String get lastNameRequired => 'Nom requis';
+
+  @override
+  String get phoneRequired => 'Numéro de téléphone requis';
+
+  @override
+  String get residenceRequired => 'Choisissez une résidence';
+
+  @override
+  String get floorRequired => 'Choisissez un étage';
+
+  @override
+  String get apartmentRequired => 'Choisissez un appartement';
 }

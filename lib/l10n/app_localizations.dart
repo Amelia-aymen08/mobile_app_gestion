@@ -1418,6 +1418,108 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Enregistrer'**
   String get saveLabel;
+
+  /// No description provided for @registerTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créer votre compte'**
+  String get registerTitle;
+
+  /// No description provided for @registerSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rejoignez votre résidence en quelques champs.'**
+  String get registerSubtitle;
+
+  /// No description provided for @firstNameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom'**
+  String get firstNameLabel;
+
+  /// No description provided for @firstNameHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre prénom'**
+  String get firstNameHint;
+
+  /// No description provided for @lastNameLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom'**
+  String get lastNameLabel;
+
+  /// No description provided for @lastNameHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre nom'**
+  String get lastNameHint;
+
+  /// No description provided for @phoneHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre numéro de téléphone'**
+  String get phoneHint;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous avez déjà un compte ?'**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @signIn.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connectez-vous'**
+  String get signIn;
+
+  /// No description provided for @registrationSentTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Demande envoyée'**
+  String get registrationSentTitle;
+
+  /// No description provided for @registrationSentBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre demande d\'inscription a bien été reçue. Vous recevrez vos accès par e-mail après validation.'**
+  String get registrationSentBody;
+
+  /// No description provided for @firstNameRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom requis'**
+  String get firstNameRequired;
+
+  /// No description provided for @lastNameRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom requis'**
+  String get lastNameRequired;
+
+  /// No description provided for @phoneRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Numéro de téléphone requis'**
+  String get phoneRequired;
+
+  /// No description provided for @residenceRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez une résidence'**
+  String get residenceRequired;
+
+  /// No description provided for @floorRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un étage'**
+  String get floorRequired;
+
+  /// No description provided for @apartmentRequired.
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisissez un appartement'**
+  String get apartmentRequired;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

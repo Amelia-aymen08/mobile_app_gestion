@@ -219,5 +219,22 @@
   "removeMemberTitle": "Remove this member?",
   "removeMemberBody": "{name} will no longer be listed in your household.",
   "nameRequired": "A name is required.",
-  "saveLabel": "Save"
+  "saveLabel": "Save",
+  "registerTitle": "Create your account",
+  "registerSubtitle": "Join your residence in a few fields.",
+  "firstNameLabel": "First name",
+  "firstNameHint": "Your first name",
+  "lastNameLabel": "Last name",
+  "lastNameHint": "Your last name",
+  "phoneHint": "Your phone number",
+  "alreadyHaveAccount": "Already have an account?",
+  "signIn": "Sign in",
+  "registrationSentTitle": "Request sent",
+  "registrationSentBody": "Your registration request has been received. You will get your credentials by email once it is approved.",
+  "firstNameRequired": "First name required",
+  "lastNameRequired": "Last name required",
+  "phoneRequired": "Phone number required",
+  "residenceRequired": "Choose a residence",
+  "floorRequired": "Choose a floor",
+  "apartmentRequired": "Choose an apartment"
 }

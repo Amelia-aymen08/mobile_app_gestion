@@ -328,5 +328,22 @@
         "type": "String"
       }
     }
-  }
+  },
+  "registerTitle": "Créer votre compte",
+  "registerSubtitle": "Rejoignez votre résidence en quelques champs.",
+  "firstNameLabel": "Prénom",
+  "firstNameHint": "Votre prénom",
+  "lastNameLabel": "Nom",
+  "lastNameHint": "Votre nom",
+  "phoneHint": "Votre numéro de téléphone",
+  "alreadyHaveAccount": "Vous avez déjà un compte ?",
+  "signIn": "Connectez-vous",
+  "registrationSentTitle": "Demande envoyée",
+  "registrationSentBody": "Votre demande d'inscription a bien été reçue. Vous recevrez vos accès par e-mail après validation.",
+  "firstNameRequired": "Prénom requis",
+  "lastNameRequired": "Nom requis",
+  "phoneRequired": "Numéro de téléphone requis",
+  "residenceRequired": "Choisissez une résidence",
+  "floorRequired": "Choisissez un étage",
+  "apartmentRequired": "Choisissez un appartement"
 }

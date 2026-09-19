@@ -219,5 +219,22 @@
   "removeMemberTitle": "إزالة هذا العضو؟",
   "removeMemberBody": "لن يظهر {name} ضمن أفراد أسرتك بعد الآن.",
   "nameRequired": "الاسم مطلوب.",
-  "saveLabel": "حفظ"
+  "saveLabel": "حفظ",
+  "registerTitle": "أنشئ حسابك",
+  "registerSubtitle": "انضم إلى إقامتك بملء بعض الحقول.",
+  "firstNameLabel": "الاسم",
+  "firstNameHint": "اسمك",
+  "lastNameLabel": "اللقب",
+  "lastNameHint": "لقبك",
+  "phoneHint": "رقم هاتفك",
+  "alreadyHaveAccount": "لديك حساب بالفعل؟",
+  "signIn": "سجّل الدخول",
+  "registrationSentTitle": "تم إرسال الطلب",
+  "registrationSentBody": "تم استلام طلب التسجيل. ستصلك بيانات الدخول عبر البريد بعد الموافقة.",
+  "firstNameRequired": "الاسم مطلوب",
+  "lastNameRequired": "اللقب مطلوب",
+  "phoneRequired": "رقم الهاتف مطلوب",
+  "residenceRequired": "اختر إقامة",
+  "floorRequired": "اختر طابقًا",
+  "apartmentRequired": "اختر شقة"
 }
