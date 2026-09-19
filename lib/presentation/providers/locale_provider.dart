@@ -13,10 +13,23 @@ class LocaleProvider with ChangeNotifier {
   Locale get locale => _locale;
   bool get isRtl => _locale.languageCode == 'ar';
 
+  /// Langues proposees par l'app.
+  static const supported = ['fr', 'en', 'ar'];
+
   Future<void> restore() async {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString(_prefsKey);
     if (code != null && code.isNotEmpty) _locale = Locale(code);
+
+    // AIDE AU TEST — a retirer avant la mise en production.
+    // Sur le web, ?lang=ar ouvre directement l'app dans cette langue, pour
+    // verifier la mise en page de droite a gauche sans passer par les
+    // reglages. Le choix est memorise comme s'il avait ete fait a la main.
+    final forced = Uri.base.queryParameters['lang'];
+    if (forced != null && supported.contains(forced)) {
+      _locale = Locale(forced);
+      await prefs.setString(_prefsKey, forced);
+    }
     notifyListeners();
   }
 

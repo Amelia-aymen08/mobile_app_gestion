@@ -167,7 +167,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     );
     if (!mounted) return;
     _fetchUnread();
-    if (picked != null && picked != _carouselPage && picked < _properties.length) {
+    if (picked != null &&
+        picked != _carouselPage &&
+        picked < _properties.length) {
       setState(() => _carouselPage = picked);
     }
   }
@@ -224,14 +226,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       currentIndex: _tab,
       onTap: (i) => setState(() => _tab = i),
       items: [
-        GiNavItem(
-            asset: 'assets/figma/icons/nav_home.svg',
-            label: t.navHome),
+        GiNavItem(asset: 'assets/figma/icons/nav_home.svg', label: t.navHome),
         GiNavItem(
             asset: 'assets/figma/icons/nav_notice.svg', label: t.navNotice),
         GiNavItem(
-            asset: 'assets/figma/icons/nav_report.svg',
-            label: t.navReport),
+            asset: 'assets/figma/icons/nav_report.svg', label: t.navReport),
         GiNavItem(
             asset: 'assets/figma/icons/nav_payment.svg', label: t.navPayment),
         GiNavItem(
@@ -368,8 +367,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                     borderRadius: BorderRadius.circular(FigRadius.chip),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.asset('assets/figma/avatar.png',
-                      fit: BoxFit.cover),
+                  child:
+                      Image.asset('assets/figma/avatar.png', fit: BoxFit.cover),
                 ),
               ),
             ],
@@ -488,15 +487,17 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   // AlignmentDirectional ne peut se resoudre sans le sens de
                   // lecture : sans ce parametre createShader echoue et le
                   // ShaderMask ne peint plus rien du tout.
-                ).createShader(rect,
-                    textDirection: Directionality.of(context)),
+                ).createShader(rect, textDirection: Directionality.of(context)),
                 child: asset != null
                     ? Image.asset(asset,
-                        fit: BoxFit.cover, alignment: Alignment.centerRight)
+                        fit: BoxFit.cover,
+                        alignment: AlignmentDirectional.centerEnd
+                            .resolve(Directionality.of(context)))
                     : (url != null
                         ? Image.network(url,
                             fit: BoxFit.cover,
-                            alignment: Alignment.centerRight,
+                            alignment: AlignmentDirectional.centerEnd
+                                .resolve(Directionality.of(context)),
                             errorBuilder: (_, __, ___) =>
                                 ColoredBox(color: c.card))
                         : ColoredBox(color: c.card)),
@@ -629,36 +630,36 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     // se dimensionner. Il donne aussi la meme hauteur aux deux cartes.
     return IntrinsicHeight(
       child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(
-          child: _statCard(
-            c,
-            asset: 'assets/figma/icons/payment_15.svg',
-            accent: FigAccent.amber,
-            label: t.nextPayment,
-            value: amount == null ? '—' : '$amount DZD',
-            sub: dueDate == null
-                ? ''
-                : t.paymentDeadline(_formatDate(dueDate)),
-            subColor: FigBrand.amber,
-            onTap: () => setState(() => _tab = 3),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _statCard(
+              c,
+              asset: 'assets/figma/icons/payment_15.svg',
+              accent: FigAccent.amber,
+              label: t.nextPayment,
+              value: amount == null ? '—' : '$amount DZD',
+              sub: dueDate == null
+                  ? ''
+                  : t.paymentDeadline(_formatDate(dueDate)),
+              subColor: FigBrand.amber,
+              onTap: () => setState(() => _tab = 3),
+            ),
           ),
-        ),
-        const SizedBox(width: FigSpace.lg),
-        Expanded(
-          child: _statCard(
-            c,
-            asset: 'assets/figma/icons/alert_16.svg',
-            accent: FigAccent.red,
-            label: t.reports,
-            value: t.reportsOpen(open),
-            sub: inProgress == 0 ? '' : t.reportsInProgress(inProgress),
-            subColor: FigAlert.error,
-            onTap: () => setState(() => _tab = 2),
+          const SizedBox(width: FigSpace.lg),
+          Expanded(
+            child: _statCard(
+              c,
+              asset: 'assets/figma/icons/alert_16.svg',
+              accent: FigAccent.red,
+              label: t.reports,
+              value: t.reportsOpen(open),
+              sub: inProgress == 0 ? '' : t.reportsInProgress(inProgress),
+              subColor: FigAlert.error,
+              onTap: () => setState(() => _tab = 2),
+            ),
           ),
-        ),
-      ],
+        ],
       ),
     );
   }
@@ -765,17 +766,17 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       final slice = actions.skip(i).take(columns).toList();
       rows.add(IntrinsicHeight(
         child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var j = 0; j < columns; j++) ...[
-            if (j > 0) const SizedBox(width: FigSpace.lg),
-            Expanded(
-              child: j < slice.length
-                  ? _quickTile(c, slice[j])
-                  : const SizedBox.shrink(),
-            ),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var j = 0; j < columns; j++) ...[
+              if (j > 0) const SizedBox(width: FigSpace.lg),
+              Expanded(
+                child: j < slice.length
+                    ? _quickTile(c, slice[j])
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ],
-        ],
         ),
       ));
       if (i + columns < actions.length) {
@@ -927,8 +928,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                               .copyWith(height: 1.2, color: c.textBody)),
                       const SizedBox(height: FigSpace.xs),
                       Text(
-                        t.currentResidenceIs(
-                            resName.isEmpty ? '—' : resName),
+                        t.currentResidenceIs(resName.isEmpty ? '—' : resName),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: FigText.label.copyWith(color: c.textMuted),
@@ -947,15 +947,14 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             rows: [
               GiSettingsRow(
                 icon: SvgPicture.asset('assets/figma/icons/settings_16.svg',
-                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.settingsTitle,
                 value: t.settingsSubtitle,
                 onTap: () => _push(const ResidentProfileScreen()),
               ),
               GiSettingsRow(
                 icon: SvgPicture.asset('assets/figma/icons/bell_16.svg',
-                    colorFilter:
-                        ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.notificationsTitle,
                 onTap: () => _push(const NotificationsScreen()),
                 trailing: Row(
@@ -983,13 +982,13 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               ),
               GiSettingsRow(
                 icon: SvgPicture.asset('assets/figma/icons/nav_home.svg',
-                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.myProperties,
                 onTap: () => _openSwitch(),
               ),
               GiSettingsRow(
                 icon: SvgPicture.asset('assets/figma/icons/household_16.svg',
-                      colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.householdMembers,
                 onTap: () => _push(const HouseholdMembersScreen()),
               ),
@@ -1008,8 +1007,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: FigAlert.error.withValues(alpha: 0.08),
-                border: Border.all(
-                    color: FigAlert.error.withValues(alpha: 0.30)),
+                border:
+                    Border.all(color: FigAlert.error.withValues(alpha: 0.30)),
                 borderRadius: BorderRadius.circular(FigRadius.cta),
               ),
               child: Row(
@@ -1090,12 +1089,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               ),
               const SizedBox(width: FigSpace.md),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: FigAccent.chipFill(FigAlert.success),
-                  border: Border.all(
-                      color: FigAccent.chipBorder(FigAlert.success)),
+                  border:
+                      Border.all(color: FigAccent.chipBorder(FigAlert.success)),
                   borderRadius: BorderRadius.circular(FigRadius.pill),
                 ),
                 child: Text(t.verified,
@@ -1105,8 +1103,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           ),
           const SizedBox(height: FigSpace.xl),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(FigRadius.card),
               border: Border.all(color: c.innerBorder),
@@ -1124,6 +1121,4 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       ),
     );
   }
-
 }
-

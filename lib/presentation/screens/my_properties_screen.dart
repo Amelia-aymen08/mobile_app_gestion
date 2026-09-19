@@ -94,6 +94,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final base = _api.baseUrl.replaceAll(RegExp(r'/api/?$'), '');
     return '$base/${raw.startsWith('/') ? raw.substring(1) : raw}';
   }
+
   // ─── Build ────────────────────────────────────────────────
   /// Bien mis en avant. Le Figma fait de cet ecran un selecteur : une carte
   /// porte la selection, le bouton du bas la confirme.
@@ -103,9 +104,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   /// mais l'ecran sert a choisir « sa » residence : nommer la personne rend
   /// le choix personnel plutot qu'administratif.
   String get _firstName {
-    final full = (context.read<AuthProvider>().user?['name'] ?? '')
-        .toString()
-        .trim();
+    final full =
+        (context.read<AuthProvider>().user?['name'] ?? '').toString().trim();
     if (full.isEmpty) return '';
     return full.split(RegExp(r'\s+')).first;
   }
@@ -155,16 +155,15 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                           decoration: BoxDecoration(
                             color: c.headerChipBg,
                             border: Border.all(color: c.headerChipBorder),
-                            borderRadius:
-                                BorderRadius.circular(FigRadius.chip),
+                            borderRadius: BorderRadius.circular(FigRadius.chip),
                           ),
                           child: Transform.flip(
-                            flipX: Directionality.of(context) ==
-                                TextDirection.rtl,
+                            flipX:
+                                Directionality.of(context) == TextDirection.rtl,
                             child: SvgPicture.asset(
                               'assets/figma/icons/back_14.svg',
-                              colorFilter: ColorFilter.mode(
-                                  c.textBody, BlendMode.srcIn),
+                              colorFilter:
+                                  ColorFilter.mode(c.textBody, BlendMode.srcIn),
                             ),
                           ),
                         ),
@@ -225,8 +224,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                 104),
                             children: [
                               Text(t.yourProperties(_properties.length),
-                                  style: FigText.field
-                                      .copyWith(height: 1.2, color: c.textMuted)),
+                                  style: FigText.field.copyWith(
+                                      height: 1.2, color: c.textMuted)),
                               const SizedBox(height: FigSpace.lg),
                               if (_properties.isEmpty)
                                 GiEmptyState(
@@ -236,8 +235,11 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                   message: _error ?? t.noPropertyYet,
                                 )
                               else
-                                for (var i = 0; i < _properties.length; i++) ...[
-                                  if (i > 0) const SizedBox(height: FigSpace.lg),
+                                for (var i = 0;
+                                    i < _properties.length;
+                                    i++) ...[
+                                  if (i > 0)
+                                    const SizedBox(height: FigSpace.lg),
                                   GiAppear(
                                     index: i,
                                     child: _residenceCard(
@@ -301,8 +303,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         : <String, dynamic>{};
     final resName = _residenceName(property);
     final address = (residence['address'] ?? '').toString();
-    final asset = residenceImageAsset(
-        id: _residenceId(property), name: resName);
+    final asset =
+        residenceImageAsset(id: _residenceId(property), name: resName);
     final url = _propertyImage(Map<String, dynamic>.from(property));
     final floor = (property['floor'] ?? '').toString();
     final surface = (property['surface'] ?? '').toString();
@@ -316,9 +318,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         curve: Curves.easeOut,
         height: FigSize.heroH,
         decoration: BoxDecoration(
-          color: isSelected
-              ? FigBrand.amber.withValues(alpha: 0.20)
-              : c.card,
+          color: isSelected ? FigBrand.amber.withValues(alpha: 0.20) : c.card,
           borderRadius: BorderRadius.circular(FigRadius.card),
           border: Border.all(
               color: isSelected
@@ -341,15 +341,17 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                     Colors.white.withValues(alpha: 0.78),
                   ],
                   stops: const [0.12, 0.42, 0.72, 1.0],
-                ).createShader(rect,
-                    textDirection: Directionality.of(context)),
+                ).createShader(rect, textDirection: Directionality.of(context)),
                 child: asset != null
                     ? Image.asset(asset,
-                        fit: BoxFit.cover, alignment: Alignment.centerRight)
+                        fit: BoxFit.cover,
+                        alignment: AlignmentDirectional.centerEnd
+                            .resolve(Directionality.of(context)))
                     : (url != null
                         ? Image.network(url,
                             fit: BoxFit.cover,
-                            alignment: Alignment.centerRight,
+                            alignment: AlignmentDirectional.centerEnd
+                                .resolve(Directionality.of(context)),
                             errorBuilder: (_, __, ___) =>
                                 ColoredBox(color: c.card))
                         : ColoredBox(color: c.card)),
@@ -398,7 +400,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                             child: Text(address,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: FigText.body.copyWith(color: c.textBody)),
+                                style:
+                                    FigText.body.copyWith(color: c.textBody)),
                           ),
                         ],
                       ),
@@ -442,8 +445,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   /// Bandeau du Figma : etage, surface et numero de lot, separes par un trait.
   /// La troisieme colonne porte le lot et non le statut, contrairement a la
   /// carte de l'accueil.
-  Widget _stats(GiColors c, AppL10n t, String floor, String surface,
-      String lot, bool isSelected) {
+  Widget _stats(GiColors c, AppL10n t, String floor, String surface, String lot,
+      bool isSelected) {
     Widget cell(String label, String value) => Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -496,4 +499,3 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     );
   }
 }
-
