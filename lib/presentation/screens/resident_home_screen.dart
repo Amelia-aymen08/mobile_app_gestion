@@ -643,7 +643,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   Widget _statsRow(GiColors c, AppL10n t, int open, int inProgress) {
-    final totalDue = Charges.totalDue(_charges);
+    // Meme chiffre et meme libelle que l'ecran des paiements : la carte
+    // annonce le prochain paiement, pas le cumul des impayes.
+    final nextPayment = Charges.nextPayment(_charges, _chargesSummary);
     final dueDate = Charges.nextDueDate(_charges, _chargesSummary);
 
     // IntrinsicHeight est indispensable : dans une ListView la hauteur est
@@ -658,9 +660,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               c,
               asset: 'assets/figma/icons/payment_15.svg',
               accent: FigAccent.amber,
-              label: totalDue > 0 ? t.nextPayment : t.paymentsUpToDate,
-              value: Charges.format(totalDue),
-              sub: totalDue > 0 && dueDate != null
+              label: nextPayment > 0 ? t.nextPayment : t.paymentsUpToDate,
+              value: Charges.format(nextPayment),
+              sub: nextPayment > 0 && dueDate != null
                   ? t.paymentDeadline(_formatDate(dueDate))
                   : '',
               subColor: FigBrand.amber,

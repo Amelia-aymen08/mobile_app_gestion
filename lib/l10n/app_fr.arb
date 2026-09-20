@@ -481,5 +481,6 @@
   "chatReadOnly": "Cette conversation est en lecture seule. L'administration vous répond ici.",
   "chatEmptyReadOnly": "Aucun message pour le moment. L'administration écrira ici si votre signalement demande une précision.",
   "annualCharge": "Charge annuelle",
-  "upToDateTitle": "À jour"
+  "upToDateTitle": "À jour",
+  "amountOwed": "Argent dû"
 }

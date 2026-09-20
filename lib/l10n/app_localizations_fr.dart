@@ -1069,4 +1069,7 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get upToDateTitle => 'À jour';
+
+  @override
+  String get amountOwed => 'Argent dû';
 }

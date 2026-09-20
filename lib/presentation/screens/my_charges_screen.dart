@@ -169,7 +169,9 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     // Montant annuel annonce par le serveur. Il ne se confond pas avec ce
     // qui reste du : c'est le cout de l'annee, rappele pour situer la
     // somme a regler.
-    final annual = int.tryParse((_summary['annualAmount'] ?? '').toString());
+    // Le serveur annonce le prochain paiement dans le resume ; a defaut,
+    // on prend la premiere charge impayee.
+    final nextPayment = Charges.nextPayment(_charges, _summary);
 
     return GiCard(
       child: Column(
@@ -220,36 +222,40 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
             ],
           ),
           const SizedBox(height: FigSpace.lg),
-          Text(t.totalDue, style: FigText.body.copyWith(color: c.textMuted)),
+          // Prochain paiement : le montant annonce par le serveur, avec son
+          // echeance. C'est la somme que le resident va devoir regler.
+          Text(t.nextPayment, style: FigText.body.copyWith(color: c.textMuted)),
           const SizedBox(height: FigSpace.xs),
-          Text(_formatAmount(totalDue),
+          Text(_formatAmount(nextPayment),
               style: FigText.greeting.copyWith(color: c.textBody)),
-          if (deadline != null && totalDue > 0) ...[
+          if (deadline != null) ...[
             const SizedBox(height: FigSpace.xs),
             Text(
               t.paymentDeadline(_formatDate(deadline.toIso8601String())),
               style: FigText.body.copyWith(color: stateColor),
             ),
           ],
-          if (annual != null && annual > 0) ...[
-            const SizedBox(height: FigSpace.lg),
-            Container(
-              padding: const EdgeInsets.only(top: FigSpace.lg),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: c.innerBorder)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(t.annualCharge,
-                        style: FigText.body.copyWith(color: c.textMuted)),
-                  ),
-                  Text(_formatAmount(annual),
-                      style: FigText.field.copyWith(color: c.textBody)),
-                ],
-              ),
+          // Argent du : ce qui reste impaye, tous mois confondus. Zero
+          // quand le resident est a jour.
+          const SizedBox(height: FigSpace.lg),
+          Container(
+            padding: const EdgeInsets.only(top: FigSpace.lg),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: c.innerBorder)),
             ),
-          ],
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(t.amountOwed,
+                      style: FigText.body.copyWith(color: c.textMuted)),
+                ),
+                Text(_formatAmount(totalDue),
+                    style: FigText.field.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: totalDue > 0 ? stateColor : c.textBody)),
+              ],
+            ),
+          ),
         ],
       ),
     );

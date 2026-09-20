@@ -80,6 +80,15 @@ class Charges {
         ?.toLocal();
   }
 
+  /// Prochain paiement annonce par le serveur. A defaut, le montant de la
+  /// premiere charge impayee.
+  static int nextPayment(List<dynamic> charges, Map summary) {
+    final announced = int.tryParse((summary['annualAmount'] ?? '').toString());
+    if (announced != null && announced > 0) return announced;
+    final list = due(charges);
+    return list.isEmpty ? 0 : amount(list.first);
+  }
+
   static String format(int value) =>
       '${NumberFormat.decimalPattern('fr_FR').format(value)} DZD';
 }

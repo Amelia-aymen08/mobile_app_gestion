@@ -1066,4 +1066,7 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get upToDateTitle => 'لا مستحقات';
+
+  @override
+  String get amountOwed => 'المبلغ المستحق';
 }

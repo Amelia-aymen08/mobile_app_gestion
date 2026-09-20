@@ -1067,4 +1067,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get upToDateTitle => 'Up to date';
+
+  @override
+  String get amountOwed => 'Amount owed';
 }

@@ -2048,6 +2048,12 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'À jour'**
   String get upToDateTitle;
+
+  /// No description provided for @amountOwed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Argent dû'**
+  String get amountOwed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
