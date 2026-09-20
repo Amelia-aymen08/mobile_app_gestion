@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../theme/residence_images.dart';
 import 'resident_create_ticket_screen.dart';
 import 'property_add_request_screen.dart';
+import '../l10n/l10n.dart';
 
 class MyPropertiesScreen extends StatefulWidget {
   const MyPropertiesScreen({super.key});
@@ -38,13 +39,13 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
       final email = (user?['email'] ?? '').toString();
       if (email.isEmpty) {
         setState(() {
-          _error = 'Utilisateur non identifié';
+          _error = 'Utilisateur non identifié'.tr;
           _loading = false;
         });
         return;
       }
       final results = await Future.wait([
-        _api.getMyProperties(email),
+        _api.getMyProperties(email, trustServer: true),
         _api.getMyCharges(),
       ]);
       if (!mounted) return;
@@ -130,8 +131,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
-        title: const Text('Mes Biens',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text('Mes Biens'.tr,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
@@ -159,7 +160,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                             onPressed: _fetchAll,
-                            child: const Text('Réessayer')),
+                            child: Text('Réessayer'.tr)),
                       ],
                     ),
                   )
@@ -182,9 +183,9 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                     size: 36, color: Colors.white),
                               ),
                               const SizedBox(height: 16),
-                              const Text('Aucun bien associé à votre compte.',
+                              Text('Aucun bien associé à votre compte.'.tr,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.white)),
+                                  style: const TextStyle(color: Colors.white)),
                               const SizedBox(height: 20),
                               ElevatedButton.icon(
                                 onPressed: () => Navigator.push(
@@ -193,7 +194,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                         builder: (_) =>
                                             const PropertyAddRequestScreen())),
                                 icon: const Icon(Icons.add_home_outlined),
-                                label: const Text('Demander ajout de bien'),
+                                label: Text('Demander ajout de bien'.tr),
                               ),
                             ],
                           ),
@@ -213,8 +214,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
 
     final aptNum = _aptNumber(property['lotNumber']);
     final title = aptNum.isNotEmpty
-        ? 'Appartement n° $aptNum'
-        : (property['title'] ?? 'Appartement').toString();
+        ? 'Appartement n° {apt}'.trp({'apt': aptNum})
+        : (property['title'] ?? 'Appartement'.tr).toString();
     final typology = (property['type'] ?? '').toString().trim().isNotEmpty
         ? property['type'].toString()
         : _typology(property['surface']);
@@ -277,11 +278,11 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                         child: _infoChip(Icons.layers_outlined,
-                            floor.isNotEmpty ? 'Étage $floor' : 'RDC')),
+                            floor.isNotEmpty ? 'Étage {floor}'.trp({'floor': floor}) : 'RDC'.tr)),
                     const SizedBox(width: 8),
                     Expanded(
                         child: _infoChip(Icons.grid_view_outlined,
-                            block.isNotEmpty ? 'Bloc $block' : 'N/A')),
+                            block.isNotEmpty ? 'Bloc {block}'.trp({'block': block}) : 'N/A'.tr)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -298,8 +299,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Charges',
-                            style: TextStyle(
+                        Text('Charges'.tr,
+                            style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF64748B),
@@ -309,14 +310,14 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                           children: [
                             if (actives > 0) ...[
                               _chargeChip(
-                                  '$actives active${actives > 1 ? 's' : ''}',
+                                  (actives > 1 ? '{n} actives' : '{n} active').trp({'n': actives}),
                                   const Color(0xFFDC2626),
                                   Icons.radio_button_unchecked),
                               const SizedBox(width: 8),
                             ],
                             if (soldees > 0)
                               _chargeChip(
-                                  '$soldees soldée${soldees > 1 ? 's' : ''}',
+                                  (soldees > 1 ? '{n} soldées' : '{n} soldée').trp({'n': soldees}),
                                   const Color(0xFF15803D),
                                   Icons.check_circle_outline),
                           ],
@@ -334,12 +335,12 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                       color: const Color(0xFF15803D).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(children: [
-                      Icon(Icons.check_circle_outline,
+                    child: Row(children: [
+                      const Icon(Icons.check_circle_outline,
                           size: 14, color: Color(0xFF15803D)),
-                      SizedBox(width: 6),
-                      Text('Aucune charge en cours',
-                          style: TextStyle(
+                      const SizedBox(width: 6),
+                      Text('Aucune charge en cours'.tr,
+                          style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF15803D),
                               fontWeight: FontWeight.w600)),
@@ -382,12 +383,12 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                       );
                       if (result == true && context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Ticket envoyé.')),
+                          SnackBar(content: Text('Ticket envoyé.'.tr)),
                         );
                       }
                     },
                     icon: const Icon(Icons.report_problem_outlined, size: 18),
-                    label: const Text('Signaler un problème'),
+                    label: Text('Signaler un problème'.tr),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFB91C1C),
                       foregroundColor: Colors.white,
@@ -416,13 +417,13 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final String label;
     final Color color;
     if (total == 0) {
-      label = 'À jour';
+      label = 'À jour'.tr;
       color = const Color(0xFF15803D);
     } else if (actives == 0) {
-      label = 'À jour';
+      label = 'À jour'.tr;
       color = const Color(0xFF15803D);
     } else {
-      label = 'Impayé';
+      label = 'Impayé'.tr;
       color = const Color(0xFFDC2626);
     }
     return Container(

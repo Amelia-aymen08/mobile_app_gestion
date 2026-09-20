@@ -7,7 +7,8 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../../data/api_service.dart';
 import 'resident_create_ticket_screen.dart';
-import 'chat_screen.dart';
+import 'resident_ticket_detail_screen.dart';
+import '../l10n/l10n.dart';
 
 class ResidentTicketsScreen extends StatefulWidget {
   const ResidentTicketsScreen({super.key});
@@ -51,15 +52,6 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
     }
   }
 
-  String _fmtDateTime(dynamic v) {
-    try {
-      if (v == null) return '';
-      return DateFormat('dd/MM/yyyy · HH:mm').format(DateTime.parse(v.toString()).toLocal());
-    } catch (_) {
-      return v?.toString() ?? '';
-    }
-  }
-
   String _ticketTitle(dynamic ticket) {
     final raw = (ticket is Map ? ticket['title'] : '').toString();
     switch (raw) {
@@ -83,7 +75,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
       final user = context.read<AuthProvider>().user;
       final email = (user?['email'] ?? '').toString();
       if (email.isNotEmpty) {
-        final props = await _api.getMyProperties(email);
+        final props = await _api.getMyProperties(email, trustServer: true);
         if (props.isNotEmpty && props.first is Map) {
           _property = Map<String, dynamic>.from(props.first as Map);
           _residenceId = (_property!['residenceId'] ?? '').toString();
@@ -91,7 +83,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
       }
       await Future.wait([_fetchMy(), _fetchCopro()]);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur : {error}'.trp({'error': e}))));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -118,7 +110,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
   Future<void> _createNew() async {
     if (_property == null) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Aucun bien associé à votre compte.')));
+          .showSnackBar(SnackBar(content: Text('Aucun bien associé à votre compte.'.tr)));
       return;
     }
     final created = await Navigator.push<bool>(context,
@@ -186,18 +178,13 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
     return true;
   }
 
-  void _openDetails(dynamic ticket) {
+  Future<void> _openDetails(dynamic ticket) async {
     if (ticket is! Map) return;
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => _ReportDetailScreen(
-        ticket: Map<String, dynamic>.from(ticket),
-        statusColor: _statusColor((ticket['status'] ?? '').toString()),
-        ref: _ref(ticket),
-        title: _ticketTitle(ticket),
-        dateLabel: _fmt(ticket['createdAt']),
-        dateTimeLabel: _fmtDateTime(ticket['createdAt']),
-      ),
-    ));
+    await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => ResidentTicketDetailScreen(
+                ticket: Map<String, dynamic>.from(ticket))));
   }
 
   // ─── List builder ─────────────────────────────────────────
@@ -205,7 +192,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
     final filtered = tickets.whereType<Map>().where(_matchesFilter).toList();
     if (filtered.isEmpty) {
       return Center(
-        child: Text('Aucun signalement.', style: TextStyle(color: muted, fontSize: 15)),
+        child: Text('Aucun signalement.'.tr, style: TextStyle(color: muted, fontSize: 15)),
       );
     }
     return RefreshIndicator(
@@ -246,17 +233,17 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                               color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(category,
+                            child: Text(category.tr,
                                 style: const TextStyle(
                                     color: Color(0xFF3B82F6), fontSize: 11, fontWeight: FontWeight.w700)),
                           ),
                         const Spacer(),
-                        const Row(
+                        Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Lire la suite',
-                                style: TextStyle(color: brandAmber, fontWeight: FontWeight.w700, fontSize: 12)),
-                            Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
+                            Text('Lire la suite'.tr,
+                                style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w700, fontSize: 12)),
+                            const Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
                           ],
                         ),
                       ],
@@ -278,7 +265,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(title,
+                              Text(title.tr,
                                   style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
                               if (desc.isNotEmpty) ...[
                                 const SizedBox(height: 4),
@@ -309,7 +296,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: sc.withValues(alpha: 0.4)),
                           ),
-                          child: Text(status, style: TextStyle(color: sc, fontSize: 11, fontWeight: FontWeight.w700)),
+                          child: Text(status.tr, style: TextStyle(color: sc, fontSize: 11, fontWeight: FontWeight.w700)),
                         ),
                       ],
                     ),
@@ -352,8 +339,8 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Signalements', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                        Text('Suivez vos demandes de maintenance', style: TextStyle(color: muted, fontSize: 12)),
+                        Text('Signalements'.tr, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
+                        Text('Suivez vos demandes de maintenance'.tr, style: TextStyle(color: muted, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -389,7 +376,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                         unselectedLabelColor: muted,
                         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                        tabs: const [Tab(text: 'Mes signalements'), Tab(text: 'Copropriété')],
+                        tabs: [Tab(text: 'Mes signalements'.tr), Tab(text: 'Copropriété'.tr)],
                       ),
                     ),
                   ),
@@ -401,11 +388,11 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  _chip('Tout', 'all', dark, fg, muted),
+                  _chip('Tout'.tr, 'all', dark, fg, muted),
                   const SizedBox(width: 8),
-                  _chip('En cours', 'progress', dark, fg, muted),
+                  _chip('En cours'.tr, 'progress', dark, fg, muted),
                   const SizedBox(width: 8),
-                  _chip('Terminé', 'done', dark, fg, muted),
+                  _chip('Terminé'.tr, 'done', dark, fg, muted),
                 ],
               ),
             ),
@@ -445,186 +432,4 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
       ),
     );
   }
-}
-
-// ─── Report detail ──────────────────────────────────────────────────────────
-class _ReportDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> ticket;
-  final Color statusColor;
-  final String ref;
-  final String title;
-  final String dateLabel;
-  final String dateTimeLabel;
-
-  const _ReportDetailScreen({
-    required this.ticket,
-    required this.statusColor,
-    required this.ref,
-    required this.title,
-    required this.dateLabel,
-    required this.dateTimeLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final fg = dark ? Colors.white : brandNavy;
-    final muted = dark ? darkMuted : const Color(0xFF6B7280);
-    final status = (ticket['status'] ?? '').toString();
-    final desc = (ticket['description'] ?? '').toString();
-    final category = (ticket['category'] ?? '').toString();
-    final priority = (ticket['priority'] ?? '').toString();
-    final location = (ticket['location'] ?? '').toString();
-    final rejection = (ticket['rejectionReason'] ?? '').toString();
-    final attachmentUrl = (ticket['attachmentUrl'] ?? '').toString();
-
-    return Scaffold(
-      backgroundColor: dark ? darkSurface : brandCream,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          children: [
-            Row(
-              children: [
-                _iconBtn(Icons.arrow_back_rounded, dark, fg, () => Navigator.pop(context)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Détail du signalement',
-                          style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
-                      if (dateLabel.isNotEmpty)
-                        Text(dateLabel, style: TextStyle(color: muted, fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                        child: Text(status,
-                            style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
-                      ),
-                      const Spacer(),
-                      if (ref.isNotEmpty) Text(ref, style: TextStyle(color: muted, fontSize: 12)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(title, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
-                  if (desc.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(desc, style: TextStyle(color: muted, fontSize: 14, height: 1.5)),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: Column(
-                children: [
-                  if (dateTimeLabel.isNotEmpty) _row('Signalé le', dateTimeLabel, fg, muted, dark),
-                  if (category.isNotEmpty) _row('Catégorie', category, fg, muted, dark),
-                  if (priority.isNotEmpty) _row('Priorité', priority, fg, muted, dark),
-                  if (location.isNotEmpty) _row('Lieu', location, fg, muted, dark, last: true),
-                ],
-              ),
-            ),
-            if (attachmentUrl.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Text('Pièce jointe', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(attachmentUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                          height: 100,
-                          color: dark ? darkCard : Colors.white,
-                          alignment: Alignment.center,
-                          child: Icon(Icons.insert_drive_file_outlined, color: muted),
-                        )),
-              ),
-            ],
-            if (rejection.isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDC2626).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.block_rounded, color: Color(0xFFDC2626), size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text('Motif de rejet : $rejection',
-                          style: const TextStyle(
-                              color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w600)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-                label: const Text('Report Chat'),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChatScreen(
-                      ticketId: (ticket['id'] ?? '').toString(),
-                      title: 'Report Chat',
-                      subtitle: title,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, Color fg, Color muted, bool dark, {bool last = false}) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          border: last
-              ? null
-              : Border(bottom: BorderSide(color: dark ? darkBorder : const Color(0xFFF0EBDD))),
-        ),
-        child: Row(
-          children: [
-            Text(label, style: TextStyle(color: muted, fontSize: 13)),
-            const Spacer(),
-            Text(value, style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w700)),
-          ],
-        ),
-      );
-
-  Widget _iconBtn(IconData icon, bool dark, Color fg, VoidCallback onTap) => Container(
-        decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
-        child: IconButton(icon: Icon(icon, color: fg), onPressed: onTap),
-      );
 }

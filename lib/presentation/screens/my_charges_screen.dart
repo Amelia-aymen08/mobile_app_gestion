@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 class MyChargesScreen extends StatefulWidget {
   const MyChargesScreen({super.key});
@@ -44,7 +45,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = e.toString().replaceAll('Exception: ', '').tr;
         _loading = false;
       });
     }
@@ -55,11 +56,17 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
   ];
 
+  /// Month name in the current language; abbreviated (3 letters) for latin scripts.
+  String _monthName(int month, {bool short = false}) {
+    final name = _months[month - 1].tr;
+    return short && L10n.current != AppLang.ar ? name.substring(0, 3) : name;
+  }
+
   String _formatDate(dynamic value) {
     if (value == null) return '';
     try {
       final d = DateTime.parse(value.toString()).toLocal();
-      return '${d.day} ${_months[d.month - 1].substring(0, 3)} ${d.year}';
+      return '${d.day} ${_monthName(d.month, short: true)} ${d.year}';
     } catch (_) {
       return value.toString();
     }
@@ -69,9 +76,9 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     final raw = (charge['periodEnd'] ?? charge['periodStart'] ?? '').toString();
     try {
       final d = DateTime.parse(raw).toLocal();
-      return '${_months[d.month - 1]} ${d.year}';
+      return '${_monthName(d.month)} ${d.year}';
     } catch (_) {
-      return (charge['description'] ?? 'Charge').toString();
+      return (charge['description'] ?? 'Charge'.tr).toString();
     }
   }
 
@@ -136,8 +143,8 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Charges', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                                  Text('Suivez vos charges de copropriété', style: TextStyle(color: muted, fontSize: 12)),
+                                  Text('Charges'.tr, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
+                                  Text('Suivez vos charges de copropriété'.tr, style: TextStyle(color: muted, fontSize: 12)),
                                 ],
                               ),
                             ),
@@ -160,9 +167,10 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    message.isNotEmpty
-                                        ? message
-                                        : "Votre compte est en attente d'activation par l'administration.",
+                                    (message.isNotEmpty
+                                            ? message
+                                            : "Votre compte est en attente d'activation par l'administration.")
+                                        .tr,
                                     style: const TextStyle(color: Color(0xFFB45309), fontWeight: FontWeight.w600, fontSize: 13),
                                   ),
                                 ),
@@ -180,7 +188,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Text('MOIS EN COURS',
+                                  Text('MOIS EN COURS'.tr,
                                       style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
                                   const Spacer(),
                                   if (currentDue != null)
@@ -188,36 +196,36 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
                                           color: brandAmber.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(20)),
-                                      child: const Text('Dû',
-                                          style: TextStyle(color: brandAmber, fontSize: 11, fontWeight: FontWeight.w700)),
+                                      child: Text('Dû'.tr,
+                                          style: const TextStyle(color: brandAmber, fontSize: 11, fontWeight: FontWeight.w700)),
                                     ),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                currentDue != null ? _monthLabel(currentDue) : 'À jour',
+                                currentDue != null ? _monthLabel(currentDue) : 'À jour'.tr,
                                 style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18),
                               ),
                               Divider(height: 26, color: dark ? darkBorder : const Color(0xFFF0EBDD)),
                               if (currentDue != null) ...[
-                                Text('MONTANT DÛ',
+                                Text('MONTANT DÛ'.tr,
                                     style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
                                 const SizedBox(height: 4),
                                 Text(_formatAmount(_amountValue(currentDue)),
                                     style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w900, fontSize: 26)),
                                 const SizedBox(height: 4),
                                 if (currentDue['periodEnd'] != null)
-                                  Text('Échéance : ${_formatDate(currentDue['periodEnd'])}',
+                                  Text('Échéance : {date}'.trp({'date': _formatDate(currentDue['periodEnd'])}),
                                       style: const TextStyle(color: brandAmber, fontSize: 12, fontWeight: FontWeight.w600)),
                               ] else
-                                Text('Aucune charge en attente de paiement.',
+                                Text('Aucune charge en attente de paiement.'.tr,
                                     style: TextStyle(color: muted, fontSize: 13)),
                             ],
                           ),
                         ),
                         const SizedBox(height: 22),
 
-                        Text('Historique des paiements',
+                        Text('Historique des paiements'.tr,
                             style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
                         const SizedBox(height: 12),
 
@@ -247,7 +255,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                                           children: [
                                             Text(_monthLabel(c).isNotEmpty
                                                     ? '${_monthLabel(c)[0].toUpperCase()}${_monthLabel(c).substring(1)}'
-                                                    : 'Charge',
+                                                    : 'Charge'.tr,
                                                 style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 14)),
                                             if (c['periodEnd'] != null)
                                               Text(_formatDate(c['periodEnd']),
@@ -284,9 +292,9 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
             child: Icon(Icons.receipt_long_outlined, size: 44, color: dark ? darkBorder : const Color(0xFFE2DDCF)),
           ),
           const SizedBox(height: 18),
-          Text('Aucun paiement', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
+          Text('Aucun paiement'.tr, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
           const SizedBox(height: 6),
-          Text("Vous n'avez encore effectué aucun paiement de charges.",
+          Text("Vous n'avez encore effectué aucun paiement de charges.".tr,
               textAlign: TextAlign.center, style: TextStyle(color: muted, fontSize: 13)),
         ],
       ),

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -70,7 +71,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Erreur: $e')));
+            .showSnackBar(SnackBar(content: Text('Erreur : {error}'.trp({'error': e}))));
       }
     }
   }
@@ -123,7 +124,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (!mounted) return;
       setState(() => _isOptLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur chargement: $e')));
+          SnackBar(content: Text('Erreur de chargement : {error}'.trp({'error': e}))));
     }
   }
 
@@ -165,17 +166,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20)),
-            title: const Text('Demande envoyée'),
-            content: const Text(
-                'Votre demande d\'inscription a été reçue. '
-                'Vous recevrez vos accès par email après validation.'),
+            title: Text('Demande envoyée'.tr),
+            content: Text(
+                'Votre demande d\'inscription a été reçue. Vous recevrez vos accès par email après validation.'.tr),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(ctx).pop();
                   Navigator.of(context).pop();
                 },
-                child: const Text('OK'),
+                child: Text('OK'.tr),
               )
             ],
           ),
@@ -188,13 +188,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           builder: (ctx) => AlertDialog(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20)),
-            title: const Text('Erreur'),
+            title: Text('Erreur'.tr),
             content: SingleChildScrollView(
-                child: Text(e.toString().replaceAll('Exception: ', ''))),
+                child: Text(e.toString().replaceAll('Exception: ', '').tr)),
             actions: [
               TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Fermer'))
+                  child: Text('Fermer'.tr))
             ],
           ),
         );
@@ -233,9 +233,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(width: 14),
-                        const Text(
-                          'GÉRANCE IMMO\nSERVICE',
-                          style: TextStyle(
+                        Text('GÉRANCE IMMO\nSERVICE'.tr,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
@@ -274,8 +273,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                     color: brandNavy, size: 24),
                               ),
                               const SizedBox(width: 12),
-                              const Text('Inscription',
-                                  style: TextStyle(
+                              Text('Inscription'.tr,
+                                  style: const TextStyle(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w800,
                                       color: brandNavy)),
@@ -289,7 +288,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   controller: _firstNameCtrl,
                                   textInputAction: TextInputAction.next,
                                   decoration:
-                                      const InputDecoration(hintText: 'Prénom'),
+                                      InputDecoration(hintText: 'Prénom'.tr),
                                   validator: (v) =>
                                       v?.isEmpty ?? true ? 'Requis' : null,
                                 ),
@@ -300,7 +299,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   controller: _lastNameCtrl,
                                   textInputAction: TextInputAction.next,
                                   decoration:
-                                      const InputDecoration(hintText: 'Nom'),
+                                      InputDecoration(hintText: 'Nom'.tr),
                                   validator: (v) =>
                                       v?.isEmpty ?? true ? 'Requis' : null,
                                 ),
@@ -313,12 +312,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               decoration:
-                                  const InputDecoration(hintText: 'E-mail...'),
+                                  InputDecoration(hintText: 'E-mail...'.tr),
                               validator: (v) {
                                 final val = (v ?? '').trim();
-                                if (val.isEmpty) return 'Requis';
+                                if (val.isEmpty) return 'Requis'.tr;
                                 if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(val)) {
-                                  return 'Email invalide';
+                                  return 'Email invalide'.tr;
                                 }
                                 return null;
                               },
@@ -329,8 +328,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               controller: _phoneCtrl,
                               keyboardType: TextInputType.phone,
                               textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
-                                  hintText: 'Numéro de téléphone'),
+                              decoration: InputDecoration(
+                                  hintText: 'Numéro de téléphone'.tr),
                               validator: (v) =>
                                   v?.isEmpty ?? true ? 'Requis' : null,
                             ),
@@ -340,8 +339,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             DropdownButtonFormField<String>(
                               value: _selectedResidence,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                  hintText: 'Résidence'),
+                              decoration: InputDecoration(
+                                  hintText: 'Résidence'.tr),
                               items: _residences
                                   .map((r) => DropdownMenuItem(
                                       value: r['id'] as String,
@@ -355,8 +354,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               },
                               validator: (v) => v == null ? 'Requis' : null,
                               hint: _isLoading
-                                  ? const Text('Chargement...')
-                                  : const Text('Sélectionner une résidence'),
+                                  ? Text('Chargement...'.tr)
+                                  : Text('Sélectionner une résidence'.tr),
                             ),
                             const SizedBox(height: 14),
 
@@ -364,13 +363,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             DropdownButtonFormField<String>(
                               value: _selectedFloor,
                               isExpanded: true,
-                              decoration: const InputDecoration(hintText: 'Étage'),
+                              decoration: InputDecoration(hintText: 'Étage'.tr),
                               items: _floors
                                   .map((f) => DropdownMenuItem(
                                       value: f,
                                       child: Text(f.isEmpty
-                                          ? 'Rez-de-chaussée'
-                                          : 'Étage $f')))
+                                          ? 'Rez-de-chaussée'.tr
+                                          : 'Étage {floor}'.trp({'floor': f}))))
                                   .toList(),
                               onChanged: _isOptLoading
                                   ? null
@@ -383,10 +382,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       }),
                               validator: (v) => v == null ? 'Requis' : null,
                               hint: _selectedResidence == null
-                                  ? const Text('Sélectionner une résidence d\'abord')
+                                  ? Text('Sélectionner une résidence d\'abord'.tr)
                                   : _isOptLoading
-                                      ? const Text('Chargement...')
-                                      : const Text('Sélectionner un étage'),
+                                      ? Text('Chargement...'.tr)
+                                      : Text('Sélectionner un étage'.tr),
                             ),
                             const SizedBox(height: 14),
 
@@ -395,14 +394,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               value: _selectedUnitId,
                               isExpanded: true,
                               decoration:
-                                  const InputDecoration(hintText: 'Appartement'),
+                                  InputDecoration(hintText: 'Appartement'.tr),
                               items: _unitsForFloor.map((u) {
                                 final id  = (u['id'] ?? '').toString();
                                 final apt = (u['apartmentNumber'] ?? '').toString();
                                 final blk = (u['block'] ?? '').toString();
                                 final lbl = blk.isNotEmpty
-                                    ? 'N° $apt - Bloc $blk'
-                                    : 'N° $apt';
+                                    ? 'N° {apt} - Bloc {block}'.trp({'apt': apt, 'block': blk})
+                                    : 'N° {apt}'.trp({'apt': apt});
                                 return DropdownMenuItem(
                                     value: id, child: Text(lbl));
                               }).toList(),
@@ -419,12 +418,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       }),
                               validator: (v) => (v == null || v.isEmpty) ? 'Requis' : null,
                               hint: _selectedFloor == null
-                                  ? const Text('Sélectionner un étage d\'abord')
+                                  ? Text('Sélectionner un étage d\'abord'.tr)
                                   : _isOptLoading
-                                      ? const Text('Chargement...')
+                                      ? Text('Chargement...'.tr)
                                       : _unitsForFloor.isEmpty
-                                          ? const Text('Aucun appartement libre')
-                                          : const Text('Sélectionner un appartement'),
+                                          ? Text('Aucun appartement libre'.tr)
+                                          : Text('Sélectionner un appartement'.tr),
                             ),
                             const SizedBox(height: 24),
 
@@ -436,23 +435,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                       width: 20,
                                       child: CircularProgressIndicator(
                                           color: Colors.white, strokeWidth: 2))
-                                  : const Text('S\'inscrire'),
+                                  : Text('S\'inscrire'.tr),
                             ),
                             const SizedBox(height: 16),
 
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text(
-                                  'Vous avez déjà un compte, ',
-                                  style: TextStyle(
+                                Text('Vous avez déjà un compte, '.tr,
+                                  style: const TextStyle(
                                       color: Color(0xFF4B5563), fontSize: 13),
                                 ),
                                 GestureDetector(
                                   onTap: () => Navigator.pop(context),
-                                  child: const Text(
-                                    'connectez-vous.',
-                                    style: TextStyle(
+                                  child: Text('connectez-vous.'.tr,
+                                    style: const TextStyle(
                                       color: brandAmber,
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import '../../data/api_service.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 
 class ResidentCreateTicketScreen extends StatefulWidget {
@@ -27,7 +28,19 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
   String? _selectedSubCategory;
 
   String _priority = 'Moyenne';
-  PlatformFile? _attachment;
+
+  /// Up to 4 files, 10 MB in total (the backend enforces the same limits).
+  static const int _maxFiles = 4;
+  static const int _maxTotalBytes = 10 * 1024 * 1024;
+  final List<PlatformFile> _attachments = [];
+
+  int get _attachmentsBytes => _attachments.fold(0, (sum, f) => sum + f.size);
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes o';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} Ko';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+  }
 
   String _apartmentNumberFromLotNumber(dynamic lotNumber) {
     final raw = (lotNumber ?? '').toString().trim();
@@ -88,7 +101,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur catégories: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur catégories : {error}'.trp({'error': e}))));
     }
   }
 
@@ -106,7 +119,16 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     return [];
   }
 
-  String _locationLabel() {
+  /// [localized] = false builds the French text saved on the ticket (data seen
+  /// by the staff); true builds the one shown on screen in the current language.
+  String _locationLabel({bool localized = false}) {
+    String fill(String template, Map<String, String> params) {
+      if (localized) return template.trp(params);
+      var out = template;
+      params.forEach((k, v) => out = out.replaceAll('{$k}', v));
+      return out;
+    }
+
     final p = widget.property;
     final apt = _apartmentNumberFromLotNumber(p['lotNumber']);
     final block = (p['block'] ?? '').toString().trim();
@@ -115,46 +137,67 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
 
     final parts = <String>[
       if (residenceName.isNotEmpty) residenceName,
-      if (apt.isNotEmpty) 'Appartement n° $apt',
-      if (block.isNotEmpty) 'Bloc $block',
-      if (floor.isNotEmpty) 'Étage $floor',
+      if (apt.isNotEmpty) fill('Appartement n° {apt}', {'apt': apt}),
+      if (block.isNotEmpty) fill('Bloc {block}', {'block': block}),
+      if (floor.isNotEmpty) fill('Étage {floor}', {'floor': floor}),
     ];
     return parts.join(' • ');
   }
 
-  Future<void> _pickAttachment() async {
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _pickAttachments() async {
+    if (_attachments.length >= _maxFiles) {
+      _snack('{max} pièces jointes maximum.'.trp({'max': _maxFiles}));
+      return;
+    }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx'],
+      allowMultiple: true,
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
-    final picked = result.files.first;
-    if (picked.bytes == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Impossible de lire le fichier sélectionné.')));
-      return;
+
+    final next = [..._attachments];
+    var total = _attachmentsBytes;
+    String? problem;
+    for (final picked in result.files) {
+      if (picked.bytes == null) {
+        problem = 'Impossible de lire le fichier sélectionné.'.tr;
+        continue;
+      }
+      if (_mimeTypeForFilename(picked.name) == null) {
+        problem = 'Type de fichier non supporté.'.tr;
+        continue;
+      }
+      if (next.length >= _maxFiles) {
+        problem = '{max} pièces jointes maximum.'.trp({'max': _maxFiles});
+        break;
+      }
+      if (total + picked.size > _maxTotalBytes) {
+        problem = 'Les pièces jointes ne doivent pas dépasser 10 Mo au total.'.tr;
+        continue;
+      }
+      next.add(picked);
+      total += picked.size;
     }
-    if (picked.size > 2 * 1024 * 1024) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fichier trop grand (max 2 Mo).')));
-      return;
-    }
-    final mime = _mimeTypeForFilename(picked.name);
-    if (mime == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Type de fichier non supporté.')));
-      return;
-    }
-    setState(() => _attachment = picked);
+    setState(() {
+      _attachments
+        ..clear()
+        ..addAll(next);
+    });
+    if (problem != null) _snack(problem);
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null || _selectedSubCategory == null) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Choisissez une catégorie et un type de problème.')));
+          .showSnackBar(SnackBar(content: Text('Choisissez une catégorie et un type de problème.'.tr)));
       return;
     }
 
@@ -176,26 +219,38 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
 
       final created = await _api.createTicket(payload);
 
-      if (_attachment != null && _attachment!.bytes != null) {
-        final mime = _mimeTypeForFilename(_attachment!.name);
-        if (mime != null) {
-          await _api.uploadTicketAttachment(
+      // The ticket exists at this point: a failed upload must not lose it.
+      String? uploadError;
+      if (_attachments.isNotEmpty) {
+        try {
+          await _api.uploadTicketAttachments(
             ticketId: created['id'].toString(),
-            bytes: _attachment!.bytes!,
-            filename: _attachment!.name,
-            mimeType: mime,
+            files: [
+              for (final f in _attachments)
+                if (f.bytes != null && _mimeTypeForFilename(f.name) != null)
+                  UploadFile(
+                      bytes: f.bytes!,
+                      filename: f.name,
+                      mimeType: _mimeTypeForFilename(f.name)!),
+            ],
           );
+        } catch (e) {
+          uploadError = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
         }
       }
 
       if (!mounted) return;
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signalement envoyé.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(uploadError == null
+              ? 'Signalement envoyé.'.tr
+              : 'Signalement envoyé, mais les pièces jointes n\'ont pas pu être envoyées : {reason}'
+                  .trp({'reason': uploadError.tr}))));
     } catch (e) {
       if (mounted) {
         final raw = e.toString();
         final msg = raw.replaceFirst(RegExp(r'^Exception:\s*'), '');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.isNotEmpty ? msg : 'Erreur')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.isNotEmpty ? msg.tr : 'Erreur'.tr)));
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -227,7 +282,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                         children: [
                           _backButton(context, dark, fg),
                           const SizedBox(width: 12),
-                          Text('Nouveau signalement',
+                          Text('Nouveau signalement'.tr,
                               style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
                         ],
                       ),
@@ -243,21 +298,21 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Bien concerné', style: TextStyle(fontWeight: FontWeight.w800, color: fg)),
+                            Text('Bien concerné'.tr, style: TextStyle(fontWeight: FontWeight.w800, color: fg)),
                             const SizedBox(height: 6),
                             Text(
-                              apt.isNotEmpty ? 'Appartement n° $apt' : (p['title'] ?? 'Appartement').toString(),
+                              apt.isNotEmpty ? 'Appartement n° {apt}'.trp({'apt': apt}) : (p['title'] ?? 'Appartement'.tr).toString(),
                               style: TextStyle(fontWeight: FontWeight.w700, color: fg),
                             ),
                             const SizedBox(height: 4),
-                            Text(_locationLabel(), style: TextStyle(color: muted, fontSize: 12)),
+                            Text(_locationLabel(localized: true), style: TextStyle(color: muted, fontSize: 12)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 20),
 
                       // ── Catégorie ───────────────────────────
-                      _label('Catégorie', fg),
+                      _label('Catégorie'.tr, fg),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -277,7 +332,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: active ? brandAmber : Colors.transparent, width: 1.4),
                               ),
-                              child: Text(name,
+                              child: Text(name.tr,
                                   style: TextStyle(
                                       color: active ? brandAmber : muted,
                                       fontWeight: FontWeight.w600,
@@ -289,7 +344,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                       const SizedBox(height: 18),
 
                       // ── Type de problème (sous-catégorie) ──
-                      _label('Type de problème', fg),
+                      _label('Type de problème'.tr, fg),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -304,7 +359,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                                 color: active ? brandAmber : fieldFill,
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(s,
+                              child: Text(s.tr,
                                   style: TextStyle(
                                       color: active ? brandNavy : muted,
                                       fontWeight: FontWeight.w600,
@@ -316,7 +371,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                       const SizedBox(height: 20),
 
                       // ── Description ─────────────────────────
-                      _label('Description', fg),
+                      _label('Description'.tr, fg),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _descController,
@@ -325,7 +380,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                         style: TextStyle(color: fg),
                         inputFormatters: [LengthLimitingTextInputFormatter(100)],
                         decoration: InputDecoration(
-                          hintText: 'Décrivez le problème en détail...',
+                          hintText: 'Décrivez le problème en détail...'.tr,
                           hintStyle: TextStyle(color: muted.withValues(alpha: 0.7)),
                           filled: true,
                           fillColor: fieldFill,
@@ -337,7 +392,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                       const SizedBox(height: 18),
 
                       // ── Priorité ────────────────────────────
-                      _label('Priorité', fg),
+                      _label('Priorité'.tr, fg),
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(color: fieldFill, borderRadius: BorderRadius.circular(16)),
@@ -349,7 +404,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                             dropdownColor: dark ? darkCard : Colors.white,
                             style: TextStyle(color: fg, fontSize: 15),
                             items: const ['Basse', 'Moyenne', 'Haute', 'Urgent']
-                                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                                .map((e) => DropdownMenuItem(value: e, child: Text(e.tr)))
                                 .toList(),
                             onChanged: (v) => setState(() => _priority = v ?? _priority),
                           ),
@@ -357,27 +412,80 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                       ),
                       const SizedBox(height: 18),
 
-                      // ── Pièce jointe ────────────────────────
-                      GestureDetector(
-                        onTap: _submitting ? null : _pickAttachment,
-                        child: Container(
+                      // ── Pièces jointes ──────────────────────
+                      Row(
+                        children: [
+                          _label('Pièces jointes'.tr, fg),
+                          const Spacer(),
+                          Text(
+                              '{count}/{max} · {size} / 10 Mo'.trp({
+                                'count': _attachments.length,
+                                'max': _maxFiles,
+                                'size': _formatBytes(_attachmentsBytes),
+                              }),
+                              style: TextStyle(color: muted, fontSize: 12)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      for (var i = 0; i < _attachments.length; i++)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: brandAmber.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: brandAmber.withValues(alpha: 0.4), style: BorderStyle.solid),
+                            color: dark ? darkCard : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.camera_alt_outlined, color: brandAmber, size: 20),
+                              Icon(
+                                  (_mimeTypeForFilename(_attachments[i].name) ?? '').startsWith('image/')
+                                      ? Icons.image_outlined
+                                      : Icons.insert_drive_file_outlined,
+                                  color: brandAmber,
+                                  size: 20),
                               const SizedBox(width: 10),
-                              Text(_attachment?.name ?? 'Joindre une photo ou un document',
-                                  style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w700)),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(_attachments[i].name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 13)),
+                                    Text(_formatBytes(_attachments[i].size),
+                                        style: TextStyle(color: muted, fontSize: 11)),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                icon: Icon(Icons.close_rounded, color: muted, size: 20),
+                                onPressed: _submitting ? null : () => setState(() => _attachments.removeAt(i)),
+                              ),
                             ],
                           ),
                         ),
-                      ),
+                      if (_attachments.length < _maxFiles)
+                        GestureDetector(
+                          onTap: _submitting ? null : _pickAttachments,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: brandAmber.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: brandAmber.withValues(alpha: 0.4), style: BorderStyle.solid),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.camera_alt_outlined, color: brandAmber, size: 20),
+                                const SizedBox(width: 10),
+                                Text('Joindre des photos ou des documents'.tr,
+                                    style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 26),
 
                       ElevatedButton(
@@ -394,8 +502,8 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(color: brandNavy, strokeWidth: 2))
-                            : const Text('Envoyer le signalement',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                            : Text('Envoyer le signalement'.tr,
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       ),
                     ],
                   ),

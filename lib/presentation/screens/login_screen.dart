@@ -1,7 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/l10n.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/language_picker.dart';
 import '../theme/app_theme.dart';
 import 'change_password_screen.dart';
 import 'gestionnaire_tag_home_screen.dart';
@@ -23,6 +25,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _form = GlobalKey<FormState>();
   bool _obscure = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // e.g. "account deactivated" after the administration cut this account off.
+    _error = context.read<AuthProvider>().consumeNotice()?.tr;
+  }
 
   @override
   void dispose() {
@@ -51,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _go(const ResidentHomeScreen());
     } catch (error) {
       if (mounted) {
-        setState(() => _error = error.toString().replaceAll('Exception: ', ''));
+        setState(() => _error = error.toString().replaceAll('Exception: ', '').tr);
       }
     }
   }
@@ -75,20 +84,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                   Image.asset('assets/global_immo_logo_light.png', width: 118),
                   const SizedBox(height: 20),
-                  const Text('Bienvenue chez vous',
+                  Text('Bienvenue chez vous'.tr,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 25,
                           height: 1.05,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
-                  const Text(
-                      'Accédez à votre résidence et à tous vos services.',
+                  Text('Accédez à votre résidence et à tous vos services.'.tr,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Colors.white70, fontSize: 11, height: 1.45)),
                 ])),
+            const SafeArea(
+              child: Align(
+                alignment: AlignmentDirectional.topEnd,
+                child: Padding(
+                  padding: EdgeInsets.all(14),
+                  child: LanguageChip(),
+                ),
+              ),
+            ),
           ]),
         ),
         Align(
@@ -108,18 +125,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Connexion',
-                                style: TextStyle(
+                            Text('Connexion'.tr,
+                                style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w800,
                                     color: brandNavy)),
                             const SizedBox(height: 6),
-                            const Text(
-                                'Saisissez les identifiants associés à votre compte.',
-                                style: TextStyle(
+                            Text('Saisissez les identifiants associés à votre compte.'.tr,
+                                style: const TextStyle(
                                     fontSize: 11, color: brandGoldDark)),
                             const SizedBox(height: 20),
-                            const _Label('ADRESSE E-MAIL'),
+                            _Label('ADRESSE E-MAIL'.tr),
                             TextFormField(
                                 controller: _email,
                                 keyboardType: TextInputType.emailAddress,
@@ -127,10 +143,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                     error: _error),
                                 validator: (value) =>
                                     value == null || value.trim().isEmpty
-                                        ? 'Adresse requise'
+                                        ? 'Adresse requise'.tr
                                         : null),
                             const SizedBox(height: 14),
-                            const _Label('MOT DE PASSE'),
+                            _Label('MOT DE PASSE'.tr),
                             TextFormField(
                                 controller: _password,
                                 obscureText: _obscure,
@@ -147,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             color: brandGoldDark))),
                                 validator: (value) =>
                                     value == null || value.isEmpty
-                                        ? 'Mot de passe requis'
+                                        ? 'Mot de passe requis'.tr
                                         : null),
                             const SizedBox(height: 20),
                             Consumer<AuthProvider>(
@@ -169,15 +185,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 child:
                                                     CircularProgressIndicator(
                                                         strokeWidth: 2))
-                                            : const Text('Se connecter',
-                                                style: TextStyle(
+                                            : Text('Se connecter'.tr,
+                                                style: const TextStyle(
                                                     fontWeight:
                                                         FontWeight.w700))))),
                             const SizedBox(height: 18),
-                            const Center(
+                            Center(
                                 child: Text(
-                                    'Le type de compte est détecté automatiquement',
-                                    style: TextStyle(
+                                    'Le type de compte est détecté automatiquement'.tr,
+                                    style: const TextStyle(
                                         fontSize: 9,
                                         color: Color(0xFFB8B8B8)))),
                             const SizedBox(height: 14),
@@ -188,13 +204,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                   MaterialPageRoute(builder: (_) => const RegistrationScreen()),
                                 ),
                                 child: RichText(
-                                  text: const TextSpan(
-                                    style: TextStyle(fontSize: 12, color: brandGoldDark),
+                                  text: TextSpan(
+                                    style: const TextStyle(fontSize: 12, color: brandGoldDark),
                                     children: [
-                                      TextSpan(text: "Vous êtes résident et n'avez pas encore de compte ? "),
+                                      TextSpan(text: "Vous êtes résident et n'avez pas encore de compte ? ".tr),
                                       TextSpan(
-                                        text: "S'inscrire",
-                                        style: TextStyle(fontWeight: FontWeight.w800, color: brandAmber),
+                                        text: "S'inscrire".tr,
+                                        style: const TextStyle(fontWeight: FontWeight.w800, color: brandAmber),
                                       ),
                                     ],
                                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -39,7 +40,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = e.toString().replaceAll('Exception: ', '').tr;
         _loading = false;
       });
     }
@@ -84,10 +85,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: const Icon(Icons.mark_email_read_outlined, color: Color(0xFF16A34A), size: 36),
                 ),
                 const SizedBox(height: 20),
-                Text('E-mail envoyé', style: TextStyle(color: fg, fontSize: 24, fontWeight: FontWeight.w900)),
+                Text('E-mail envoyé'.tr, style: TextStyle(color: fg, fontSize: 24, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 10),
                 Text(
-                  "Si un compte existe avec l'adresse ${_emailController.text.trim()}, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte de réception (et vos spams).",
+                  "Si un compte existe avec l'adresse {email}, un lien de réinitialisation vient d'être envoyé. Vérifiez votre boîte de réception (et vos spams)."
+                      .trp({'email': _emailController.text.trim()}),
                   style: TextStyle(color: muted, fontSize: 14, height: 1.5),
                 ),
                 const SizedBox(height: 28),
@@ -100,15 +102,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     minimumSize: const Size.fromHeight(54),
                     elevation: 0,
                   ),
-                  child: const Text('Retour à la connexion',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  child: Text('Retour à la connexion'.tr,
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                 ),
               ] else ...[
-                Text('Mot de passe oublié',
+                Text('Mot de passe oublié'.tr,
                     style: TextStyle(color: fg, fontSize: 26, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 8),
                 Text(
-                  'Entrez votre adresse e-mail, nous vous enverrons un lien pour réinitialiser votre mot de passe.',
+                  'Entrez votre adresse e-mail, nous vous enverrons un lien pour réinitialiser votre mot de passe.'.tr,
                   style: TextStyle(color: muted, fontSize: 14, height: 1.5),
                 ),
                 const SizedBox(height: 28),
@@ -117,7 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Adresse e-mail',
+                      Text('Adresse e-mail'.tr,
                           style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -128,7 +130,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         style: TextStyle(color: fg),
                         onFieldSubmitted: (_) => _submit(),
                         decoration: InputDecoration(
-                          hintText: 'exemple@email.com',
+                          hintText: 'exemple@email.com'.tr,
                           hintStyle: TextStyle(color: muted.withValues(alpha: 0.6)),
                           errorText: _error,
                           filled: true,
@@ -138,7 +140,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                         ),
                         validator: (v) =>
-                            (v?.trim().isEmpty ?? true) ? 'Adresse e-mail requise' : null,
+                            (v?.trim().isEmpty ?? true) ? 'Adresse e-mail requise'.tr : null,
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
@@ -155,8 +157,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(color: brandNavy, strokeWidth: 2))
-                            : const Text('Envoyer le lien',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                            : Text('Envoyer le lien'.tr,
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                       ),
                     ],
                   ),

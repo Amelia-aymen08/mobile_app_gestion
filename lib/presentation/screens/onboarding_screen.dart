@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -14,10 +15,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _page = 0;
 
-  static const _slides = [
-    _Slide(image: 'assets/onboarding-who-we-are.png', title: 'WHO WE ARE', description: 'Crafting exceptional residences where luxury, comfort, and modern living come together to create a lifestyle beyond expectations.'),
-    _Slide(image: 'assets/screen02.png', title: 'WHAT WE OFFER', description: 'From residence updates to payments, bookings, and maintenance requests — everything you need, brought together in one seamless experience.'),
-    _Slide(image: 'assets/screen03.png', title: 'LIVE WITH PEACE OF MIND', description: 'Stay connected, informed, and fully in control of your daily life with premium services designed for modern living.'),
+  // Built on demand: the titles depend on the selected language.
+  List<_Slide> get _slides => [
+    _Slide(image: 'assets/onboarding-who-we-are.png', title: 'WHO WE ARE'.tr, description: 'Crafting exceptional residences where luxury, comfort, and modern living come together to create a lifestyle beyond expectations.'.tr),
+    _Slide(image: 'assets/screen02.png', title: 'WHAT WE OFFER'.tr, description: 'From residence updates to payments, bookings, and maintenance requests — everything you need, brought together in one seamless experience.'.tr),
+    _Slide(image: 'assets/screen03.png', title: 'LIVE WITH PEACE OF MIND'.tr, description: 'Stay connected, informed, and fully in control of your daily life with premium services designed for modern living.'.tr),
   ];
 
   void _next() {
@@ -97,7 +99,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       TextButton(
                         onPressed: widget.onComplete,
                         style: TextButton.styleFrom(foregroundColor: dark ? Colors.white : Colors.black, padding: EdgeInsets.zero),
-                        child: const Text('Skip', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                        child: Text('Skip'.tr, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                       )
                     else
                       const SizedBox(width: 48),
@@ -107,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(isLast ? 'Get started' : 'Next', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                          Text((isLast ? 'Get started' : 'Next').tr, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                           const SizedBox(width: 16),
                           SvgPicture.asset('assets/figma-arrow-right.svg', width: 24, height: 16),
                         ],

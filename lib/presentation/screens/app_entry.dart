@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../../data/api_service.dart';
+import '../l10n/l10n.dart';
 import 'login_screen.dart';
 import 'resident_home_screen.dart';
 import 'manager_home_screen.dart';
@@ -117,7 +118,7 @@ class _AppEntryState extends State<AppEntry> {
           } catch (_) {}
           if (createdAt != null && createdAt.isAfter(recentCutoff)) {
             final title =
-                (notif['title'] ?? 'Nouvelle notification').toString();
+                (notif['title'] ?? 'Nouvelle notification').toString().tr;
             final message = (notif['message'] ?? '').toString();
             await SystemNotificationService.instance.show(
               key: id,
@@ -142,7 +143,7 @@ class _AppEntryState extends State<AppEntry> {
         }
         for (final id in newUnread) {
           final notif = notifById[id] ?? {};
-          final title = (notif['title'] ?? 'Nouvelle notification').toString();
+          final title = (notif['title'] ?? 'Nouvelle notification').toString().tr;
           final message = (notif['message'] ?? '').toString();
           final body = message.isNotEmpty ? message : title;
           await SystemNotificationService.instance.show(

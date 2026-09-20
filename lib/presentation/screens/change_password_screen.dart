@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import 'resident_home_screen.dart';
 import 'manager_home_screen.dart';
 import 'intervenant_home_screen.dart';
+import '../l10n/l10n.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -79,16 +80,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   const SizedBox(height: 16),
                 ] else
                   const SizedBox(height: 8),
-                Text('Changer le mot de passe',
+                Text('Changer le mot de passe'.tr,
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: fg)),
                 const SizedBox(height: 8),
                 Text(
-                  'Créez un nouveau mot de passe pour sécuriser votre compte.',
+                  'Créez un nouveau mot de passe pour sécuriser votre compte.'.tr,
                   style: TextStyle(color: muted, fontSize: 14),
                 ),
                 const SizedBox(height: 28),
 
-                _label('Mot de passe actuel', fg),
+                _label('Mot de passe actuel'.tr, fg),
                 const SizedBox(height: 8),
                 _field(
                   controller: _currentController,
@@ -97,11 +98,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   fg: fg,
                   muted: muted,
                   fill: fieldFill,
-                  validator: (v) => (v == null || v.isEmpty) ? 'Champ obligatoire' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'Champ obligatoire'.tr : null,
                 ),
                 const SizedBox(height: 16),
 
-                _label('Nouveau mot de passe', fg),
+                _label('Nouveau mot de passe'.tr, fg),
                 const SizedBox(height: 8),
                 _field(
                   controller: _newController,
@@ -110,11 +111,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   fg: fg,
                   muted: muted,
                   fill: fieldFill,
-                  validator: (v) => (v == null || v.length < 6) ? '6 caractères minimum' : null,
+                  validator: (v) => (v == null || v.length < 6) ? '6 caractères minimum'.tr : null,
                 ),
                 const SizedBox(height: 16),
 
-                _label('Confirmer le nouveau mot de passe', fg),
+                _label('Confirmer le nouveau mot de passe'.tr, fg),
                 const SizedBox(height: 8),
                 _field(
                   controller: _confirmController,
@@ -124,8 +125,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   muted: muted,
                   fill: fieldFill,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Champ obligatoire';
-                    if (v != _newController.text) return 'Les mots de passe ne correspondent pas';
+                    if (v == null || v.isEmpty) return 'Champ obligatoire'.tr;
+                    if (v != _newController.text) return 'Les mots de passe ne correspondent pas'.tr;
                     return null;
                   },
                 ),
@@ -142,7 +143,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             _goHome(auth);
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+                              SnackBar(content: Text(e.toString().replaceAll('Exception: ', '').tr)),
                             );
                           } finally {
                             if (mounted) setState(() => _loading = false);
@@ -160,8 +161,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(color: brandNavy, strokeWidth: 2))
-                      : const Text('Changer le mot de passe',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                      : Text('Changer le mot de passe'.tr,
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                 ),
               ],
             ),

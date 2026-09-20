@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
 import '../providers/auth_provider.dart';
+import '../l10n/l10n.dart';
 
 class PropertyAddRequestScreen extends StatefulWidget {
   const PropertyAddRequestScreen({super.key});
@@ -49,7 +50,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
       if (!mounted) return;
       setState(() => _loadingResidences = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}')),
+        SnackBar(content: Text('Erreur : {error}'.trp({'error': e.toString().replaceAll('Exception: ', '').tr}))),
       );
     }
   }
@@ -82,7 +83,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
     return copy;
   }
 
-  String _floorLabel(String floor) => floor.isEmpty ? 'Rez-de-chaussée' : 'Étage $floor';
+  String _floorLabel(String floor) => floor.isEmpty ? 'Rez-de-chaussée'.tr : 'Étage {floor}'.trp({'floor': floor});
 
   Future<void> _fetchResidenceOptions(String residenceId) async {
     setState(() {
@@ -110,14 +111,14 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
 
       if (_floors.isEmpty && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Aucun appartement libre disponible dans cette résidence.')),
+          SnackBar(content: Text('Aucun appartement libre disponible dans cette résidence.'.tr)),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isOptionsLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}')),
+        SnackBar(content: Text('Erreur : {error}'.trp({'error': e.toString().replaceAll('Exception: ', '').tr}))),
       );
     }
   }
@@ -141,11 +142,11 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
     final ok = _formKey.currentState?.validate() ?? false;
     if (!ok) return;
     if ((_selectedResidenceId ?? '').trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez sélectionner une résidence.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Veuillez sélectionner une résidence.'.tr)));
       return;
     }
     if ((_selectedUnitId ?? '').trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez sélectionner un appartement.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Veuillez sélectionner un appartement.'.tr)));
       return;
     }
 
@@ -157,12 +158,12 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
         notes: '',
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Demande envoyée avec succès.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Demande envoyée avec succès.'.tr)));
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', '').tr)),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -175,7 +176,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
     final email = (user?['email'] ?? '').toString();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Demander ajout de bien')),
+      appBar: AppBar(title: Text('Demander ajout de bien'.tr)),
       body: _loadingResidences
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -197,9 +198,9 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
                     DropdownButtonFormField<String>(
                       value: _selectedResidenceId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Résidence',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'Résidence'.tr,
+                        border: const OutlineInputBorder(),
                       ),
                       items: _residences
                           .whereType<Map>()
@@ -234,17 +235,17 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
                     DropdownButtonFormField<String>(
                       value: _selectedFloor,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Étage',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'Étage'.tr,
+                        border: const OutlineInputBorder(),
                       ),
                       hint: _selectedResidenceId == null
-                          ? const Text('Sélectionner une résidence d\'abord')
+                          ? Text('Sélectionner une résidence d\'abord'.tr)
                           : _isOptionsLoading
-                              ? const Text('Chargement…')
+                              ? Text('Chargement…'.tr)
                               : _floors.isEmpty
-                                  ? const Text('Aucun étage disponible')
-                                  : const Text('Sélectionner un étage'),
+                                  ? Text('Aucun étage disponible'.tr)
+                                  : Text('Sélectionner un étage'.tr),
                       items: _floors
                           .map((f) => DropdownMenuItem<String>(
                                 value: f,
@@ -268,22 +269,24 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
                     DropdownButtonFormField<String>(
                       value: _selectedUnitId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Appartement',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'Appartement'.tr,
+                        border: const OutlineInputBorder(),
                       ),
                       hint: _selectedFloor == null
-                          ? const Text('Sélectionner un étage d\'abord')
+                          ? Text('Sélectionner un étage d\'abord'.tr)
                           : _isOptionsLoading
-                              ? const Text('Chargement…')
+                              ? Text('Chargement…'.tr)
                               : _availableUnitsForSelectedFloor.isEmpty
-                                  ? const Text('Aucun appartement libre')
-                                  : const Text('Sélectionner un appartement'),
+                                  ? Text('Aucun appartement libre'.tr)
+                                  : Text('Sélectionner un appartement'.tr),
                       items: _availableUnitsForSelectedFloor.map((u) {
                         final id = (u['id'] ?? '').toString();
                         final apt = (u['apartmentNumber'] ?? '').toString();
                         final block = (u['block'] ?? '').toString().trim();
-                        final label = block.isNotEmpty ? 'N° $apt - Bloc $block' : 'N° $apt';
+                        final label = block.isNotEmpty
+                            ? 'N° {apt} - Bloc {block}'.trp({'apt': apt, 'block': block})
+                            : 'N° {apt}'.trp({'apt': apt});
                         return DropdownMenuItem<String>(
                           value: id,
                           child: Text(label, overflow: TextOverflow.ellipsis),
@@ -302,7 +305,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
                       onPressed: _submitting ? null : _submit,
                       child: _submitting
                           ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Envoyer la demande'),
+                          : Text('Envoyer la demande'.tr),
                     ),
                   ],
                 ),

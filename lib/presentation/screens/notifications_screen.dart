@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
+import '../l10n/l10n.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -40,7 +41,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = e.toString().replaceAll('Exception: ', '').tr;
         _loading = false;
       });
     }
@@ -71,7 +72,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', '').tr)),
       );
     }
   }
@@ -86,7 +87,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        SnackBar(content: Text(e.toString().replaceAll('Exception: ', '').tr)),
       );
     }
   }
@@ -150,8 +151,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
-                        Text('Communications officielles', style: TextStyle(color: muted, fontSize: 12)),
+                        Text('Avis'.tr, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
+                        Text('Communications officielles'.tr, style: TextStyle(color: muted, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -161,7 +162,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(color: brandAmber, borderRadius: BorderRadius.circular(20)),
-                        child: Text('$unreadCount nouveau${unreadCount > 1 ? 'x' : ''}',
+                        child: Text((unreadCount > 1 ? '{n} nouveaux' : '{n} nouveau').trp({'n': unreadCount}),
                             style: const TextStyle(
                                 color: brandNavy, fontWeight: FontWeight.w700, fontSize: 12)),
                       ),
@@ -173,11 +174,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               // ── Filter chips ─────────────────────────────
               Row(
                 children: [
-                  _chip('Tout', 'all', dark, fg),
+                  _chip('Tout'.tr, 'all', dark, fg),
                   const SizedBox(width: 8),
-                  _chip('Urgent', 'urgent', dark, fg),
+                  _chip('Urgent'.tr, 'urgent', dark, fg),
                   const SizedBox(width: 8),
-                  _chip('Info', 'info', dark, fg),
+                  _chip('Info'.tr, 'info', dark, fg),
                 ],
               ),
               const SizedBox(height: 18),
@@ -283,7 +284,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title.isEmpty ? 'Avis' : title,
+                      Text((title.isEmpty ? 'Avis' : title).tr,
                           style: TextStyle(
                               color: fg,
                               fontWeight: FontWeight.w800,
@@ -302,15 +303,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            const Align(
+            Align(
               alignment: Alignment.centerRight,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Lire la suite',
-                      style: TextStyle(color: brandAmber, fontWeight: FontWeight.w700, fontSize: 13)),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
+                  Text('Lire la suite'.tr,
+                      style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right_rounded, size: 16, color: brandAmber),
                 ],
               ),
             ),
@@ -337,9 +338,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 size: 56, color: dark ? darkBorder : const Color(0xFFE2DDCF)),
           ),
           const SizedBox(height: 22),
-          Text('Aucun avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
+          Text('Aucun avis'.tr, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
           const SizedBox(height: 8),
-          Text('Vous êtes à jour. Aucun avis à afficher pour le moment.',
+          Text('Vous êtes à jour. Aucun avis à afficher pour le moment.'.tr,
               textAlign: TextAlign.center, style: TextStyle(color: muted, fontSize: 13)),
         ],
       ),
@@ -385,7 +386,7 @@ class _NoticeDetailScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Avis', style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
+                      Text('Avis'.tr, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 20)),
                       if (createdAt.isNotEmpty)
                         Text(createdAt, style: TextStyle(color: muted, fontSize: 12)),
                     ],
@@ -404,7 +405,7 @@ class _NoticeDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title.isEmpty ? 'Avis' : title,
+                  Text((title.isEmpty ? 'Avis' : title).tr,
                       style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 19)),
                   if (message.isNotEmpty) ...[
                     const SizedBox(height: 12),

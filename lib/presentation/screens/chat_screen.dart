@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../../data/api_service.dart';
+import '../l10n/l10n.dart';
 
 /// "Report Chat" — messaging thread attached to a maintenance ticket.
 class ChatScreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '').tr)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -96,19 +97,47 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '').tr)));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
+  /// A resident can only reply: the composer stays closed until someone from
+  /// the administration has written on the ticket (the backend enforces it too).
+  bool get _locked =>
+      !_loading &&
+      context.read<AuthProvider>().userRole == 'RESIDENT' &&
+      !_messages.any((m) => (m['senderRole'] ?? '').toString() != 'RESIDENT');
+
+  Widget _lockedNotice(bool dark, Color fg, Color muted) => Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: dark ? darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(children: [
+          Icon(Icons.lock_outline_rounded, color: muted, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+                "Vous pourrez écrire dès que l'administration vous aura envoyé un message."
+                    .tr,
+                style: TextStyle(color: muted, fontSize: 13, height: 1.4)),
+          ),
+          TextButton(onPressed: _load, child: Text('Actualiser'.tr)),
+        ]),
+      );
+
   String _dayLabel(DateTime d) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final that = DateTime(d.year, d.month, d.day);
-    if (that == today) return "Aujourd'hui";
-    if (that == today.subtract(const Duration(days: 1))) return 'Hier';
+    if (that == today) return "Aujourd'hui".tr;
+    if (that == today.subtract(const Duration(days: 1))) return 'Hier'.tr;
     return DateFormat('dd/MM/yyyy').format(d);
   }
 
@@ -156,7 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : _messages.isEmpty
                       ? Center(
-                          child: Text('Aucun message pour le moment.',
+                          child: Text('Aucun message pour le moment.'.tr,
                               style: TextStyle(color: muted, fontSize: 14)))
                       : ListView.builder(
                           controller: _scrollCtrl,
@@ -214,6 +243,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                 ),
               ),
+            if (_locked)
+              _lockedNotice(dark, fg, muted)
+            else
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(
@@ -240,8 +272,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         minLines: 1,
                         maxLines: 4,
                         style: TextStyle(color: fg),
-                        decoration: const InputDecoration(
-                          hintText: 'Écrire un message...',
+                        decoration: InputDecoration(
+                          hintText: 'Écrire un message...'.tr,
                           border: InputBorder.none,
                         ),
                       ),

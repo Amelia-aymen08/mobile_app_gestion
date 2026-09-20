@@ -2,8 +2,15 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../l10n/l10n.dart';
+import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/user_avatar.dart';
 import '../../data/api_service.dart';
+
+/// A household can hold at most this many additional members (backend rule too).
+const int kMaxHouseholdMembers = 4;
 
 class HouseholdMembersScreen extends StatefulWidget {
   const HouseholdMembersScreen({super.key});
@@ -29,54 +36,79 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
       final list = await _api.getHouseholdMembers();
       if (mounted) setState(() => _members = list);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
-      }
+      _toast(e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  static const _accessLabels = {
-    'FULL': 'Accès complet',
-    'RESIDENT': 'Accès résident',
-    'VISITOR': 'Accès visiteur',
-    'CUSTOM': 'Accès personnalisé',
-  };
-
-  Color _accessColor(String level, bool dark) {
-    switch (level) {
-      case 'FULL':
-        return const Color(0xFF16A34A);
-      case 'VISITOR':
-        return dark ? darkMuted : const Color(0xFF6B7280);
-      default:
-        return brandAmber;
-    }
+  void _toast(Object e) {
+    if (!mounted) return;
+    final msg = e.toString().replaceFirst('Exception: ', '');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.tr)));
   }
 
+  bool get _isFull => _members.length >= kMaxHouseholdMembers;
+
   Future<void> _openForm({Map<String, dynamic>? existing}) async {
-    final saved = await showModalBottomSheet<bool>(
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _MemberFormSheet(existing: existing),
     );
-    if (saved == true) _load();
+    if (result == null) return;
+    await _load();
+    // The account was created but the invitation mail couldn't go out.
+    if (result['emailSent'] == false && mounted) {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text("E-mail non envoyé".tr),
+          content: Text(
+              "Le compte a été créé mais l'e-mail d'accès n'a pas pu être envoyé. Utilisez « Renvoyer les accès » depuis le menu du membre."
+                  .tr),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx), child: Text('OK'.tr)),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _resend(Map<String, dynamic> member) async {
+    try {
+      final sent = await _api.resendMemberAccess(member['id'].toString());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text((sent
+                  ? "Les accès ont été renvoyés par e-mail."
+                  : "L'e-mail n'a pas pu être envoyé.")
+              .tr)));
+    } catch (e) {
+      _toast(e);
+    }
   }
 
   Future<void> _remove(Map<String, dynamic> member) async {
+    final hasAccount = member['linkedUserId'] != null;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Retirer ce membre ?'),
-        content: Text('${member['fullName']} ne sera plus listé dans votre foyer.'),
+        title: Text('Retirer ce membre ?'.tr),
+        content: Text((hasAccount
+                ? '{name} ne pourra plus se connecter à l\'application : son compte sera supprimé.'
+                : '{name} ne sera plus listé dans votre foyer.')
+            .trp({'name': member['fullName']})),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Annuler'.tr)),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Retirer', style: TextStyle(color: Color(0xFFDC2626)))),
+              child: Text('Retirer'.tr,
+                  style: const TextStyle(color: Color(0xFFDC2626)))),
         ],
       ),
     );
@@ -85,10 +117,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
       await _api.removeHouseholdMember(member['id'].toString());
       _load();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
-      }
+      _toast(e);
     }
   }
 
@@ -97,6 +126,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final fg = dark ? Colors.white : brandNavy;
     final muted = dark ? darkMuted : const Color(0xFF6B7280);
+    final me = context.watch<AuthProvider>().user;
 
     return Scaffold(
       backgroundColor: dark ? darkSurface : brandCream,
@@ -107,10 +137,27 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Row(
                 children: [
-                  _iconBtn(Icons.arrow_back_rounded, dark, fg, () => Navigator.pop(context)),
+                  _iconBtn(Icons.arrow_back_rounded, dark, fg,
+                      () => Navigator.pop(context)),
                   const SizedBox(width: 12),
-                  Text('Membres du foyer',
-                      style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Membres du foyer'.tr,
+                            style: TextStyle(
+                                color: fg,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18)),
+                        Text(
+                            '{count} sur {max} membres'.trp({
+                              'count': _members.length,
+                              'max': kMaxHouseholdMembers
+                            }),
+                            style: TextStyle(color: muted, fontSize: 12)),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -120,60 +167,110 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: brandAmber.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: brandAmber.withValues(alpha: 0.35)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.mail_outline_rounded,
+                                    color: brandAmber, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                      "Chaque membre reçoit ses accès de connexion par e-mail. Vous pouvez ajouter jusqu'à {max} personnes."
+                                          .trp({'max': kMaxHouseholdMembers}),
+                                      style: TextStyle(
+                                          color: fg, fontSize: 12.5, height: 1.4)),
+                                ),
+                              ],
+                            ),
+                          ),
                           _memberTile(
                             fg: fg,
                             muted: muted,
                             dark: dark,
-                            name: 'Vous',
-                            relation: 'Résident principal',
-                            accessLabel: 'Accès complet',
-                            accessColor: const Color(0xFF16A34A),
-                            photo: null,
+                            name: ((me?['name'] ?? '').toString().isEmpty
+                                ? 'Vous'.tr
+                                : '{name} ({you})'.trp({
+                                    'name': me?['name'],
+                                    'you': 'Vous'.tr,
+                                  })),
+                            relation: 'Résident principal'.tr,
+                            email: (me?['email'] ?? '').toString(),
+                            photo: (me?['photo'] ?? '').toString(),
+                            statusChip: null,
                             trailing: null,
                           ),
                           if (_members.isEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 40),
                               child: Center(
-                                child: Text('Aucun autre membre pour le moment.',
+                                child: Text('Aucun autre membre pour le moment.'.tr,
                                     style: TextStyle(color: muted, fontSize: 14)),
                               ),
                             ),
                           ..._members.whereType<Map>().map((m) {
                             final member = Map<String, dynamic>.from(m);
-                            final level = (member['accessLevel'] ?? 'RESIDENT').toString();
+                            final hasAccount = member['linkedUserId'] != null;
+                            final active = member['accountActive'];
                             return _memberTile(
                               fg: fg,
                               muted: muted,
                               dark: dark,
                               name: (member['fullName'] ?? '').toString(),
                               relation: (member['relation'] ?? '').toString(),
-                              accessLabel: _accessLabels[level] ?? level,
-                              accessColor: _accessColor(level, dark),
+                              email: (member['email'] ?? '').toString(),
                               photo: (member['photo'] ?? '').toString(),
+                              statusChip: !hasAccount
+                                  ? _StatusChip('Sans compte'.tr, muted)
+                                  : (active == false
+                                      ? _StatusChip('Compte désactivé'.tr,
+                                          const Color(0xFFDC2626))
+                                      : _StatusChip('Compte actif'.tr,
+                                          const Color(0xFF16A34A))),
                               trailing: PopupMenuButton<String>(
                                 icon: Icon(Icons.more_vert_rounded, color: muted),
                                 onSelected: (v) {
                                   if (v == 'edit') _openForm(existing: member);
+                                  if (v == 'resend') _resend(member);
                                   if (v == 'remove') _remove(member);
                                 },
-                                itemBuilder: (_) => const [
+                                itemBuilder: (_) => [
                                   PopupMenuItem(
                                       value: 'edit',
                                       child: Row(children: [
-                                        Icon(Icons.edit_outlined, size: 18),
-                                        SizedBox(width: 10),
-                                        Text('Modifier'),
+                                        const Icon(Icons.edit_outlined, size: 18),
+                                        const SizedBox(width: 10),
+                                        Text('Modifier'.tr),
                                       ])),
+                                  if (hasAccount && active != false)
+                                    PopupMenuItem(
+                                        value: 'resend',
+                                        child: Row(children: [
+                                          const Icon(Icons.forward_to_inbox_outlined,
+                                              size: 18),
+                                          const SizedBox(width: 10),
+                                          Text('Renvoyer les accès'.tr),
+                                        ])),
                                   PopupMenuItem(
                                       value: 'remove',
                                       child: Row(children: [
-                                        Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFDC2626)),
-                                        SizedBox(width: 10),
-                                        Text('Retirer', style: TextStyle(color: Color(0xFFDC2626))),
+                                        const Icon(Icons.delete_outline_rounded,
+                                            size: 18, color: Color(0xFFDC2626)),
+                                        const SizedBox(width: 10),
+                                        Text('Retirer'.tr,
+                                            style: const TextStyle(
+                                                color: Color(0xFFDC2626))),
                                       ])),
                                 ],
                               ),
@@ -192,8 +289,10 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => _openForm(),
-            child: const Text('Ajouter un membre'),
+            onPressed: (_loading || _isFull) ? null : () => _openForm(),
+            child: Text(_isFull
+                ? 'Maximum de {max} membres atteint'.trp({'max': kMaxHouseholdMembers})
+                : 'Ajouter un membre'.tr),
           ),
         ),
       ),
@@ -206,29 +305,42 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     required bool dark,
     required String name,
     required String relation,
-    required String accessLabel,
-    required Color accessColor,
+    required String email,
     required String? photo,
+    required _StatusChip? statusChip,
     required Widget? trailing,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+          color: dark ? darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(18)),
       child: Row(
         children: [
-          _avatar(photo, name, dark),
+          UserAvatar(photo: photo, name: name, size: 48),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
+                Text(name,
+                    style: TextStyle(
+                        color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
                 if (relation.isNotEmpty)
                   Text(relation, style: TextStyle(color: muted, fontSize: 12)),
-                const SizedBox(height: 2),
-                Text(accessLabel,
-                    style: TextStyle(color: accessColor, fontSize: 12, fontWeight: FontWeight.w700)),
+                if (email.isNotEmpty)
+                  Text(email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: muted, fontSize: 12)),
+                const SizedBox(height: 4),
+                if (statusChip != null)
+                  Text(statusChip.label,
+                      style: TextStyle(
+                          color: statusChip.color,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
               ],
             ),
           ),
@@ -238,32 +350,19 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     );
   }
 
-  Widget _avatar(String? photo, String name, bool dark) {
-    final initials = name.trim().isEmpty
-        ? '?'
-        : name.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase();
-    if (photo != null && photo.isNotEmpty) {
-      return ClipOval(
-        child: Image.network('${ApiService().baseUrl.replaceAll('/api', '')}$photo',
-            width: 48, height: 48, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _initialsCircle(initials, dark)),
-      );
-    }
-    return _initialsCircle(initials, dark);
-  }
-
-  Widget _initialsCircle(String initials, bool dark) => Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: brandAmber.withValues(alpha: 0.16)),
-        alignment: Alignment.center,
-        child: Text(initials, style: const TextStyle(color: brandAmber, fontWeight: FontWeight.w800)),
-      );
-
-  Widget _iconBtn(IconData icon, bool dark, Color fg, VoidCallback onTap) => Container(
-        decoration: BoxDecoration(color: dark ? darkCard : Colors.white, borderRadius: BorderRadius.circular(12)),
+  Widget _iconBtn(IconData icon, bool dark, Color fg, VoidCallback onTap) =>
+      Container(
+        decoration: BoxDecoration(
+            color: dark ? darkCard : Colors.white,
+            borderRadius: BorderRadius.circular(12)),
         child: IconButton(icon: Icon(icon, color: fg), onPressed: onTap),
       );
+}
+
+class _StatusChip {
+  final String label;
+  final Color color;
+  const _StatusChip(this.label, this.color);
 }
 
 // ─── Add / Edit sheet ───────────────────────────────────────────────────────
@@ -278,11 +377,16 @@ class _MemberFormSheet extends StatefulWidget {
 class _MemberFormSheetState extends State<_MemberFormSheet> {
   final ApiService _api = ApiService();
   final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
   final _relationCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  String _accessLevel = 'RESIDENT';
   String? _photoDataUrl;
   bool _saving = false;
+
+  bool get _isEdit => widget.existing != null;
+
+  /// Once a member has a login account its e-mail can't change.
+  bool get _emailLocked => widget.existing?['linkedUserId'] != null;
 
   @override
   void initState() {
@@ -290,77 +394,89 @@ class _MemberFormSheetState extends State<_MemberFormSheet> {
     final e = widget.existing;
     if (e != null) {
       _nameCtrl.text = (e['fullName'] ?? '').toString();
+      _emailCtrl.text = (e['email'] ?? '').toString();
       _relationCtrl.text = (e['relation'] ?? '').toString();
       _phoneCtrl.text = (e['phone'] ?? '').toString();
-      _accessLevel = (e['accessLevel'] ?? 'RESIDENT').toString();
     }
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _emailCtrl.dispose();
     _relationCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _pickPhoto() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    final result =
+        await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
     final file = result?.files.single;
     if (file?.bytes == null) return;
-    final ext = (file!.extension ?? 'jpg').toLowerCase();
-    final mime = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
+    if (file!.size > 5 * 1024 * 1024) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Photo trop grande (max 5 Mo).'.tr)));
+      return;
+    }
+    final ext = (file.extension ?? 'jpg').toLowerCase();
+    final mime =
+        ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
     setState(() => _photoDataUrl = 'data:$mime;base64,${base64Encode(file.bytes!)}');
   }
 
+  bool _validEmail(String v) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v);
+
   Future<void> _save() async {
     final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim().toLowerCase();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Le nom est requis.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Le nom est requis.'.tr)));
+      return;
+    }
+    // New members need an e-mail (their login); so do legacy members being given one.
+    final needsEmail = !_isEdit || !_emailLocked;
+    if (needsEmail && !_validEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Saisissez une adresse e-mail valide.'.tr)));
       return;
     }
     setState(() => _saving = true);
     try {
       final id = widget.existing?['id']?.toString();
+      Map<String, dynamic> saved;
       if (id != null) {
-        await _api.updateHouseholdMember(id,
+        saved = await _api.updateHouseholdMember(id,
             fullName: name,
+            email: _emailLocked ? null : email,
             relation: _relationCtrl.text.trim(),
-            accessLevel: _accessLevel,
             phone: _phoneCtrl.text.trim(),
             photoDataUrl: _photoDataUrl);
       } else {
-        await _api.addHouseholdMember(
+        saved = await _api.addHouseholdMember(
             fullName: name,
+            email: email,
             relation: _relationCtrl.text.trim(),
-            accessLevel: _accessLevel,
             phone: _phoneCtrl.text.trim(),
             photoDataUrl: _photoDataUrl);
       }
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, saved);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.tr)));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  static const _levels = ['FULL', 'RESIDENT', 'VISITOR', 'CUSTOM'];
-  static const _labels = {
-    'FULL': 'Accès complet',
-    'RESIDENT': 'Accès résident',
-    'VISITOR': 'Accès visiteur',
-    'CUSTOM': 'Accès personnalisé',
-  };
-
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final fg = dark ? Colors.white : brandNavy;
-    final isEdit = widget.existing != null;
+    final muted = dark ? darkMuted : const Color(0xFF6B7280);
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -379,12 +495,15 @@ class _MemberFormSheetState extends State<_MemberFormSheet> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: dark ? darkBorder : const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(
+                      color: dark ? darkBorder : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(4)),
                 ),
               ),
               const SizedBox(height: 18),
-              Text(isEdit ? 'Modifier le membre' : 'Ajouter un membre',
-                  style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
+              Text(_isEdit ? 'Modifier le membre'.tr : 'Ajouter un membre'.tr,
+                  style: TextStyle(
+                      color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
               const SizedBox(height: 18),
               Center(
                 child: GestureDetector(
@@ -394,9 +513,19 @@ class _MemberFormSheetState extends State<_MemberFormSheet> {
                       Container(
                         width: 72,
                         height: 72,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: brandAmber.withValues(alpha: 0.14)),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: brandAmber.withValues(alpha: 0.14)),
                         alignment: Alignment.center,
-                        child: const Icon(Icons.person_rounded, size: 36, color: brandAmber),
+                        child: _photoDataUrl != null
+                            ? ClipOval(
+                                child: Image.memory(
+                                    base64Decode(_photoDataUrl!.split(',').last),
+                                    width: 72,
+                                    height: 72,
+                                    fit: BoxFit.cover))
+                            : const Icon(Icons.person_rounded,
+                                size: 36, color: brandAmber),
                       ),
                       Positioned(
                         bottom: 0,
@@ -404,9 +533,11 @@ class _MemberFormSheetState extends State<_MemberFormSheet> {
                         child: Container(
                           width: 24,
                           height: 24,
-                          decoration: const BoxDecoration(color: brandNavy, shape: BoxShape.circle),
+                          decoration: const BoxDecoration(
+                              color: brandNavy, shape: BoxShape.circle),
                           alignment: Alignment.center,
-                          child: const Icon(Icons.camera_alt_rounded, size: 12, color: Colors.white),
+                          child: const Icon(Icons.camera_alt_rounded,
+                              size: 12, color: Colors.white),
                         ),
                       ),
                     ],
@@ -414,44 +545,47 @@ class _MemberFormSheetState extends State<_MemberFormSheet> {
                 ),
               ),
               const SizedBox(height: 18),
-              TextField(controller: _nameCtrl, decoration: const InputDecoration(hintText: 'Nom complet')),
+              TextField(
+                  controller: _nameCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(hintText: 'Nom complet'.tr)),
               const SizedBox(height: 12),
-              TextField(controller: _relationCtrl, decoration: const InputDecoration(hintText: 'Relation (ex: Épouse, Fils...)')),
-              const SizedBox(height: 12),
-              TextField(controller: _phoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(hintText: 'Téléphone (optionnel)')),
-              const SizedBox(height: 16),
-              Text("Niveau d'accès", style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _levels.map((level) {
-                  final active = _accessLevel == level;
-                  return GestureDetector(
-                    onTap: () => setState(() => _accessLevel = level),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: active ? brandAmber : (dark ? darkCard : const Color(0xFFF3F0E8)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(_labels[level]!,
-                          style: TextStyle(
-                              color: active ? brandNavy : (dark ? Colors.white70 : const Color(0xFF6B7280)),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12)),
-                    ),
-                  );
-                }).toList(),
+              TextField(
+                controller: _emailCtrl,
+                enabled: !_emailLocked,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                decoration: InputDecoration(hintText: 'Adresse e-mail (identifiant de connexion)'.tr),
               ),
+              if (!_emailLocked)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 4, right: 4),
+                  child: Text(
+                      "Un e-mail contenant les accès (mot de passe temporaire) sera envoyé à cette adresse."
+                          .tr,
+                      style: TextStyle(color: muted, fontSize: 11.5)),
+                ),
+              const SizedBox(height: 12),
+              TextField(
+                  controller: _relationCtrl,
+                  decoration: InputDecoration(hintText: 'Relation (ex: Épouse, Fils...)'.tr)),
+              const SizedBox(height: 12),
+              TextField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(hintText: 'Téléphone (optionnel)'.tr)),
               const SizedBox(height: 22),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _saving ? null : _save,
                   child: _saving
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text(isEdit ? 'Enregistrer' : 'Ajouter'),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Text(_isEdit ? 'Enregistrer'.tr : 'Ajouter'.tr),
                 ),
               ),
             ],

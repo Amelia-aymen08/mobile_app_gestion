@@ -4,13 +4,61 @@ import 'dart:io';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/api_service.dart';
+import '../l10n/l10n.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
   
+  AuthProvider() {
+    ApiService.onAccountDisabled = _handleAccountDisabled;
+  }
+
   bool _isLoading = false;
   String? _token;
   Map<String, dynamic>? _user;
+  String? _notice;
+
+  /// One-shot message for the login screen (e.g. the account was deactivated).
+  String? consumeNotice() {
+    final n = _notice;
+    _notice = null;
+    return n;
+  }
+
+  /// Accounts created through a household (not the primary resident).
+  bool get isHouseholdMember => _user?['isHouseholdMember'] == true;
+
+  Map<String, dynamic> _userFrom(Map<dynamic, dynamic> data) => {
+        'id': data['id'],
+        'name': data['name'],
+        'email': data['email'],
+        'role': data['role'],
+        'profession': data['profession'],
+        'zone': data['zone'],
+        'photo': data['photo'],
+        'isHouseholdMember': data['isHouseholdMember'] == true,
+        'mustChangePassword': data['mustChangePassword'] == true,
+      };
+
+  Future<void> _persistUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user', json.encode(_user));
+  }
+
+  void _handleAccountDisabled() {
+    if (_token == null) return;
+    _notice = "Ce compte a été désactivé. Veuillez contacter l'administration.";
+    // No server round-trip: the API would just refuse it again.
+    _clearLocalSession();
+  }
+
+  /// Updates the profile picture locally after the API accepted it.
+  Future<void> setPhoto(String? photoUrl) async {
+    if (_user == null) return;
+    _user = {..._user!, 'photo': photoUrl};
+    await _persistUser();
+    notifyListeners();
+  }
 
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _token != null;
@@ -61,15 +109,7 @@ class AuthProvider with ChangeNotifier {
 
       try {
         final me = await _apiService.me();
-        _user = {
-          'id': me['id'],
-          'name': me['name'],
-          'email': me['email'],
-          'role': me['role'],
-          'profession': me['profession'],
-          'zone': me['zone'],
-          'mustChangePassword': me['mustChangePassword'] == true,
-        };
+        _user = _userFrom(me);
         await prefs.setString('user', json.encode(_user));
         notifyListeners();
       } catch (e) {
@@ -97,15 +137,7 @@ class AuthProvider with ChangeNotifier {
       _token = data['token'];
       _apiService.setToken(_token); // Set token in singleton ApiService
       
-      _user = {
-        'id': data['id'],
-        'name': data['name'],
-        'email': data['email'],
-        'role': data['role'],
-        'profession': data['profession'],
-        'zone': data['zone'],
-        'mustChangePassword': data['mustChangePassword'] == true,
-      };
+      _user = _userFrom(data);
       
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', _token!);
@@ -135,17 +167,24 @@ class AuthProvider with ChangeNotifier {
       await _apiService.logout(deviceId: deviceId);
     } catch (_) {}
 
+    await _clearLocalSession();
+  }
+
+  Future<void> _clearLocalSession() async {
     _token = null;
     _user = null;
     _apiService.setToken(null);
 
     final prefs = await SharedPreferences.getInstance();
-    // Preserve device_id so re-login on same device doesn't create a new entry
+    // Preserve device_id so re-login on same device doesn't create a new
+    // entry, and the chosen language so the login screen keeps it.
     final deviceId = prefs.getString('device_id');
+    final lang = prefs.getString(LocaleProvider.prefsKey);
     await prefs.clear();
     if (deviceId != null && deviceId.trim().isNotEmpty) {
       await prefs.setString('device_id', deviceId);
     }
+    if (lang != null) await prefs.setString(LocaleProvider.prefsKey, lang);
 
     notifyListeners();
   }

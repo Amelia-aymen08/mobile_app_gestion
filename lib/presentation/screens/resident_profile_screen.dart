@@ -1,9 +1,15 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../data/api_service.dart';
+import '../l10n/l10n.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_picker.dart';
+import '../widgets/user_avatar.dart';
 
 class ResidentProfileScreen extends StatefulWidget {
   const ResidentProfileScreen({super.key});
@@ -13,18 +19,30 @@ class ResidentProfileScreen extends StatefulWidget {
 }
 
 class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
-  final _pwdController     = TextEditingController();
+  final ApiService _api = ApiService();
+  final _currentController = TextEditingController();
+  final _pwdController = TextEditingController();
   final _confirmController = TextEditingController();
-  final _formKey           = GlobalKey<FormState>();
-  bool _loading   = false;
-  bool _obscurePwd    = true;
-  bool _obscureConf   = true;
+  final _formKey = GlobalKey<FormState>();
+  bool _loading = false;
+  bool _photoBusy = false;
+  bool _obscureCurrent = true;
+  bool _obscurePwd = true;
+  bool _obscureConf = true;
+
+  static const int _maxPhotoBytes = 5 * 1024 * 1024;
 
   @override
   void dispose() {
+    _currentController.dispose();
     _pwdController.dispose();
     _confirmController.dispose();
     super.dispose();
+  }
+
+  void _snack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _save() async {
@@ -34,26 +52,110 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
       final auth = context.read<AuthProvider>();
       // Only update password if fields are filled
       if (_pwdController.text.isNotEmpty) {
-        await auth.changePassword('', _pwdController.text);
+        await auth.changePassword(_currentController.text, _pwdController.text);
       }
+      _currentController.clear();
       _pwdController.clear();
       _confirmController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil enregistré.')));
+      _snack('Profil enregistré.'.tr);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+      _snack(e.toString().replaceAll('Exception: ', '').tr);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  // ── Profile picture (optional) ───────────────────────────
+  Future<void> _pickPhoto() async {
+    final result =
+        await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
+    final file = result?.files.single;
+    if (file == null || file.bytes == null) return;
+    if (file.size > _maxPhotoBytes) {
+      _snack('Photo trop grande (max 5 Mo).'.tr);
+      return;
+    }
+    final ext = (file.extension ?? 'jpg').toLowerCase();
+    final mime =
+        ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
+
+    setState(() => _photoBusy = true);
+    try {
+      final updated = await _api
+          .updateProfilePhoto('data:$mime;base64,${base64Encode(file.bytes!)}');
+      await context.read<AuthProvider>().setPhoto(updated['photo']?.toString());
+      _snack('Photo de profil mise à jour.'.tr);
+    } catch (e) {
+      _snack(e.toString().replaceAll('Exception: ', '').tr);
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
+  }
+
+  Future<void> _removePhoto() async {
+    setState(() => _photoBusy = true);
+    try {
+      await _api.removeProfilePhoto();
+      await context.read<AuthProvider>().setPhoto(null);
+      _snack('Photo de profil supprimée.'.tr);
+    } catch (e) {
+      _snack(e.toString().replaceAll('Exception: ', '').tr);
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
+  }
+
+  void _photoMenu(bool hasPhoto) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+        decoration: BoxDecoration(
+          color: dark ? darkSurface : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: brandAmber),
+              title: Text(hasPhoto ? 'Changer la photo'.tr : 'Choisir une photo'.tr,
+                  style: TextStyle(
+                      color: dark ? Colors.white : brandNavy,
+                      fontWeight: FontWeight.w700)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickPhoto();
+              },
+            ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded,
+                    color: Color(0xFFDC2626)),
+                title: Text('Supprimer la photo'.tr,
+                    style: const TextStyle(
+                        color: Color(0xFFDC2626), fontWeight: FontWeight.w700)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _removePhoto();
+                },
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
-    final name  = (user?['name'] ?? '').toString();
+    final name = (user?['name'] ?? '').toString();
     final email = (user?['email'] ?? '').toString();
     final phone = (user?['phone'] ?? '').toString();
+    final photo = (user?['photo'] ?? '').toString();
+    final lang = context.watch<LocaleProvider>().lang;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -68,8 +170,9 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
             child: Icon(Icons.arrow_back_rounded, color: Colors.white),
           ),
         ),
-        title: const Text('Profil',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        title: Text('Profil'.tr,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w700)),
       ),
       body: Container(
         decoration: appBg(),
@@ -82,36 +185,38 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                 children: [
                   // ── Avatar ────────────────────────────────
                   Center(
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.25),
-                            border: Border.all(color: Colors.white, width: 3),
-                          ),
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.person_rounded,
-                              size: 46, color: Colors.white),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: brandNavy,
-                              shape: BoxShape.circle,
+                    child: GestureDetector(
+                      onTap: _photoBusy ? null : () => _photoMenu(photo.isNotEmpty),
+                      child: Stack(
+                        children: [
+                          UserAvatar(
+                              photo: photo,
+                              name: name,
+                              size: 96,
+                              ringColor: Colors.white),
+                          if (_photoBusy)
+                            const Positioned.fill(
+                              child: Center(
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2.5)),
                             ),
-                            alignment: Alignment.center,
-                            child: const Icon(Icons.edit_rounded,
-                                size: 14, color: Colors.white),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: const BoxDecoration(
+                                color: brandNavy,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  size: 15, color: Colors.white),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -120,6 +225,11 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 4),
+                  Text('La photo de profil est facultative.'.tr,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 12)),
                   const SizedBox(height: 24),
 
                   // ── White profile card ─────────────────────
@@ -138,8 +248,8 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Profil',
-                            style: TextStyle(
+                        Text('Profil'.tr,
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 16,
                                 color: brandNavy)),
@@ -149,18 +259,47 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                         TextFormField(
                           initialValue: email,
                           readOnly: true,
-                          decoration: const InputDecoration(hintText: 'E-mail'),
+                          decoration: InputDecoration(hintText: 'E-mail'.tr),
                           style: const TextStyle(color: brandNavy),
                         ),
                         const SizedBox(height: 12),
 
                         // Phone (read-only display)
+                        if (phone.isNotEmpty) ...[
+                          TextFormField(
+                            initialValue: phone,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                                hintText: 'Numéro de téléphone'.tr),
+                            style: const TextStyle(color: brandNavy),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // Current password (needed to set a new one)
                         TextFormField(
-                          initialValue: phone.isNotEmpty ? phone : null,
-                          readOnly: true,
-                          decoration: const InputDecoration(
-                              hintText: 'Numéro de téléphone'),
-                          style: const TextStyle(color: brandNavy),
+                          controller: _currentController,
+                          obscureText: _obscureCurrent,
+                          decoration: InputDecoration(
+                            hintText: 'Mot de passe actuel'.tr,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureCurrent
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: const Color(0xFFADB5BD),
+                              ),
+                              onPressed: () => setState(
+                                  () => _obscureCurrent = !_obscureCurrent),
+                            ),
+                          ),
+                          validator: (v) {
+                            if (_pwdController.text.isNotEmpty &&
+                                (v == null || v.isEmpty)) {
+                              return 'Saisissez votre mot de passe actuel'.tr;
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
 
@@ -169,7 +308,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           controller: _pwdController,
                           obscureText: _obscurePwd,
                           decoration: InputDecoration(
-                            hintText: 'Mot de passe',
+                            hintText: 'Nouveau mot de passe'.tr,
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePwd
@@ -183,7 +322,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           ),
                           validator: (v) {
                             if (v != null && v.isNotEmpty && v.length < 6) {
-                              return '6 caractères minimum';
+                              return '6 caractères minimum'.tr;
                             }
                             return null;
                           },
@@ -195,7 +334,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           controller: _confirmController,
                           obscureText: _obscureConf,
                           decoration: InputDecoration(
-                            hintText: 'Confirmer le mot de passe',
+                            hintText: 'Confirmer le mot de passe'.tr,
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscureConf
@@ -210,19 +349,44 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                           validator: (v) {
                             if (_pwdController.text.isNotEmpty &&
                                 v != _pwdController.text) {
-                              return 'Les mots de passe ne correspondent pas';
+                              return 'Les mots de passe ne correspondent pas'.tr;
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
 
+                        // Language
+                        InkWell(
+                          onTap: () => showLanguagePicker(context),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              children: [
+                                Text('Langue'.tr,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: brandNavy,
+                                        fontSize: 14)),
+                                const Spacer(),
+                                Text(lang.nativeName,
+                                    style: const TextStyle(
+                                        color: brandAmber,
+                                        fontWeight: FontWeight.w700)),
+                                const Icon(Icons.chevron_right_rounded,
+                                    color: Color(0xFFADB5BD)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+
                         // Dark mode toggle
                         Consumer<ThemeProvider>(
                           builder: (_, theme, __) => Row(
                             children: [
-                              const Text('Activer le thème sombre',
-                                  style: TextStyle(
+                              Text('Activer le thème sombre'.tr,
+                                  style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       color: brandNavy,
                                       fontSize: 14)),
@@ -244,7 +408,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                                     width: 20,
                                     child: CircularProgressIndicator(
                                         color: Colors.white, strokeWidth: 2))
-                                : const Text('Enregistrer'),
+                                : Text('Enregistrer'.tr),
                           ),
                         ),
                       ],

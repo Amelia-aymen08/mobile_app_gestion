@@ -11,20 +11,77 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode): $message';
 }
 
+/// A file picked on the device, ready to be uploaded.
+class UploadFile {
+  final Uint8List bytes;
+  final String filename;
+  final String mimeType;
+  const UploadFile(
+      {required this.bytes, required this.filename, required this.mimeType});
+}
+
+/// Wraps the HTTP client to notice when the administration has deactivated
+/// the signed-in account (403 + code ACCOUNT_DISABLED), whatever the endpoint.
+class _GuardedClient extends http.BaseClient {
+  _GuardedClient(this._inner);
+  final http.Client _inner;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final response = await _inner.send(request);
+    if (response.statusCode != 403) return response;
+
+    final bytes = await response.stream.toBytes();
+    try {
+      final body = jsonDecode(utf8.decode(bytes));
+      if (body is Map && body['code'] == 'ACCOUNT_DISABLED') {
+        ApiService.onAccountDisabled?.call();
+      }
+    } catch (_) {}
+    return http.StreamedResponse(
+      Stream.value(bytes),
+      response.statusCode,
+      contentLength: bytes.length,
+      request: response.request,
+      headers: response.headers,
+      isRedirect: response.isRedirect,
+      persistentConnection: response.persistentConnection,
+      reasonPhrase: response.reasonPhrase,
+    );
+  }
+
+  @override
+  void close() => _inner.close();
+}
+
 class ApiService {
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
 
+  /// Called when any request comes back with ACCOUNT_DISABLED.
+  static void Function()? onAccountDisabled;
+
   String? _token;
   void setToken(String? token) => _token = token;
 
-  final http.Client _client = http.Client();
+  final http.Client _client = _GuardedClient(http.Client());
   final String baseUrl = const String.fromEnvironment(
     'API_URL',
     defaultValue: 'https://landing.aymenpromotion-dz.com/api',
   );
+
+  /// Server root, i.e. [baseUrl] without the trailing /api.
+  String get serverRoot => baseUrl.replaceAll(RegExp(r'/api/?$'), '');
+
+  /// Absolute URL of an uploaded file ("/uploads/x.jpg"), or null when empty.
+  String? mediaUrl(dynamic raw) {
+    final s = (raw ?? '').toString().trim();
+    if (s.isEmpty) return null;
+    if (s.startsWith('http')) return s;
+    return '$serverRoot${s.startsWith('/') ? s : '/$s'}';
+  }
 
   static final List<Map<String, dynamic>> _defaultMaintenanceCategories = [
     {
@@ -421,7 +478,11 @@ class ApiService {
     throw Exception(msg);
   }
 
-  Future<List<dynamic>> getMyProperties(String email) async {
+  /// [trustServer]: for RESIDENT accounts the backend already returns only the
+  /// resident's own properties (a household member's e-mail differs from the
+  /// owner's), so the client-side e-mail filter must be skipped.
+  Future<List<dynamic>> getMyProperties(String email,
+      {bool trustServer = false}) async {
     final response = await _client
         .get(Uri.parse('$baseUrl/properties'), headers: _headers)
         .timeout(const Duration(seconds: 20));
@@ -433,6 +494,7 @@ class ApiService {
     final decoded = jsonDecode(response.body);
     final data = decoded is Map<String, dynamic> ? decoded['data'] : null;
     final list = data is List ? data : [];
+    if (trustServer) return list;
     final lowerEmail = email.toLowerCase().trim();
     return list.where((p) {
       if (p is! Map) return false;
@@ -946,8 +1008,8 @@ class ApiService {
 
   Future<Map<String, dynamic>> addHouseholdMember({
     required String fullName,
+    required String email,
     String? relation,
-    String accessLevel = 'RESIDENT',
     String? phone,
     String? photoDataUrl,
   }) async {
@@ -957,13 +1019,13 @@ class ApiService {
           headers: _headers,
           body: jsonEncode({
             'fullName': fullName,
+            'email': email,
             if (relation != null) 'relation': relation,
-            'accessLevel': accessLevel,
             if (phone != null) 'phone': phone,
             if (photoDataUrl != null) 'photo': photoDataUrl,
           }),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 30));
     if (response.statusCode == 201) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -974,8 +1036,8 @@ class ApiService {
   Future<Map<String, dynamic>> updateHouseholdMember(
     String id, {
     String? fullName,
+    String? email,
     String? relation,
-    String? accessLevel,
     String? phone,
     String? photoDataUrl,
   }) async {
@@ -985,18 +1047,31 @@ class ApiService {
           headers: _headers,
           body: jsonEncode({
             if (fullName != null) 'fullName': fullName,
+            if (email != null && email.isNotEmpty) 'email': email,
             if (relation != null) 'relation': relation,
-            if (accessLevel != null) 'accessLevel': accessLevel,
             if (phone != null) 'phone': phone,
             if (photoDataUrl != null) 'photo': photoDataUrl,
           }),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 30));
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
     throw Exception(
         _tryDecode(response.body)['error'] ?? 'Erreur lors de la modification');
+  }
+
+  /// Sends the member a new temporary password by e-mail. Returns whether the
+  /// e-mail could be sent.
+  Future<bool> resendMemberAccess(String id) async {
+    final response = await _client
+        .post(Uri.parse('$baseUrl/household-members/$id/resend-access'),
+            headers: _headers)
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode == 200) {
+      return _tryDecode(response.body)['emailSent'] == true;
+    }
+    throw Exception(_tryDecode(response.body)['error'] ?? 'Erreur');
   }
 
   Future<void> removeHouseholdMember(String id) async {
@@ -1091,5 +1166,126 @@ class ApiService {
     }
     throw Exception(_tryDecode(response.body)['error'] ??
         "Erreur lors de l'envoi du message");
+  }
+
+  // --- Profile photo ---
+
+  Future<Map<String, dynamic>> updateProfilePhoto(String photoDataUrl) async {
+    final response = await _client
+        .put(Uri.parse('$baseUrl/auth/photo'),
+            headers: _headers, body: jsonEncode({'photo': photoDataUrl}))
+        .timeout(const Duration(seconds: 40));
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception(
+        _tryDecode(response.body)['error'] ?? 'Erreur lors de l\'envoi de la photo');
+  }
+
+  Future<Map<String, dynamic>> removeProfilePhoto() async {
+    final response = await _client
+        .delete(Uri.parse('$baseUrl/auth/photo'), headers: _headers)
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception(_tryDecode(response.body)['error'] ?? 'Erreur');
+  }
+
+  // --- Residence details ---
+
+  Future<Map<String, dynamic>> getResidence(String id) async {
+    final response = await _client
+        .get(Uri.parse('$baseUrl/residences/$id'), headers: _headers)
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception(
+        _tryDecode(response.body)['error'] ?? 'Erreur chargement de la résidence');
+  }
+
+  // --- Documents published by the administration ---
+
+  Future<List<dynamic>> getResidentDocuments() async {
+    final response = await _client
+        .get(Uri.parse('$baseUrl/documents/resident'), headers: _headers)
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return decoded is List ? decoded : [];
+    }
+    throw Exception(
+        _tryDecode(response.body)['error'] ?? 'Erreur chargement des documents');
+  }
+
+  Future<Uint8List> downloadResidentDocument(String id) async {
+    final response = await _client
+        .get(Uri.parse('$baseUrl/documents/$id/download'), headers: _headers)
+        .timeout(const Duration(seconds: 90));
+    if (response.statusCode == 200) return response.bodyBytes;
+    throw Exception(
+        _tryDecode(response.body)['error'] ?? 'Téléchargement impossible');
+  }
+
+  /// Downloads a public uploaded file (e.g. a ticket attachment).
+  Future<Uint8List> downloadPublicFile(String pathOrUrl) async {
+    final url = mediaUrl(pathOrUrl);
+    if (url == null) throw Exception('Fichier introuvable');
+    final response =
+        await _client.get(Uri.parse(url)).timeout(const Duration(seconds: 90));
+    if (response.statusCode == 200) return response.bodyBytes;
+    throw Exception('Téléchargement impossible');
+  }
+
+  // --- Ticket details: attachments, history, information ---
+
+  Future<Map<String, dynamic>> getTicket(String id) async {
+    final response = await _client
+        .get(Uri.parse('$baseUrl/maintenance/$id'), headers: _headers)
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception(
+        _tryDecode(response.body)['error'] ?? 'Erreur chargement du signalement');
+  }
+
+  /// Up to 4 files, 10 MB in total (enforced server side too).
+  Future<List<dynamic>> uploadTicketAttachments({
+    required String ticketId,
+    required List<UploadFile> files,
+  }) async {
+    final request = http.MultipartRequest(
+        'POST', Uri.parse('$baseUrl/maintenance/$ticketId/attachments'));
+    if (_token != null) request.headers['Authorization'] = 'Bearer $_token';
+    for (final f in files) {
+      request.files.add(http.MultipartFile.fromBytes('files', f.bytes,
+          filename: f.filename, contentType: MediaType.parse(f.mimeType)));
+    }
+    final streamed =
+        await _client.send(request).timeout(const Duration(seconds: 120));
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode == 201) {
+      final decoded = jsonDecode(response.body);
+      return decoded is Map && decoded['attachments'] is List
+          ? decoded['attachments'] as List
+          : [];
+    }
+    throw Exception(_tryDecode(response.body)['error'] ??
+        'Envoi des pièces jointes impossible (${response.statusCode})');
+  }
+
+  /// { history: [...], startedAt, closedAt }
+  Future<Map<String, dynamic>> getTicketHistory(String ticketId) async {
+    final response = await _client
+        .get(Uri.parse('$baseUrl/maintenance/$ticketId/history'),
+            headers: _headers)
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
+    }
+    throw Exception(
+        _tryDecode(response.body)['error'] ?? 'Erreur chargement de l\'historique');
   }
 }

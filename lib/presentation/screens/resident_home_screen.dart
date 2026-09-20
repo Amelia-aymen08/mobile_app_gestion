@@ -17,6 +17,11 @@ import 'property_add_request_screen.dart';
 import 'resident_tickets_screen.dart';
 import 'household_members_screen.dart';
 import 'notices_screen.dart';
+import 'documents_screen.dart';
+import 'residence_details_screen.dart';
+import '../l10n/l10n.dart';
+import '../widgets/language_picker.dart';
+import '../widgets/user_avatar.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -95,7 +100,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       final email = (user?['email'] ?? '').toString();
       final results = await Future.wait([
         email.isNotEmpty
-            ? _api.getMyProperties(email)
+            ? _api.getMyProperties(email, trustServer: true)
             : Future.value(<dynamic>[]),
         _api.getMyChargesSummary(),
         _api.getTickets(),
@@ -151,13 +156,13 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                       color: Colors.white, size: 34),
                 ),
                 const SizedBox(height: 18),
-                Text('Paiement urgent',
+                Text('Paiement urgent'.tr,
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: dark ? Colors.white : brandNavy)),
                 const SizedBox(height: 10),
-                Text('Votre prochain paiement est dû le $label.',
+                Text('Votre prochain paiement est dû le {date}.'.trp({'date': label}),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         color: dark ? darkMuted : const Color(0xFF6B7280),
@@ -175,8 +180,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                               borderRadius: BorderRadius.circular(30)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: const Text('Fermer',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
+                        child: Text('Fermer'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -194,8 +199,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           elevation: 0,
                         ),
-                        child: const Text('Voir',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
+                        child: Text('Voir'.tr,
+                            style: const TextStyle(fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],
@@ -216,9 +221,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final d = DateTime.tryParse(iso);
     if (d == null) return '';
     final diff = DateTime.now().difference(d);
-    if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
-    if (diff.inDays < 7) return 'Il y a ${diff.inDays} j';
+    if (diff.inMinutes < 60) {
+      return 'Il y a {n} min'.trp({'n': diff.inMinutes});
+    }
+    if (diff.inHours < 24) return 'Il y a {n} h'.trp({'n': diff.inHours});
+    if (diff.inDays < 7) return 'Il y a {n} j'.trp({'n': diff.inDays});
     return _formatDate(d);
   }
 
@@ -245,6 +252,15 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     if (s.startsWith('http')) return s;
     final base = _api.baseUrl.replaceAll(RegExp(r'/api/?$'), '');
     return '$base/${s.startsWith('/') ? s.substring(1) : s}';
+  }
+
+  /// The resident's (first) residence, as embedded in their properties.
+  Map<String, dynamic>? get _residenceForDetails {
+    for (final p in _properties.whereType<Map>()) {
+      final r = p['Residence'];
+      if (r is Map && r['id'] != null) return Map<String, dynamic>.from(r);
+    }
+    return null;
   }
 
   Future<void> _push(Widget screen) async {
@@ -276,12 +292,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                     color: Colors.white, size: 34),
               ),
               const SizedBox(height: 18),
-              Text('Se déconnecter ?',
+              Text('Se déconnecter ?'.tr,
                   style: TextStyle(
                       fontSize: 20, fontWeight: FontWeight.w800, color: fg)),
               const SizedBox(height: 10),
               Text(
-                  'Voulez-vous vraiment vous déconnecter ? Vous pourrez vous reconnecter à tout moment.',
+                  'Voulez-vous vraiment vous déconnecter ? Vous pourrez vous reconnecter à tout moment.'.tr,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: muted, fontSize: 14)),
               const SizedBox(height: 22),
@@ -297,8 +313,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                             borderRadius: BorderRadius.circular(30)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: const Text('Annuler',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text('Annuler'.tr,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -313,8 +329,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      child: const Text('Se déconnecter',
-                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text('Se déconnecter'.tr,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -357,26 +373,26 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
   Widget _buildNavBar(bool dark) {
     final items = [
-      const _NavItem(
+      _NavItem(
           icon: Icons.home_outlined,
           activeIcon: Icons.home_rounded,
-          label: 'Accueil'),
-      const _NavItem(
+          label: 'Accueil'.tr),
+      _NavItem(
           icon: Icons.campaign_outlined,
           activeIcon: Icons.campaign_rounded,
-          label: 'Avis'),
-      const _NavItem(
+          label: 'Avis'.tr),
+      _NavItem(
           icon: Icons.add_circle_outline,
           activeIcon: Icons.add_circle_rounded,
-          label: 'Signaler'),
-      const _NavItem(
+          label: 'Signaler'.tr),
+      _NavItem(
           icon: Icons.credit_card_outlined,
           activeIcon: Icons.credit_card_rounded,
-          label: 'Paiement'),
-      const _NavItem(
+          label: 'Paiement'.tr),
+      _NavItem(
           icon: Icons.more_horiz_rounded,
           activeIcon: Icons.more_horiz_rounded,
-          label: 'Plus'),
+          label: 'Plus'.tr),
     ];
 
     return Container(
@@ -502,7 +518,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    'Bienvenue ${firstName.isNotEmpty ? firstName : ''}',
+                    'Bienvenue {name}'.trp({'name': firstName}),
                     style: TextStyle(
                         color: fg, fontWeight: FontWeight.w900, fontSize: 24),
                   ),
@@ -529,17 +545,14 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   ],
                 ),
                 const SizedBox(width: 10),
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: (dark ? Colors.white : brandNavy)
-                        .withValues(alpha: 0.08),
-                    border: Border.all(color: brandAmber, width: 2),
+                GestureDetector(
+                  onTap: () => _push(const ResidentProfileScreen()),
+                  child: UserAvatar(
+                    photo: user?['photo']?.toString(),
+                    name: (user?['name'] ?? '').toString(),
+                    size: 40,
+                    ringColor: brandAmber,
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(Icons.person_rounded, color: fg, size: 22),
                 ),
               ],
             ),
@@ -562,11 +575,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   child: _statCard(
                     icon: Icons.account_balance_wallet_outlined,
                     iconColor: brandAmber,
-                    label: 'Prochain paiement',
+                    label: 'Prochain paiement'.tr,
                     value: annualAmount != null ? '$annualAmount DZD' : '—',
                     sub: nextPaymentDate != null
-                        ? 'Échéance : ${_formatDate(nextPaymentDate)}'
-                        : (ownerStatus.isNotEmpty ? ownerStatus : null),
+                        ? 'Échéance : {date}'.trp({'date': _formatDate(nextPaymentDate)})
+                        : (ownerStatus.isNotEmpty ? ownerStatus.tr : null),
                     subColor: brandAmber,
                     dark: dark,
                     fg: fg,
@@ -579,11 +592,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   child: _statCard(
                     icon: Icons.error_outline_rounded,
                     iconColor: const Color(0xFFE0362B),
-                    label: 'Signalements',
+                    label: 'Signalements'.tr,
                     value:
-                        '${openTickets.length} ouvert${openTickets.length > 1 ? 's' : ''}',
+                        (openTickets.length > 1 ? '{n} ouverts' : '{n} ouvert')
+                            .trp({'n': openTickets.length}),
                     sub: inProgressTickets.isNotEmpty
-                        ? '${inProgressTickets.length} en cours'
+                        ? '{n} en cours'.trp({'n': inProgressTickets.length})
                         : null,
                     subColor: const Color(0xFFE0362B),
                     dark: dark,
@@ -597,7 +611,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             const SizedBox(height: 22),
 
             // ── Quick actions ──────────────────────────
-            Text('Actions rapides',
+            Text('Actions rapides'.tr,
                 style: TextStyle(
                     color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 12),
@@ -606,7 +620,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
             // ── Recent activity ────────────────────────
             if (_tickets.isNotEmpty) ...[
-              Text('Activité récente',
+              Text('Activité récente'.tr,
                   style: TextStyle(
                       color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
               const SizedBox(height: 12),
@@ -614,7 +628,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 if (t is! Map) return const SizedBox.shrink();
                 final status = (t['status'] ?? '').toString();
                 final title =
-                    (t['type'] ?? t['title'] ?? 'Signalement').toString();
+                    (t['type'] ?? t['title'] ?? 'Signalement').toString().tr;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: GestureDetector(
@@ -749,7 +763,15 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final unit = unitRaw.contains('-') ? unitRaw.split('-').last : unitRaw;
     final active = ownerStatus.isEmpty || ownerStatus == 'Actif';
 
-    return ClipRRect(
+    final residenceId = (residence['id'] ?? property['residenceId'] ?? '').toString();
+
+    return GestureDetector(
+      onTap: residenceId.isEmpty
+          ? null
+          : () => _push(ResidenceDetailsScreen(
+              residenceId: residenceId,
+              initial: Map<String, dynamic>.from(residence))),
+      child: ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
@@ -794,7 +816,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text('MA RÉSIDENCE',
+                        child: Text('MA RÉSIDENCE'.tr,
                             style: TextStyle(
                                 color: muted,
                                 fontSize: 11,
@@ -819,7 +841,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(name.isNotEmpty ? name : 'Résidence',
+                  Text(name.isNotEmpty ? name : 'Résidence'.tr,
                       style: TextStyle(
                           color: fg,
                           fontSize: 18,
@@ -837,6 +859,14 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
                         ),
+                        const SizedBox(width: 8),
+                        Text('Détails'.tr,
+                            style: const TextStyle(
+                                color: brandAmber,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700)),
+                        const Icon(Icons.chevron_right_rounded,
+                            size: 16, color: brandAmber),
                       ],
                     ),
                   ],
@@ -853,7 +883,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                       children: [
                         if (floor.isNotEmpty)
                           _Stat(
-                              label: 'Étage',
+                              label: 'Étage'.tr,
                               value: floor,
                               muted: muted,
                               fg: fg),
@@ -861,7 +891,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                           _statDivider(dark),
                         if (surface.isNotEmpty)
                           _Stat(
-                              label: 'Surface',
+                              label: 'Surface'.tr,
                               value: '$surface m²',
                               muted: muted,
                               fg: fg),
@@ -870,10 +900,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Statut',
+                              Text('Statut'.tr,
                                   style: TextStyle(color: muted, fontSize: 11)),
                               const SizedBox(height: 2),
-                              Text(active ? 'Actif' : ownerStatus,
+                              Text((active ? 'Actif' : ownerStatus).tr,
                                   style: TextStyle(
                                       color: active
                                           ? const Color(0xFF16A34A)
@@ -892,7 +922,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _statDivider(bool dark) => Container(
@@ -965,47 +995,49 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   Widget _quickActionsGrid(bool dark, Color fg) {
     final actions = [
       (
-        const _QAction(
+        _QAction(
             icon: Icons.error_outline_rounded,
-            color: Color(0xFFE0362B),
-            label: 'Signalements'),
+            color: const Color(0xFFE0362B),
+            label: 'Signalements'.tr),
         () => setState(() => _tab = 2)
       ),
       (
-        const _QAction(
+        _QAction(
             icon: Icons.campaign_outlined,
-            color: Color(0xFF8B7CF6),
-            label: 'Avis'),
+            color: const Color(0xFF8B7CF6),
+            label: 'Avis'.tr),
         () => setState(() => _tab = 1)
       ),
       (
-        const _QAction(
+        _QAction(
             icon: Icons.account_balance_wallet_outlined,
             color: brandAmber,
-            label: 'Paiements'),
+            label: 'Paiements'.tr),
         () => setState(() => _tab = 3)
       ),
       (
-        const _QAction(
+        _QAction(
             icon: Icons.description_outlined,
-            color: Color(0xFF3B82F6),
-            label: 'Documents'),
-        () => _push(const MyPropertiesScreen())
+            color: const Color(0xFF3B82F6),
+            label: 'Documents'.tr),
+        () => _push(const DocumentsScreen())
       ),
       (
         _QAction(
             icon: Icons.person_outline_rounded,
             color: dark ? darkMuted : const Color(0xFF6B7280),
-            label: 'Profil'),
+            label: 'Profil'.tr),
         () => _push(const ResidentProfileScreen())
       ),
-      (
-        const _QAction(
-            icon: Icons.add_home_work_outlined,
-            color: Color(0xFF16A34A),
-            label: 'Ajouter un bien'),
-        () => _push(const PropertyAddRequestScreen())
-      ),
+      // Only the primary resident can request a new property.
+      if (!context.read<AuthProvider>().isHouseholdMember)
+        (
+          _QAction(
+              icon: Icons.add_home_work_outlined,
+              color: const Color(0xFF16A34A),
+              label: 'Ajouter un bien'.tr),
+          () => _push(const PropertyAddRequestScreen())
+        ),
     ];
 
     return GridView.count(
@@ -1065,17 +1097,14 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               borderRadius: BorderRadius.circular(24),
             ),
             child: Column(children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      (dark ? Colors.white : brandNavy).withValues(alpha: 0.08),
-                  border: Border.all(color: brandAmber, width: 2.5),
+              GestureDetector(
+                onTap: () => _push(const ResidentProfileScreen()),
+                child: UserAvatar(
+                  photo: user?['photo']?.toString(),
+                  name: (user?['name'] ?? '').toString(),
+                  size: 80,
+                  ringColor: brandAmber,
                 ),
-                alignment: Alignment.center,
-                child: Icon(Icons.person_rounded, size: 40, color: fg),
               ),
               const SizedBox(height: 14),
               Text(
@@ -1090,8 +1119,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 decoration: BoxDecoration(
                     color: brandAmber, borderRadius: BorderRadius.circular(20)),
-                child: const Text('Résident',
-                    style: TextStyle(
+                child: Text('Résident'.tr,
+                    style: const TextStyle(
                         fontSize: 12,
                         color: Colors.white,
                         fontWeight: FontWeight.w700)),
@@ -1106,42 +1135,61 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             ]),
           ),
           const SizedBox(height: 20),
-          Text('Services',
+          Text('Services'.tr,
               style: TextStyle(
                   color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
           const SizedBox(height: 10),
           _profileItem(
               icon: Icons.person_outline,
-              label: 'Mon profil',
+              label: 'Mon profil'.tr,
               dark: dark,
               onTap: () => _push(const ResidentProfileScreen())),
           const SizedBox(height: 10),
           _profileItem(
               icon: Icons.lock_outline,
-              label: 'Changer le mot de passe',
+              label: 'Changer le mot de passe'.tr,
               dark: dark,
               onTap: () => _push(const ChangePasswordScreen())),
           const SizedBox(height: 10),
           _profileItem(
               icon: Icons.notifications_outlined,
-              label: 'Notifications',
+              label: 'Notifications'.tr,
               dark: dark,
               badge: _unreadCount,
               onTap: () => _push(const NotificationsScreen())),
           const SizedBox(height: 10),
           _profileItem(
               icon: Icons.business_outlined,
-              label: 'Mes biens',
+              label: 'Mes biens'.tr,
               dark: dark,
               onTap: () => _push(const MyPropertiesScreen())),
+          if (_residenceForDetails != null) ...[
+            const SizedBox(height: 10),
+            _profileItem(
+                icon: Icons.apartment_outlined,
+                label: 'Ma résidence'.tr,
+                dark: dark,
+                onTap: () => _push(ResidenceDetailsScreen(
+                    residenceId: _residenceForDetails!['id'].toString(),
+                    initial: _residenceForDetails))),
+          ],
           const SizedBox(height: 10),
           _profileItem(
-              icon: Icons.groups_outlined,
-              label: 'Membres du foyer',
+              icon: Icons.folder_outlined,
+              label: 'Documents'.tr,
               dark: dark,
-              onTap: () => _push(const HouseholdMembersScreen())),
+              onTap: () => _push(const DocumentsScreen())),
+          // Members added through a household can't manage it: only the primary resident.
+          if (!context.read<AuthProvider>().isHouseholdMember) ...[
+            const SizedBox(height: 10),
+            _profileItem(
+                icon: Icons.groups_outlined,
+                label: 'Membres du foyer'.tr,
+                dark: dark,
+                onTap: () => _push(const HouseholdMembersScreen())),
+          ],
           const SizedBox(height: 24),
-          Text('Apparence',
+          Text('Apparence'.tr,
               style: TextStyle(
                   color: fg, fontWeight: FontWeight.w800, fontSize: 15)),
           const SizedBox(height: 10),
@@ -1169,7 +1217,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   ),
                   const SizedBox(width: 14),
                   Expanded(
-                    child: Text('Thème sombre',
+                    child: Text('Thème sombre'.tr,
                         style:
                             TextStyle(fontWeight: FontWeight.w700, color: fg)),
                   ),
@@ -1178,10 +1226,17 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          _profileItem(
+              icon: Icons.language_rounded,
+              label: 'Langue'.tr,
+              trailing: context.watch<LocaleProvider>().lang.nativeName,
+              dark: dark,
+              onTap: () => showLanguagePicker(context)),
           const SizedBox(height: 30),
           OutlinedButton.icon(
             icon: const Icon(Icons.logout_rounded),
-            label: const Text('Se déconnecter'),
+            label: Text('Se déconnecter'.tr),
             onPressed: _confirmLogout,
             style: OutlinedButton.styleFrom(
               foregroundColor: fg,
@@ -1204,6 +1259,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     required bool dark,
     required VoidCallback onTap,
     int badge = 0,
+    String? trailing,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -1229,6 +1285,15 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: dark ? Colors.white : brandNavy))),
+          if (trailing != null)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 6),
+              child: Text(trailing,
+                  style: const TextStyle(
+                      color: brandAmber,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13)),
+            ),
           if (badge > 0)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
