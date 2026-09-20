@@ -1063,4 +1063,10 @@ class AppL10nFr extends AppL10n {
   @override
   String get chatEmptyReadOnly =>
       'Aucun message pour le moment. L\'administration écrira ici si votre signalement demande une précision.';
+
+  @override
+  String get annualCharge => 'Charge annuelle';
+
+  @override
+  String get upToDateTitle => 'À jour';
 }

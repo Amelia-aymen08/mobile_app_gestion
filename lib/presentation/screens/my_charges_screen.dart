@@ -163,7 +163,13 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
         (current?['periodEnd'] ?? _summary['nextPaymentDate'])?.toString();
     final deadline = deadlineRaw == null ? null : DateTime.tryParse(deadlineRaw);
     final late = current != null && current['status'] == 'En retard';
-    final stateColor = late ? FigAlert.error : FigBrand.amber;
+    final stateColor = totalDue == 0
+        ? FigAlert.success
+        : (late ? FigAlert.error : FigBrand.amber);
+    // Montant annuel annonce par le serveur. Il ne se confond pas avec ce
+    // qui reste du : c'est le cout de l'annee, rappele pour situer la
+    // somme a regler.
+    final annual = int.tryParse((_summary['annualAmount'] ?? '').toString());
 
     return GiCard(
       child: Column(
@@ -206,7 +212,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                           color: stateColor, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: FigSpace.sm),
-                    Text(t.statusDue,
+                    Text(totalDue > 0 ? t.statusDue : t.upToDateTitle,
                         style: FigText.body.copyWith(color: stateColor)),
                   ],
                 ),
@@ -218,11 +224,30 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
           const SizedBox(height: FigSpace.xs),
           Text(_formatAmount(totalDue),
               style: FigText.greeting.copyWith(color: c.textBody)),
-          if (deadline != null) ...[
+          if (deadline != null && totalDue > 0) ...[
             const SizedBox(height: FigSpace.xs),
             Text(
               t.paymentDeadline(_formatDate(deadline.toIso8601String())),
               style: FigText.body.copyWith(color: stateColor),
+            ),
+          ],
+          if (annual != null && annual > 0) ...[
+            const SizedBox(height: FigSpace.lg),
+            Container(
+              padding: const EdgeInsets.only(top: FigSpace.lg),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: c.innerBorder)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(t.annualCharge,
+                        style: FigText.body.copyWith(color: c.textMuted)),
+                  ),
+                  Text(_formatAmount(annual),
+                      style: FigText.field.copyWith(color: c.textBody)),
+                ],
+              ),
             ),
           ],
         ],

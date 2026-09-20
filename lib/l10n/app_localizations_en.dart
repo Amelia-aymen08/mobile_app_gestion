@@ -1061,4 +1061,10 @@ class AppL10nEn extends AppL10n {
   @override
   String get chatEmptyReadOnly =>
       'No message yet. The administration will write here if your report needs anything.';
+
+  @override
+  String get annualCharge => 'Annual charge';
+
+  @override
+  String get upToDateTitle => 'Up to date';
 }

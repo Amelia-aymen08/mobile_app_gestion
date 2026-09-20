@@ -2036,6 +2036,18 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Aucun message pour le moment. L\'administration écrira ici si votre signalement demande une précision.'**
   String get chatEmptyReadOnly;
+
+  /// No description provided for @annualCharge.
+  ///
+  /// In fr, this message translates to:
+  /// **'Charge annuelle'**
+  String get annualCharge;
+
+  /// No description provided for @upToDateTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'À jour'**
+  String get upToDateTitle;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -1060,4 +1060,10 @@ class AppL10nAr extends AppL10n {
   @override
   String get chatEmptyReadOnly =>
       'لا توجد رسائل بعد. ستكتب الإدارة هنا إذا احتاج بلاغك إلى توضيح.';
+
+  @override
+  String get annualCharge => 'الرسوم السنوية';
+
+  @override
+  String get upToDateTitle => 'لا مستحقات';
 }
