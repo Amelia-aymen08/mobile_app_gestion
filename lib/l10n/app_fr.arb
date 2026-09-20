@@ -345,5 +345,121 @@
   "phoneRequired": "Numéro de téléphone requis",
   "residenceRequired": "Choisissez une résidence",
   "floorRequired": "Choisissez un étage",
-  "apartmentRequired": "Choisissez un appartement"
+  "apartmentRequired": "Choisissez un appartement",
+  "ticketHistory": "Historique du traitement",
+  "ticketInfo": "Informations de l'administration",
+  "pipelineOpened": "Signalé",
+  "pipelineStarted": "Prise en charge",
+  "pipelineClosed": "Clôturé",
+  "pipelinePending": "En attente",
+  "historyCreated": "Signalement créé",
+  "historyStatusFromTo": "Statut : {from} → {to}",
+  "historyStatus": "Statut : {status}",
+  "historyAssigned": "Pris en charge par l'équipe",
+  "historyInfo": "Information de l'administration",
+  "historyAttachment": "Pièces jointes ajoutées",
+  "actorYou": "Vous",
+  "actorTeam": "Intervenant",
+  "actorAdmin": "Administration",
+  "attachmentsTitle": "Pièces jointes ({count})",
+  "attachmentsHint": "4 fichiers au maximum, 10 Mo au total.",
+  "attachmentTooMany": "4 fichiers au maximum.",
+  "attachmentTooBig": "10 Mo au total au maximum.",
+  "noAppToOpen": "Aucune application ne peut ouvrir ce fichier.",
+  "openFailed": "Impossible d'ouvrir le fichier.",
+  "documentsTitle": "Documents",
+  "documentsSubtitle": "Documents de l'administration",
+  "emptyDocumentsTitle": "Aucun document",
+  "emptyDocumentsBody": "L'administration n'a publié aucun document pour le moment.",
+  "downloadLabel": "Télécharger",
+  "openLabel": "Ouvrir",
+  "residenceDetails": "Ma résidence",
+  "amenitiesTitle": "Commodités",
+  "aboutTitle": "À propos",
+  "memberCount": "{count} sur {max} membres",
+  "householdHint": "Chaque membre reçoit ses accès de connexion par e-mail. Vous pouvez ajouter jusqu'à {max} personnes.",
+  "accountActiveChip": "Compte actif",
+  "accountDisabledChip": "Compte désactivé",
+  "noAccountChip": "Sans compte",
+  "resendAccess": "Renvoyer les accès",
+  "accessResent": "Les accès ont été renvoyés par e-mail.",
+  "maxMembersReached": "Maximum de {max} membres atteint",
+  "mainResident": "Résident principal",
+  "noOtherMember": "Aucun autre membre pour le moment.",
+  "removePhoto": "Retirer la photo",
+  "photoTooBig": "Photo trop lourde (5 Mo maximum).",
+  "accountDisabled": "Ce compte a été désactivé. Contactez l'administration.",
+  "editLabelShort": "Modifier",
+  "@historyStatusFromTo": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "@historyStatus": {
+    "placeholders": {
+      "status": {
+        "type": "String"
+      }
+    }
+  },
+  "@attachmentsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@memberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "@householdHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "@maxMembersReached": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "amenity_climatisation": "Climatisation centralisée",
+  "amenity_reception": "Réception",
+  "amenity_bache_eau": "Bâche à eau",
+  "amenity_ascenseur": "Ascenseur",
+  "amenity_cuisine": "Cuisine équipée",
+  "amenity_groupe_electrogene": "Groupe électrogène",
+  "amenity_parking": "Parking de stationnement",
+  "amenity_domotique": "Domotique",
+  "amenity_dressing": "Dressing",
+  "amenity_isolation_phonique": "Isolation phonique",
+  "amenity_aire_jeux": "Aire de jeux",
+  "amenity_piscine_commune": "Piscine commune",
+  "amenity_piscine_privative": "Piscine privative",
+  "amenity_fenetre": "Fenêtres double vitrage",
+  "amenity_salle_eau": "Salle d'eau",
+  "amenity_salle_sport": "Salle de sport",
+  "amenity_spa": "Spa / Hammam / Sauna",
+  "amenity_gestion_copropriete": "Gestion copropriété",
+  "amenity_creche": "Crèche / Garderie",
+  "unsupportedFileType": "Type de fichier non pris en charge.",
+  "remindIn24h": "Me le rappeler dans 24 h",
+  "reminderSetTitle": "Rappel programmé",
+  "reminderSetBody": "Une notification vous rappellera cet avis dans 24 heures.",
+  "reminderUnavailable": "Le rappel n'est disponible que sur l'application mobile."
 }

@@ -1,5 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_alert_dialog.dart';
+import '../services/file_opener.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -445,11 +448,13 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
 /// Bleu des pastilles de categorie, propre aux cartes de signalement.
 const _reportBlue = Color(0xFF0088FF);
 
-/// Detail d'un signalement — frame Figma "Report Details LT" (0:4827).
+/// Detail d'un signalement — frame Figma « Report Details LT » (0:4827),
+/// completee par ce que le back-end expose depuis septembre : pieces
+/// jointes multiples, messages de l'administration et historique date.
 ///
-/// Trois cartes : l'etat et le contenu, les caracteristiques ligne a ligne,
-/// puis la galerie de photos. Le bouton de conversation ferme l'ecran.
-class _ReportDetailScreen extends StatelessWidget {
+/// L'ecran recharge le signalement a l'ouverture : la liste d'ou l'on vient
+/// ne porte pas les pieces jointes ni l'historique.
+class _ReportDetailScreen extends StatefulWidget {
   final Map<String, dynamic> ticket;
   final Color statusColor;
   final String ref;
@@ -467,26 +472,304 @@ class _ReportDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<_ReportDetailScreen> createState() => _ReportDetailScreenState();
+}
+
+class _ReportDetailScreenState extends State<_ReportDetailScreen> {
+  final ApiService _api = ApiService();
+
+  late Map<String, dynamic> _ticket = Map<String, dynamic>.from(widget.ticket);
+  Map<String, dynamic>? _historyPayload;
+  List<Map<String, dynamic>> _infos = const [];
+  bool _loading = true;
+  bool _uploading = false;
+  String? _opening;
+
+  String get _id => (_ticket['id'] ?? '').toString();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  /// Les trois appels sont independants : l'echec de l'un ne doit pas
+  /// masquer les autres, l'ecran reste lisible avec ce qui a repondu.
+  Future<void> _load() async {
+    final results = await Future.wait<Object?>([
+      _api.getTicket(_id).then<Object?>((v) => v).catchError((_) => null),
+      _api.getTicketHistory(_id).then<Object?>((v) => v).catchError((_) => null),
+      _api.getTicketMessages(_id).then<Object?>((v) => v).catchError((_) => null),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      final fresh = results[0];
+      if (fresh is Map<String, dynamic>) _ticket = {..._ticket, ...fresh};
+      final history = results[1];
+      if (history is Map<String, dynamic>) _historyPayload = history;
+      final messages = results[2];
+      if (messages is List) {
+        _infos = messages
+            .whereType<Map>()
+            .map((m) => Map<String, dynamic>.from(m))
+            .where((m) => (m['kind'] ?? 'CHAT') == 'INFO')
+            .toList();
+      }
+      _loading = false;
+    });
+  }
+
+  // ─── Pieces jointes ───────────────────────────────────────
+  List<Map<String, dynamic>> get _attachments {
+    final raw = _ticket['attachments'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
+  }
+
+  static bool _isImage(Map a) {
+    final type = (a['type'] ?? '').toString().toLowerCase();
+    if (type.startsWith('image/')) return true;
+    final name = ((a['name'] ?? a['url']) ?? '').toString().toLowerCase();
+    return name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.png') ||
+        name.endsWith('.webp');
+  }
+
+  String _formatBytes(num bytes) {
+    if (bytes < 1024) return '${bytes.toInt()} o';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} Ko';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+  }
+
+  Future<void> _openAttachment(Map<String, dynamic> a) async {
+    final t = AppL10n.of(context);
+    final url = (a['url'] ?? '').toString();
+    if (_opening != null || url.isEmpty) return;
+
+    if (_isImage(a)) {
+      final full = _api.mediaUrl(url);
+      if (full != null) _showImage(full);
+      return;
+    }
+    setState(() => _opening = (a['id'] ?? url).toString());
+    try {
+      final bytes = await _api.downloadPublicFile(url);
+      await FileOpener.openBytes(bytes, (a['name'] ?? 'document').toString());
+    } catch (e) {
+      if (!mounted) return;
+      final raw = e.toString().replaceFirst('Exception: ', '');
+      showGiAlert<void>(
+        context: context,
+        title: t.errorTitle,
+        message: switch (raw) {
+          'noAppToOpen' => t.noAppToOpen,
+          'openFailed' => t.openFailed,
+          _ => raw,
+        },
+        closeLabel: t.close,
+        primaryLabel: t.close,
+      );
+    } finally {
+      if (mounted) setState(() => _opening = null);
+    }
+  }
+
+  /// Visionneuse plein ecran, avec zoom : une photo de fuite se lit mal dans
+  /// une vignette de 95.
+  void _showImage(String url) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog.fullscreen(
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 5,
+                child: Center(
+                  child: Image.network(url,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white54,
+                          size: 48)),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Align(
+                alignment: AlignmentDirectional.topEnd,
+                child: Padding(
+                  padding: const EdgeInsets.all(FigSpace.lg),
+                  child: GiPressable(
+                    pressedScale: 0.88,
+                    onTap: () => Navigator.pop(dialogContext),
+                    child: Container(
+                      width: FigSize.chipMd,
+                      height: FigSize.chipMd,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(FigRadius.chip),
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/close_16.svg',
+                        colorFilter: const ColorFilter.mode(
+                            Colors.white, BlendMode.srcIn),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Envoi de pieces jointes : quatre au maximum, dix megaoctets en tout.
+  /// Les deux limites sont aussi verifiees par le serveur ; les controler
+  /// ici evite un aller-retour et dit tout de suite ce qui bloque.
+  Future<void> _addAttachments() async {
+    final t = AppL10n.of(context);
+    final restants = 4 - _attachments.length;
+    if (restants <= 0 || _uploading) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      withData: true,
+      type: FileType.any,
+    );
+    final picked =
+        (result?.files ?? const []).where((f) => f.bytes != null).toList();
+    if (picked.isEmpty) return;
+
+    if (picked.length > restants) {
+      _warn(t.attachmentTooMany);
+      return;
+    }
+    final total = picked.fold<int>(0, (sum, f) => sum + f.bytes!.length);
+    if (total > 10 * 1024 * 1024) {
+      _warn(t.attachmentTooBig);
+      return;
+    }
+
+    setState(() => _uploading = true);
+    try {
+      final files = picked
+          .map((f) => UploadFile(
+                bytes: f.bytes!,
+                filename: f.name,
+                mimeType: _mimeFor(f.extension),
+              ))
+          .toList();
+      final added =
+          await _api.uploadTicketAttachments(ticketId: _id, files: files);
+      if (!mounted) return;
+      setState(() {
+        _ticket = {
+          ..._ticket,
+          'attachments': [..._attachments, ...added],
+        };
+        _uploading = false;
+      });
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      _warn(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  static String _mimeFor(String? extension) => switch ((extension ?? '').toLowerCase()) {
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'pdf' => 'application/pdf',
+        'doc' => 'application/msword',
+        'docx' =>
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        _ => 'application/octet-stream',
+      };
+
+  void _warn(String message) {
+    final t = AppL10n.of(context);
+    showGiAlert<void>(
+      context: context,
+      title: t.errorTitle,
+      message: message,
+      closeLabel: t.close,
+      primaryLabel: t.close,
+    );
+  }
+
+  // ─── Libelles de l'historique ─────────────────────────────
+  String _actorLabel(AppL10n t, Map item) {
+    switch ((item['actorRole'] ?? '').toString()) {
+      case 'RESIDENT':
+        final name = (item['actorName'] ?? '').toString();
+        return name.isEmpty ? t.actorYou : name;
+      case 'INTERVENANT':
+        return t.actorTeam;
+      case '':
+        return '';
+      default:
+        return t.actorAdmin;
+    }
+  }
+
+  String _historyLabel(AppL10n t, Map item) {
+    switch ((item['action'] ?? '').toString()) {
+      case 'CREATED':
+        return t.historyCreated;
+      case 'STATUS_CHANGED':
+        final from = (item['fromStatus'] ?? '').toString();
+        final to = (item['toStatus'] ?? '').toString();
+        if (from.isEmpty) return t.historyStatus(_statusText(t, to));
+        return t.historyStatusFromTo(_statusText(t, to), _statusText(t, from));
+      case 'ASSIGNED':
+        return t.historyAssigned;
+      case 'INFO_MESSAGE':
+        return t.historyInfo;
+      case 'ATTACHMENT_ADDED':
+        return t.historyAttachment;
+      default:
+        return (item['action'] ?? '').toString();
+    }
+  }
+
+  String _statusText(AppL10n t, String status) {
+    final s = status.toUpperCase();
+    if (s.startsWith('TERMIN') || s == 'RESOLU') return t.statusResolved;
+    if (s == 'EN_COURS' || s == 'EN COURS') return t.statusInProgress;
+    if (s.isEmpty) return '';
+    return t.statusOpen;
+  }
+
+  String _fmtDateTime(dynamic raw) {
+    final d = DateTime.tryParse((raw ?? '').toString())?.toLocal();
+    return d == null ? '' : DateFormat('dd/MM/yyyy · HH:mm').format(d);
+  }
+
+  // ─── Build ────────────────────────────────────────────────
+  @override
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
     final t = AppL10n.of(context);
 
-    final status = (ticket['status'] ?? '').toString();
-    final category = (ticket['category'] ?? '').toString();
-    final priority = (ticket['priority'] ?? '').toString();
-    final description = (ticket['description'] ?? '').toString();
-    // L'API renvoie aujourd'hui une seule piece jointe, `attachmentUrl`. La
-    // maquette en prevoit plusieurs. On lit donc aussi `attachments[]`, le
-    // champ propose a l'equipe back-end : le jour ou il arrive, la galerie se
-    // remplit sans toucher a cet ecran. En attendant, c'est la piece unique
-    // qui s'affiche.
-    final photos = <String>[
-      ...?(ticket['attachments'] as List?)
-          ?.map((e) => e is Map ? (e['url'] ?? '').toString() : e.toString())
-          .where((e) => e.isNotEmpty),
-      if (ticket['attachments'] == null)
-        ...[(ticket['attachmentUrl'] ?? '').toString()].where((e) => e.isNotEmpty),
-    ];
+    final status = (_ticket['status'] ?? '').toString();
+    final category = (_ticket['category'] ?? '').toString();
+    final priority = (_ticket['priority'] ?? '').toString();
+    final description = (_ticket['description'] ?? '').toString();
+    final history = ((_historyPayload?['history'] as List?) ?? const [])
+        .whereType<Map>()
+        .toList();
 
     return Scaffold(
       backgroundColor: c.scaffold,
@@ -501,18 +784,34 @@ class _ReportDetailScreen extends StatelessWidget {
                   0),
               child: _header(context, c, t),
             ),
-            const SizedBox(height: FigSpace.xxl),
+            const SizedBox(height: 22),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                    FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
-                children: [
-                  _contentCard(c, t, status, description),
-                  const SizedBox(height: FigSpace.lg),
-                  _factsCard(c, t, category, priority),
-                  const SizedBox(height: FigSpace.lg),
-                  _photosCard(c, t, photos),
-                ],
+              child: RefreshIndicator(
+                color: FigBrand.amber,
+                backgroundColor: c.card,
+                onRefresh: _load,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(
+                      FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
+                  children: [
+                    _contentCard(c, t, status, description),
+                    const SizedBox(height: FigSpace.lg),
+                    _pipelineCard(c, t, status),
+                    const SizedBox(height: FigSpace.lg),
+                    _factsCard(c, t, category, priority),
+                    if (_infos.isNotEmpty) ...[
+                      const SizedBox(height: FigSpace.lg),
+                      _infoCard(c, t),
+                    ],
+                    const SizedBox(height: FigSpace.lg),
+                    _attachmentsCard(c, t),
+                    if (_loading || history.isNotEmpty) ...[
+                      const SizedBox(height: FigSpace.lg),
+                      _historyCard(c, t, history),
+                    ],
+                  ],
+                ),
               ),
             ),
             Padding(
@@ -524,9 +823,9 @@ class _ReportDetailScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) => ChatScreen(
-                      ticketId: ticket['id'].toString(),
-                      title: title,
-                      subtitle: ref,
+                      ticketId: _id,
+                      title: widget.title,
+                      subtitle: widget.ref,
                     ),
                   ),
                 ),
@@ -573,25 +872,9 @@ class _ReportDetailScreen extends StatelessWidget {
                   style:
                       FigText.titleMd.copyWith(fontSize: 18, color: c.textBody)),
               const SizedBox(height: 2),
-              Text(dateLabel,
+              Text(widget.dateLabel,
                   style: FigText.label.copyWith(color: c.textMuted)),
             ],
-          ),
-        ),
-        const SizedBox(width: FigSpace.lg),
-        // Bouton « Modifier » du Figma : pastille ambre pleine, rayon 6.
-        GiPressable(
-          pressedScale: 0.92,
-          onTap: () {},
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: FigBrand.amber,
-              borderRadius: BorderRadius.circular(FigRadius.pill),
-            ),
-            child: Text(t.editLabel,
-                style: FigText.bodyActive
-                    .copyWith(fontWeight: FontWeight.w500, color: Colors.black)),
           ),
         ),
       ],
@@ -610,19 +893,22 @@ class _ReportDetailScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: FigAccent.chipFill(statusColor),
-                  border: Border.all(color: FigAccent.chipBorder(statusColor)),
+                  color: FigAccent.chipFill(widget.statusColor),
+                  border:
+                      Border.all(color: FigAccent.chipBorder(widget.statusColor)),
                   borderRadius: BorderRadius.circular(FigRadius.pill),
                 ),
-                child: Text(status,
-                    style: FigText.caption.copyWith(color: statusColor)),
+                child: Text(_statusText(t, status),
+                    style:
+                        FigText.caption.copyWith(color: widget.statusColor)),
               ),
               const Spacer(),
-              Text(ref, style: FigText.label.copyWith(color: c.textFaint)),
+              Text(widget.ref,
+                  style: FigText.label.copyWith(color: c.textFaint)),
             ],
           ),
           const SizedBox(height: FigSpace.xl),
-          Text(title,
+          Text(widget.title,
               style:
                   FigText.statValue.copyWith(height: 1.2, color: c.textBody)),
           if (description.isNotEmpty) ...[
@@ -635,8 +921,87 @@ class _ReportDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Caracteristiques ligne a ligne, separees par un trait comme le Figma :
-  /// libelle a gauche en 13, valeur a droite en 16.
+  /// Fil de traitement : trois jalons du serveur — depot, prise en charge,
+  /// cloture. Le point est plein quand l'etape a eu lieu, et porte son
+  /// horodatage ; les etapes a venir restent grises.
+  Widget _pipelineCard(GiColors c, AppL10n t, String status) {
+    final opened = _fmtDateTime(_ticket['createdAt']);
+    final started = _fmtDateTime(_historyPayload?['startedAt']);
+    final closed = _fmtDateTime(_historyPayload?['closedAt']);
+
+    final steps = <({String label, String date, bool done})>[
+      (label: t.pipelineOpened, date: opened, done: opened.isNotEmpty),
+      (
+        label: t.pipelineStarted,
+        date: started.isEmpty ? t.pipelinePending : started,
+        done: started.isNotEmpty
+      ),
+      (
+        label: t.pipelineClosed,
+        date: closed.isEmpty ? t.pipelinePending : closed,
+        done: closed.isNotEmpty
+      ),
+    ];
+
+    return GiCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < steps.length; i++) ...[
+            if (i > 0)
+              // Trait de liaison, a hauteur des pastilles.
+              Container(
+                width: 18,
+                height: 2,
+                margin: const EdgeInsets.only(top: 7),
+                color: steps[i].done ? FigBrand.amber : c.innerBorder,
+              ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 16,
+                    height: 16,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: steps[i].done
+                          ? FigBrand.amber
+                          : Colors.transparent,
+                      border: Border.all(
+                          color: steps[i].done
+                              ? FigBrand.amber
+                              : c.innerBorder,
+                          width: 2),
+                    ),
+                    child: steps[i].done
+                        ? SvgPicture.asset(
+                            'assets/figma/icons/check_14.svg',
+                            width: 8,
+                            height: 8,
+                            colorFilter: const ColorFilter.mode(
+                                Colors.white, BlendMode.srcIn),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: FigSpace.md),
+                  Text(steps[i].label,
+                      style: FigText.caption.copyWith(
+                          color: steps[i].done ? c.textBody : c.textFaint)),
+                  const SizedBox(height: 2),
+                  Text(steps[i].date,
+                      style: FigText.caption.copyWith(
+                          fontSize: 9, height: 1.3, color: c.textFaint)),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _factsCard(GiColors c, AppL10n t, String category, String priority) {
     Widget row(String label, Widget value, {bool last = false}) => Container(
           padding: EdgeInsets.only(bottom: last ? 0 : FigSpace.lg),
@@ -644,8 +1009,7 @@ class _ReportDetailScreen extends StatelessWidget {
           decoration: last
               ? null
               : BoxDecoration(
-                  border: Border(
-                      bottom: BorderSide(color: c.innerBorder)),
+                  border: Border(bottom: BorderSide(color: c.innerBorder)),
                 ),
           child: Row(
             children: [
@@ -665,7 +1029,7 @@ class _ReportDetailScreen extends StatelessWidget {
         children: [
           row(
             t.reportedOn,
-            Text(dateTimeLabel,
+            Text(widget.dateTimeLabel,
                 style: FigText.field.copyWith(color: c.textBody)),
           ),
           if (category.isNotEmpty)
@@ -699,19 +1063,70 @@ class _ReportDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Galerie : vignettes de 95,667 x 102 au rayon 8, puis la tuile d'ajout
-  /// en trait discontinu.
-  ///
-  /// L'API ne renvoie qu'une seule piece jointe (`attachmentUrl`). La
-  /// maquette en prevoit jusqu'a cinq : la grille est donc prete, elle se
-  /// remplira quand le back-end servira une liste.
-  Widget _photosCard(GiColors c, AppL10n t, List<String> photos) {
+  /// Messages postes par l'administration sur ce signalement. Ils sont
+  /// distincts de la conversation : ce sont des informations, pas des
+  /// echanges, d'ou le bandeau ambre plutot qu'une bulle.
+  Widget _infoCard(GiColors c, AppL10n t) {
     return GiCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(t.photosCount(photos.length),
+          Row(
+            children: [
+              SvgPicture.asset(
+                'assets/figma/icons/info_16.svg',
+                colorFilter:
+                    const ColorFilter.mode(FigBrand.amber, BlendMode.srcIn),
+              ),
+              const SizedBox(width: FigSpace.md),
+              Text(t.ticketInfo,
+                  style: FigText.titleMd.copyWith(color: c.textBody)),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xl),
+          for (var i = 0; i < _infos.length; i++) ...[
+            if (i > 0) const SizedBox(height: FigSpace.md),
+            Container(
+              padding: const EdgeInsets.all(FigSpace.lg),
+              decoration: BoxDecoration(
+                color: FigAccent.chipFill(FigBrand.amber),
+                border:
+                    Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
+                borderRadius: BorderRadius.circular(FigRadius.chip),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      (_infos[i]['body'] ?? _infos[i]['message'] ?? '')
+                          .toString(),
+                      style: FigText.fieldLabel
+                          .copyWith(height: 1.4, color: c.textBody)),
+                  const SizedBox(height: FigSpace.sm),
+                  Text(_fmtDateTime(_infos[i]['createdAt']),
+                      style: FigText.caption.copyWith(color: c.textFaint)),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Galerie : vignettes au rayon 8, puis la tuile d'ajout en trait
+  /// discontinu tant qu'on n'a pas atteint les quatre fichiers.
+  Widget _attachmentsCard(GiColors c, AppL10n t) {
+    final files = _attachments;
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(t.attachmentsTitle(files.length),
               style: FigText.titleMd.copyWith(color: c.textBody)),
+          const SizedBox(height: FigSpace.xs),
+          Text(t.attachmentsHint,
+              style: FigText.caption.copyWith(color: c.textFaint)),
           const SizedBox(height: FigSpace.xl),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -721,22 +1136,180 @@ class _ReportDetailScreen extends StatelessWidget {
                 spacing: FigSpace.md,
                 runSpacing: FigSpace.md,
                 children: [
-                  for (final url in photos)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(FigRadius.chip),
-                      child: SizedBox(
-                        width: w,
-                        height: 102,
-                        child: Image.network(url,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                ColoredBox(color: c.innerBorder)),
-                      ),
+                  for (final a in files) _thumb(c, a, w),
+                  if (files.length < 4)
+                    _AddPhotoTile(
+                      width: w,
+                      label: _uploading ? '…' : t.addMore,
+                      color: c.textBody,
+                      onTap: _uploading ? null : _addAttachments,
                     ),
-                  _AddPhotoTile(width: w, label: t.addMore, color: c.textBody),
                 ],
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _thumb(GiColors c, Map<String, dynamic> a, double w) {
+    final url = _api.mediaUrl(a['url']);
+    final busy = _opening == (a['id'] ?? a['url']).toString();
+    final size = a['size'];
+
+    return GiPressable(
+      pressedScale: 0.95,
+      onTap: () => _openAttachment(a),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(FigRadius.chip),
+        child: SizedBox(
+          width: w,
+          height: 102,
+          child: _isImage(a) && url != null
+              ? Image.network(url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => ColoredBox(color: c.innerBorder))
+              : Container(
+                  color: c.innerBorder,
+                  padding: const EdgeInsets.all(FigSpace.md),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (busy)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: FigBrand.amber),
+                        )
+                      else
+                        SvgPicture.asset(
+                          'assets/figma/icons/documents_20.svg',
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn),
+                        ),
+                      const SizedBox(height: FigSpace.sm),
+                      Text(
+                        (a['name'] ?? '').toString(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: FigText.caption.copyWith(color: c.textBody),
+                      ),
+                      if (size is num)
+                        Text(_formatBytes(size),
+                            style:
+                                FigText.caption.copyWith(color: c.textFaint)),
+                    ],
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  /// Historique : une ligne par evenement, reliee par un trait vertical.
+  /// C'est la chronologie demandee au back-end, telle qu'il la renvoie.
+  Widget _historyCard(GiColors c, AppL10n t, List<Map<dynamic, dynamic>> items) {
+    return GiCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(t.ticketHistory,
+              style: FigText.titleMd.copyWith(color: c.textBody)),
+          const SizedBox(height: FigSpace.xl),
+          if (_loading && items.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: FigSpace.lg),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: FigBrand.amber),
+                ),
+              ),
+            )
+          else
+            for (var i = 0; i < items.length; i++)
+              _historyRow(c, t, items[i], last: i == items.length - 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _historyRow(GiColors c, AppL10n t, Map item, {required bool last}) {
+    final actor = _actorLabel(t, item);
+    final note = (item['note'] ?? '').toString();
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 9,
+                height: 9,
+                margin: const EdgeInsets.only(top: 5),
+                decoration: const BoxDecoration(
+                    color: FigBrand.amber, shape: BoxShape.circle),
+              ),
+              if (!last)
+                Expanded(
+                  child: Container(
+                    width: 1,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    color: c.innerBorder,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: FigSpace.lg),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: last ? 0 : FigSpace.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(_historyLabel(t, item),
+                      style: FigText.fieldLabel
+                          .copyWith(height: 1.3, color: c.textBody)),
+                  if (note.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(note,
+                        style: FigText.body
+                            .copyWith(height: 1.4, color: c.textMuted)),
+                  ],
+                  const SizedBox(height: FigSpace.xs),
+                  Row(
+                    children: [
+                      Text(_fmtDateTime(item['createdAt']),
+                          style:
+                              FigText.caption.copyWith(color: c.textFaint)),
+                      if (actor.isNotEmpty) ...[
+                        const SizedBox(width: FigSpace.xs),
+                        Container(
+                          width: 3,
+                          height: 3,
+                          decoration: BoxDecoration(
+                              color: c.textFaint, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: FigSpace.xs),
+                        Flexible(
+                          child: Text(actor,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: FigText.caption
+                                  .copyWith(color: c.textFaint)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -749,18 +1322,20 @@ class _AddPhotoTile extends StatelessWidget {
   final double width;
   final String label;
   final Color color;
+  final VoidCallback? onTap;
 
   const _AddPhotoTile({
     required this.width,
     required this.label,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GiPressable(
       pressedScale: 0.95,
-      onTap: () {},
+      onTap: onTap,
       child: CustomPaint(
         painter: _DashedBorderPainter(
             color: color, radius: FigRadius.chip),

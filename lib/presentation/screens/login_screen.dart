@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import '../widgets/gi_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -47,6 +48,23 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _email.addListener(_refreshSubmitState);
     _password.addListener(_refreshSubmitState);
+    // Quand le serveur a coupe la session — compte desactive par
+    // l'administration — on arrive ici sans explication. Le message est
+    // livre par le fournisseur d'authentification, et ne s'affiche qu'une
+    // fois.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final notice = context.read<AuthProvider>().consumeNotice();
+      if (notice == null) return;
+      final t = AppL10n.of(context);
+      showGiAlert<void>(
+        context: context,
+        title: t.loginTitle,
+        message: notice == 'accountDisabled' ? t.accountDisabled : notice,
+        closeLabel: t.close,
+        primaryLabel: t.close,
+      );
+    });
   }
 
   void _refreshSubmitState() {

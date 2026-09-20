@@ -1,5 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_avatar.dart';
+import '../widgets/gi_alert_dialog.dart';
+import '../../data/api_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,8 +29,137 @@ import 'change_password_screen.dart';
 /// Le changement de mot de passe ouvre l'ecran dedie, comme dans la maquette,
 /// au lieu d'etre saisi ici. L'ancienne version appelait changePassword avec
 /// un mot de passe actuel vide, ce que l'ecran dedie gere correctement.
-class ResidentProfileScreen extends StatelessWidget {
+class ResidentProfileScreen extends StatefulWidget {
   const ResidentProfileScreen({super.key});
+
+  @override
+  State<ResidentProfileScreen> createState() => _ResidentProfileScreenState();
+}
+
+class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
+  bool _photoBusy = false;
+
+  /// Choix d'une photo de profil. Le serveur accepte une image en data-URL
+  /// et renvoie l'utilisateur mis a jour ; la limite de 5 Mo est verifiee
+  /// ici pour ne pas televerser en vain.
+  Future<void> _pickPhoto() async {
+    final t = AppL10n.of(context);
+    final auth = context.read<AuthProvider>();
+    final hasPhoto = (auth.user?['photo'] ?? '').toString().isNotEmpty;
+
+    if (hasPhoto) {
+      final action = await _askPhotoAction(t);
+      if (action == null) return;
+      if (action == 'remove') {
+        setState(() => _photoBusy = true);
+        try {
+          await ApiService().removeProfilePhoto();
+          await auth.setPhoto(null);
+        } catch (e) {
+          _photoError(t, e);
+        } finally {
+          if (mounted) setState(() => _photoBusy = false);
+        }
+        return;
+      }
+    }
+
+    final result = await FilePicker.platform
+        .pickFiles(type: FileType.image, withData: true);
+    final file = result?.files.single;
+    if (file?.bytes == null) return;
+    if (file!.bytes!.length > 5 * 1024 * 1024) {
+      if (!mounted) return;
+      showGiAlert<void>(
+        context: context,
+        title: t.errorTitle,
+        message: t.photoTooBig,
+        closeLabel: t.close,
+        primaryLabel: t.close,
+      );
+      return;
+    }
+
+    final ext = (file.extension ?? 'jpg').toLowerCase();
+    final mime = ext == 'png'
+        ? 'image/png'
+        : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
+    setState(() => _photoBusy = true);
+    try {
+      final updated = await ApiService()
+          .updateProfilePhoto('data:$mime;base64,${base64Encode(file.bytes!)}');
+      await auth.setPhoto(updated['photo']?.toString());
+    } catch (e) {
+      _photoError(t, e);
+    } finally {
+      if (mounted) setState(() => _photoBusy = false);
+    }
+  }
+
+  /// Photo deja posee : on demande s'il faut la remplacer ou l'enlever.
+  Future<String?> _askPhotoAction(AppL10n t) {
+    final c = GiColors.of(context);
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: c.scaffold,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(FigRadius.card)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+              FigSpace.pagePadding, 0, FigSpace.pagePadding, FigSpace.xxl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GiCard(
+                onTap: () => Navigator.pop(sheetContext, 'change'),
+                child: Row(
+                  children: [
+                    SvgPicture.asset('assets/figma/icons/camera_24.svg',
+                        width: 16,
+                        height: 16,
+                        colorFilter:
+                            ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    const SizedBox(width: FigSpace.lg),
+                    Text(t.changePhoto,
+                        style: FigText.field.copyWith(color: c.textBody)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: FigSpace.md),
+              GiCard(
+                onTap: () => Navigator.pop(sheetContext, 'remove'),
+                child: Row(
+                  children: [
+                    SvgPicture.asset('assets/figma/icons/trash_15.svg',
+                        colorFilter: const ColorFilter.mode(
+                            FigAlert.error, BlendMode.srcIn)),
+                    const SizedBox(width: FigSpace.lg),
+                    Text(t.removePhoto,
+                        style: FigText.field.copyWith(color: FigAlert.error)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _photoError(AppL10n t, Object e) {
+    if (!mounted) return;
+    showGiAlert<void>(
+      context: context,
+      title: t.errorTitle,
+      message: e.toString().replaceFirst('Exception: ', ''),
+      closeLabel: t.close,
+      primaryLabel: t.close,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,15 +295,51 @@ class ResidentProfileScreen extends StatelessWidget {
         children: [
           // Trait ambre de 1 seulement : une bordure epaisse rogne la photo
           // et alourdit la carte.
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              border: Border.all(color: FigBrand.amber),
-              borderRadius: BorderRadius.circular(FigRadius.card),
+          GiPressable(
+            pressedScale: 0.94,
+            onTap: _photoBusy ? null : _pickPhoto,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                GiAvatar(
+                  name: name,
+                  photoUrl: context.watch<AuthProvider>().photoUrl,
+                  size: 56,
+                  radius: FigRadius.card,
+                  bordered: true,
+                ),
+                // Pastille d'appareil photo : sans elle, rien ne dit que la
+                // photo se change en appuyant dessus.
+                PositionedDirectional(
+                  bottom: -4,
+                  end: -4,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: FigBrand.amber,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: c.card, width: 2),
+                    ),
+                    child: _photoBusy
+                        ? const SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 1.5, color: Colors.black),
+                          )
+                        : SvgPicture.asset(
+                            'assets/figma/icons/camera_24.svg',
+                            width: 11,
+                            height: 11,
+                            colorFilter: const ColorFilter.mode(
+                                Colors.black, BlendMode.srcIn),
+                          ),
+                  ),
+                ),
+              ],
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Image.asset('assets/figma/avatar.png', fit: BoxFit.cover),
           ),
           const SizedBox(width: FigSpace.xl),
           Expanded(

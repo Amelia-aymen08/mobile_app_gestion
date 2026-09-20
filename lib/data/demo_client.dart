@@ -217,7 +217,9 @@ final demoSingle = DemoProfile(
       'fullName': 'Amina Messadi',
       'relation': 'Conjoint',
       'phone': '+213 555 01 02 03',
-      'accessLevel': 'RESIDENT',
+      'email': 'amina.messadi@demo.dz',
+      'linkedUserId': 'u-amina',
+      'accountActive': true,
       'photo': null,
     },
   ],
@@ -379,6 +381,88 @@ class DemoClient extends http.BaseClient {
   late final List<Map<String, dynamic>> _members =
       profile.householdMembers.map((e) => Map<String, dynamic>.from(e)).toList();
 
+  /// Photo de profil posee pendant la session de demonstration.
+  String? _photo;
+
+  /// Nombre de fichiers du dernier envoi multipart. Le faux serveur ne lit
+  /// pas le corps de la requete : il renvoie simplement autant de pieces
+  /// jointes qu'on lui en annonce.
+  int _pendingFiles = 1;
+
+  static final _documents = <Map<String, dynamic>>[
+    {
+      'id': 'd1',
+      'name': 'Reglement interieur de la residence.pdf',
+      'type': 'application/pdf',
+      'size': 428000,
+      'category': 'Reglement',
+      'createdAt': _iso(40),
+    },
+    {
+      'id': 'd2',
+      'name': 'Proces-verbal assemblee generale.pdf',
+      'type': 'application/pdf',
+      'size': 1260000,
+      'category': 'Assemblee generale',
+      'createdAt': _iso(18),
+    },
+    {
+      'id': 'd3',
+      'name': 'Consignes de securite incendie.pdf',
+      'type': 'application/pdf',
+      'size': 96000,
+      'category': 'Securite',
+      'createdAt': _iso(6),
+    },
+  ];
+
+  /// Chronologie d'un signalement, deduite de son statut : le faux serveur
+  /// n'enregistre pas les changements, il les reconstitue.
+  Map<String, dynamic> _historyFor(Map<String, dynamic> ticket) {
+    final created = (ticket['createdAt'] ?? _iso(2)).toString();
+    final status = (ticket['status'] ?? '').toString().toUpperCase();
+    final started = DateTime.tryParse(created)?.add(const Duration(hours: 5));
+    final closed = DateTime.tryParse(created)?.add(const Duration(days: 1));
+    final enCours = status.contains('COURS') || status.startsWith('TERMIN');
+    final termine = status.startsWith('TERMIN');
+
+    return {
+      'startedAt': enCours ? started?.toIso8601String() : null,
+      'closedAt': termine ? closed?.toIso8601String() : null,
+      'history': [
+        {
+          'action': 'CREATED',
+          'actorRole': 'RESIDENT',
+          'actorName': profile.fullName,
+          'createdAt': created,
+        },
+        if (enCours)
+          {
+            'action': 'ASSIGNED',
+            'actorRole': 'ADMIN',
+            'createdAt': started?.toIso8601String(),
+          },
+        if (enCours)
+          {
+            'action': 'STATUS_CHANGED',
+            'fromStatus': 'OUVERT',
+            'toStatus': 'EN_COURS',
+            'actorRole': 'ADMIN',
+            'createdAt': started?.toIso8601String(),
+          },
+        if (termine)
+          {
+            'action': 'STATUS_CHANGED',
+            'fromStatus': 'EN_COURS',
+            'toStatus': 'TERMINE',
+            'actorRole': 'INTERVENANT',
+            'note': 'Intervention realisee, piece remplacee.',
+            'createdAt': closed?.toIso8601String(),
+          },
+      ],
+    };
+  }
+
   int _seq = 100;
   String _nextId(String prefix) => '$prefix${_seq++}';
 
@@ -403,8 +487,19 @@ class DemoClient extends http.BaseClient {
     }
     final payload = body is Map ? Map<String, dynamic>.from(body) : const {};
 
+    if (request is http.MultipartRequest) {
+      _pendingFiles = request.files.length;
+    }
+
     final result = _route(method, path, payload);
-    return _respond(result.$1, result.$2);
+    final value = result.$2;
+    if (value is _DemoFile) {
+      final bytes = utf8.encode(value.content);
+      return http.StreamedResponse(Stream.value(bytes), result.$1,
+          contentLength: bytes.length,
+          headers: {'content-type': 'application/octet-stream'});
+    }
+    return _respond(result.$1, value);
   }
 
   (int, Object?) _route(String method, String path, Map payload) {
@@ -423,6 +518,33 @@ class DemoClient extends http.BaseClient {
       // getMyProperties lit la liste sous la cle « data », pas a la racine.
       return (200, {'data': profile.properties});
     }
+    if (path.startsWith('/residences/') && method == 'GET') {
+      final id = path.split('/').last;
+      final residence = profile.properties
+          .map((p) => Map<String, dynamic>.from(p['Residence'] as Map))
+          .firstWhere((r) => '${r['id']}' == id,
+              orElse: () => <String, dynamic>{});
+      return (
+        200,
+        {
+          ...residence,
+          'description':
+              "Residence de standing signee Aymen Promotion Immobiliere. "
+                  "Les appartements, traversants, donnent sur un jardin "
+                  "arbore et beneficient de prestations haut de gamme.",
+          'amenities': const [
+            'ascenseur',
+            'parking',
+            'climatisation',
+            'groupe_electrogene',
+            'aire_jeux',
+            'gestion_copropriete',
+            'isolation_phonique',
+            'bache_eau',
+          ],
+        }
+      );
+    }
     if (path == '/residences') {
       return (
         200,
@@ -430,6 +552,20 @@ class DemoClient extends http.BaseClient {
             .map((p) => Map<String, dynamic>.from(p['Residence'] as Map))
             .toList()
       );
+    }
+
+    // ── Photo de profil ───────────────────────────────────────────────────
+    if (path == '/auth/photo') {
+      _photo = method == 'DELETE' ? null : (payload['photo'] ?? '').toString();
+      return (200, _user());
+    }
+
+    // ── Documents publies par l'administration ────────────────────────────
+    if (path == '/documents/resident') return (200, _documents);
+    if (path.startsWith('/documents/') && path.endsWith('/download')) {
+      // Un vrai fichier n'apporterait rien ici : ce texte suffit a verifier
+      // que le telechargement aboutit et s'ouvre.
+      return (200, const _DemoFile('Document de demonstration — Gerance Immo Service'));
     }
 
     // ── Signalements ──────────────────────────────────────────────────────
@@ -452,6 +588,29 @@ class DemoClient extends http.BaseClient {
       };
       _tickets.insert(0, t);
       return (201, t);
+    }
+    if (path.startsWith('/maintenance/') && path.endsWith('/history')) {
+      final id = path.split('/')[2];
+      final ticket = _tickets.firstWhere((e) => e['id'] == id,
+          orElse: () => <String, dynamic>{});
+      return (200, _historyFor(ticket));
+    }
+    if (path.startsWith('/maintenance/') && path.endsWith('/attachments')) {
+      final id = path.split('/')[2];
+      final ticket = _tickets.firstWhere((e) => e['id'] == id,
+          orElse: () => <String, dynamic>{});
+      final added = List.generate(_pendingFiles, (i) {
+        return {
+          'id': _nextId('a'),
+          'name': 'piece-jointe-$_seq.jpg',
+          'url': '/uploads/demo.jpg',
+          'type': 'image/jpeg',
+          'size': 240000,
+        };
+      });
+      final current = (ticket['attachments'] as List?) ?? [];
+      ticket['attachments'] = [...current, ...added];
+      return (201, {'attachments': added});
     }
     if (path.startsWith('/maintenance/')) {
       final id = path.split('/').last;
@@ -548,6 +707,8 @@ class DemoClient extends http.BaseClient {
         'fullName': profile.fullName,
         'name': profile.fullName,
         'role': 'RESIDENT',
+        'photo': _photo,
+        'isHouseholdMember': false,
         'mustChangePassword': false,
       };
 
@@ -559,4 +720,10 @@ class DemoClient extends http.BaseClient {
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
   }
+}
+
+/// Reponse binaire du faux serveur (telechargement d'un document).
+class _DemoFile {
+  final String content;
+  const _DemoFile(this.content);
 }

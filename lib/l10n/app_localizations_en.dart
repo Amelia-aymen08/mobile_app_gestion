@@ -783,4 +783,224 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get apartmentRequired => 'Choose an apartment';
+
+  @override
+  String get ticketHistory => 'Processing history';
+
+  @override
+  String get ticketInfo => 'Messages from the administration';
+
+  @override
+  String get pipelineOpened => 'Reported';
+
+  @override
+  String get pipelineStarted => 'Taken in charge';
+
+  @override
+  String get pipelineClosed => 'Closed';
+
+  @override
+  String get pipelinePending => 'Pending';
+
+  @override
+  String get historyCreated => 'Report created';
+
+  @override
+  String historyStatusFromTo(String from, String to) {
+    return 'Status: $from → $to';
+  }
+
+  @override
+  String historyStatus(String status) {
+    return 'Status: $status';
+  }
+
+  @override
+  String get historyAssigned => 'Taken over by the team';
+
+  @override
+  String get historyInfo => 'Message from the administration';
+
+  @override
+  String get historyAttachment => 'Attachments added';
+
+  @override
+  String get actorYou => 'You';
+
+  @override
+  String get actorTeam => 'Technician';
+
+  @override
+  String get actorAdmin => 'Administration';
+
+  @override
+  String attachmentsTitle(int count) {
+    return 'Attachments ($count)';
+  }
+
+  @override
+  String get attachmentsHint => 'Up to 4 files, 10 MB in total.';
+
+  @override
+  String get attachmentTooMany => 'Up to 4 files.';
+
+  @override
+  String get attachmentTooBig => '10 MB in total at most.';
+
+  @override
+  String get noAppToOpen => 'No app can open this file.';
+
+  @override
+  String get openFailed => 'The file could not be opened.';
+
+  @override
+  String get documentsTitle => 'Documents';
+
+  @override
+  String get documentsSubtitle => 'Documents from the administration';
+
+  @override
+  String get emptyDocumentsTitle => 'No documents';
+
+  @override
+  String get emptyDocumentsBody =>
+      'The administration has not published any document yet.';
+
+  @override
+  String get downloadLabel => 'Download';
+
+  @override
+  String get openLabel => 'Open';
+
+  @override
+  String get residenceDetails => 'My residence';
+
+  @override
+  String get amenitiesTitle => 'Amenities';
+
+  @override
+  String get aboutTitle => 'About';
+
+  @override
+  String memberCount(int count, int max) {
+    return '$count of $max members';
+  }
+
+  @override
+  String householdHint(int max) {
+    return 'Each member receives their login details by email. You can add up to $max people.';
+  }
+
+  @override
+  String get accountActiveChip => 'Account active';
+
+  @override
+  String get accountDisabledChip => 'Account disabled';
+
+  @override
+  String get noAccountChip => 'No account';
+
+  @override
+  String get resendAccess => 'Resend access';
+
+  @override
+  String get accessResent => 'Access details have been emailed again.';
+
+  @override
+  String maxMembersReached(int max) {
+    return 'Maximum of $max members reached';
+  }
+
+  @override
+  String get mainResident => 'Main resident';
+
+  @override
+  String get noOtherMember => 'No other member yet.';
+
+  @override
+  String get removePhoto => 'Remove photo';
+
+  @override
+  String get photoTooBig => 'Photo too large (5 MB maximum).';
+
+  @override
+  String get accountDisabled =>
+      'This account has been disabled. Please contact the administration.';
+
+  @override
+  String get editLabelShort => 'Edit';
+
+  @override
+  String get amenity_climatisation => 'Central air conditioning';
+
+  @override
+  String get amenity_reception => 'Reception';
+
+  @override
+  String get amenity_bache_eau => 'Water tank';
+
+  @override
+  String get amenity_ascenseur => 'Lift';
+
+  @override
+  String get amenity_cuisine => 'Fitted kitchen';
+
+  @override
+  String get amenity_groupe_electrogene => 'Backup generator';
+
+  @override
+  String get amenity_parking => 'Parking';
+
+  @override
+  String get amenity_domotique => 'Home automation';
+
+  @override
+  String get amenity_dressing => 'Walk-in closet';
+
+  @override
+  String get amenity_isolation_phonique => 'Sound insulation';
+
+  @override
+  String get amenity_aire_jeux => 'Playground';
+
+  @override
+  String get amenity_piscine_commune => 'Shared pool';
+
+  @override
+  String get amenity_piscine_privative => 'Private pool';
+
+  @override
+  String get amenity_fenetre => 'Double glazing';
+
+  @override
+  String get amenity_salle_eau => 'Shower room';
+
+  @override
+  String get amenity_salle_sport => 'Gym';
+
+  @override
+  String get amenity_spa => 'Spa / Hammam / Sauna';
+
+  @override
+  String get amenity_gestion_copropriete => 'Building management';
+
+  @override
+  String get amenity_creche => 'Nursery';
+
+  @override
+  String get unsupportedFileType => 'Unsupported file type.';
+
+  @override
+  String get remindIn24h => 'Remind me in 24 h';
+
+  @override
+  String get reminderSetTitle => 'Reminder set';
+
+  @override
+  String get reminderSetBody =>
+      'A notification will remind you of this notice in 24 hours.';
+
+  @override
+  String get reminderUnavailable =>
+      'Reminders are only available in the mobile app.';
 }

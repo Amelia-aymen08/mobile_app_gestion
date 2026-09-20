@@ -1520,6 +1520,414 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Choisissez un appartement'**
   String get apartmentRequired;
+
+  /// No description provided for @ticketHistory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Historique du traitement'**
+  String get ticketHistory;
+
+  /// No description provided for @ticketInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Informations de l\'administration'**
+  String get ticketInfo;
+
+  /// No description provided for @pipelineOpened.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalé'**
+  String get pipelineOpened;
+
+  /// No description provided for @pipelineStarted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prise en charge'**
+  String get pipelineStarted;
+
+  /// No description provided for @pipelineClosed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clôturé'**
+  String get pipelineClosed;
+
+  /// No description provided for @pipelinePending.
+  ///
+  /// In fr, this message translates to:
+  /// **'En attente'**
+  String get pipelinePending;
+
+  /// No description provided for @historyCreated.
+  ///
+  /// In fr, this message translates to:
+  /// **'Signalement créé'**
+  String get historyCreated;
+
+  /// No description provided for @historyStatusFromTo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Statut : {from} → {to}'**
+  String historyStatusFromTo(String from, String to);
+
+  /// No description provided for @historyStatus.
+  ///
+  /// In fr, this message translates to:
+  /// **'Statut : {status}'**
+  String historyStatus(String status);
+
+  /// No description provided for @historyAssigned.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pris en charge par l\'équipe'**
+  String get historyAssigned;
+
+  /// No description provided for @historyInfo.
+  ///
+  /// In fr, this message translates to:
+  /// **'Information de l\'administration'**
+  String get historyInfo;
+
+  /// No description provided for @historyAttachment.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pièces jointes ajoutées'**
+  String get historyAttachment;
+
+  /// No description provided for @actorYou.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous'**
+  String get actorYou;
+
+  /// No description provided for @actorTeam.
+  ///
+  /// In fr, this message translates to:
+  /// **'Intervenant'**
+  String get actorTeam;
+
+  /// No description provided for @actorAdmin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Administration'**
+  String get actorAdmin;
+
+  /// No description provided for @attachmentsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pièces jointes ({count})'**
+  String attachmentsTitle(int count);
+
+  /// No description provided for @attachmentsHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'4 fichiers au maximum, 10 Mo au total.'**
+  String get attachmentsHint;
+
+  /// No description provided for @attachmentTooMany.
+  ///
+  /// In fr, this message translates to:
+  /// **'4 fichiers au maximum.'**
+  String get attachmentTooMany;
+
+  /// No description provided for @attachmentTooBig.
+  ///
+  /// In fr, this message translates to:
+  /// **'10 Mo au total au maximum.'**
+  String get attachmentTooBig;
+
+  /// No description provided for @noAppToOpen.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune application ne peut ouvrir ce fichier.'**
+  String get noAppToOpen;
+
+  /// No description provided for @openFailed.
+  ///
+  /// In fr, this message translates to:
+  /// **'Impossible d\'ouvrir le fichier.'**
+  String get openFailed;
+
+  /// No description provided for @documentsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Documents'**
+  String get documentsTitle;
+
+  /// No description provided for @documentsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Documents de l\'administration'**
+  String get documentsSubtitle;
+
+  /// No description provided for @emptyDocumentsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun document'**
+  String get emptyDocumentsTitle;
+
+  /// No description provided for @emptyDocumentsBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'administration n\'a publié aucun document pour le moment.'**
+  String get emptyDocumentsBody;
+
+  /// No description provided for @downloadLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Télécharger'**
+  String get downloadLabel;
+
+  /// No description provided for @openLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvrir'**
+  String get openLabel;
+
+  /// No description provided for @residenceDetails.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ma résidence'**
+  String get residenceDetails;
+
+  /// No description provided for @amenitiesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commodités'**
+  String get amenitiesTitle;
+
+  /// No description provided for @aboutTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'À propos'**
+  String get aboutTitle;
+
+  /// No description provided for @memberCount.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} sur {max} membres'**
+  String memberCount(int count, int max);
+
+  /// No description provided for @householdHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque membre reçoit ses accès de connexion par e-mail. Vous pouvez ajouter jusqu\'à {max} personnes.'**
+  String householdHint(int max);
+
+  /// No description provided for @accountActiveChip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte actif'**
+  String get accountActiveChip;
+
+  /// No description provided for @accountDisabledChip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte désactivé'**
+  String get accountDisabledChip;
+
+  /// No description provided for @noAccountChip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sans compte'**
+  String get noAccountChip;
+
+  /// No description provided for @resendAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Renvoyer les accès'**
+  String get resendAccess;
+
+  /// No description provided for @accessResent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les accès ont été renvoyés par e-mail.'**
+  String get accessResent;
+
+  /// No description provided for @maxMembersReached.
+  ///
+  /// In fr, this message translates to:
+  /// **'Maximum de {max} membres atteint'**
+  String maxMembersReached(int max);
+
+  /// No description provided for @mainResident.
+  ///
+  /// In fr, this message translates to:
+  /// **'Résident principal'**
+  String get mainResident;
+
+  /// No description provided for @noOtherMember.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun autre membre pour le moment.'**
+  String get noOtherMember;
+
+  /// No description provided for @removePhoto.
+  ///
+  /// In fr, this message translates to:
+  /// **'Retirer la photo'**
+  String get removePhoto;
+
+  /// No description provided for @photoTooBig.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photo trop lourde (5 Mo maximum).'**
+  String get photoTooBig;
+
+  /// No description provided for @accountDisabled.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce compte a été désactivé. Contactez l\'administration.'**
+  String get accountDisabled;
+
+  /// No description provided for @editLabelShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'Modifier'**
+  String get editLabelShort;
+
+  /// No description provided for @amenity_climatisation.
+  ///
+  /// In fr, this message translates to:
+  /// **'Climatisation centralisée'**
+  String get amenity_climatisation;
+
+  /// No description provided for @amenity_reception.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réception'**
+  String get amenity_reception;
+
+  /// No description provided for @amenity_bache_eau.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bâche à eau'**
+  String get amenity_bache_eau;
+
+  /// No description provided for @amenity_ascenseur.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ascenseur'**
+  String get amenity_ascenseur;
+
+  /// No description provided for @amenity_cuisine.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cuisine équipée'**
+  String get amenity_cuisine;
+
+  /// No description provided for @amenity_groupe_electrogene.
+  ///
+  /// In fr, this message translates to:
+  /// **'Groupe électrogène'**
+  String get amenity_groupe_electrogene;
+
+  /// No description provided for @amenity_parking.
+  ///
+  /// In fr, this message translates to:
+  /// **'Parking de stationnement'**
+  String get amenity_parking;
+
+  /// No description provided for @amenity_domotique.
+  ///
+  /// In fr, this message translates to:
+  /// **'Domotique'**
+  String get amenity_domotique;
+
+  /// No description provided for @amenity_dressing.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dressing'**
+  String get amenity_dressing;
+
+  /// No description provided for @amenity_isolation_phonique.
+  ///
+  /// In fr, this message translates to:
+  /// **'Isolation phonique'**
+  String get amenity_isolation_phonique;
+
+  /// No description provided for @amenity_aire_jeux.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aire de jeux'**
+  String get amenity_aire_jeux;
+
+  /// No description provided for @amenity_piscine_commune.
+  ///
+  /// In fr, this message translates to:
+  /// **'Piscine commune'**
+  String get amenity_piscine_commune;
+
+  /// No description provided for @amenity_piscine_privative.
+  ///
+  /// In fr, this message translates to:
+  /// **'Piscine privative'**
+  String get amenity_piscine_privative;
+
+  /// No description provided for @amenity_fenetre.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fenêtres double vitrage'**
+  String get amenity_fenetre;
+
+  /// No description provided for @amenity_salle_eau.
+  ///
+  /// In fr, this message translates to:
+  /// **'Salle d\'eau'**
+  String get amenity_salle_eau;
+
+  /// No description provided for @amenity_salle_sport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Salle de sport'**
+  String get amenity_salle_sport;
+
+  /// No description provided for @amenity_spa.
+  ///
+  /// In fr, this message translates to:
+  /// **'Spa / Hammam / Sauna'**
+  String get amenity_spa;
+
+  /// No description provided for @amenity_gestion_copropriete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gestion copropriété'**
+  String get amenity_gestion_copropriete;
+
+  /// No description provided for @amenity_creche.
+  ///
+  /// In fr, this message translates to:
+  /// **'Crèche / Garderie'**
+  String get amenity_creche;
+
+  /// No description provided for @unsupportedFileType.
+  ///
+  /// In fr, this message translates to:
+  /// **'Type de fichier non pris en charge.'**
+  String get unsupportedFileType;
+
+  /// No description provided for @remindIn24h.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me le rappeler dans 24 h'**
+  String get remindIn24h;
+
+  /// No description provided for @reminderSetTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel programmé'**
+  String get reminderSetTitle;
+
+  /// No description provided for @reminderSetBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Une notification vous rappellera cet avis dans 24 heures.'**
+  String get reminderSetBody;
+
+  /// No description provided for @reminderUnavailable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le rappel n\'est disponible que sur l\'application mobile.'**
+  String get reminderUnavailable;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

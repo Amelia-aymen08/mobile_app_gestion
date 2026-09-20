@@ -1,6 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'residence_details_screen.dart';
+import 'documents_screen.dart';
+import '../widgets/gi_avatar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
@@ -159,6 +162,22 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
   /// Ouvre le selecteur de bien et aligne le carrousel sur le choix
   /// rapporte par l'ecran.
+  /// Fiche de la residence du bien affiche : description et commodites.
+  void _openResidenceDetails() {
+    if (_properties.isEmpty) return;
+    final index = _carouselPage.clamp(0, _properties.length - 1);
+    final property = _properties[index];
+    final residence = property is Map && property['Residence'] is Map
+        ? Map<String, dynamic>.from(property['Residence'] as Map)
+        : <String, dynamic>{};
+    final id = (residence['id'] ?? '').toString();
+    if (id.isEmpty) return;
+    _push(ResidenceDetailsScreen(
+      residenceId: id,
+      residenceName: (residence['name'] ?? '').toString(),
+    ));
+  }
+
   Future<void> _openSwitch() async {
     final picked = await Navigator.push<int>(
       context,
@@ -359,16 +378,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 // Figma : photo dans un carre de 32, rayon 8, cercle d'un
                 // trait ambre de 1. La bordure reste fine a dessein, elle ne
                 // doit pas manger la photo.
-                child: Container(
-                  width: FigSize.chipMd,
-                  height: FigSize.chipMd,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: FigBrand.amber),
-                    borderRadius: BorderRadius.circular(FigRadius.chip),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child:
-                      Image.asset('assets/figma/avatar.png', fit: BoxFit.cover),
+                child: GiAvatar(
+                  name: firstName,
+                  photoUrl: context.watch<AuthProvider>().photoUrl,
+                  size: FigSize.chipMd,
+                  radius: FigRadius.chip,
+                  bordered: true,
                 ),
               ),
             ],
@@ -987,6 +1002,19 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 onTap: () => _openSwitch(),
               ),
               GiSettingsRow(
+                icon: SvgPicture.asset('assets/figma/icons/documents_20.svg',
+                    colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                label: t.documentsTitle,
+                value: t.documentsSubtitle,
+                onTap: () => _push(const DocumentsScreen()),
+              ),
+              GiSettingsRow(
+                icon: SvgPicture.asset('assets/figma/icons/notice_20.svg',
+                    colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                label: t.residenceDetails,
+                onTap: _openResidenceDetails,
+              ),
+              GiSettingsRow(
                 icon: SvgPicture.asset('assets/figma/icons/household_16.svg',
                     colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
                 label: t.householdMembers,
@@ -1054,16 +1082,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         children: [
           Row(
             children: [
-              Container(
-                width: FigSize.chipMd,
-                height: FigSize.chipMd,
-                decoration: BoxDecoration(
-                  border: Border.all(color: FigBrand.amber),
-                  borderRadius: BorderRadius.circular(FigRadius.chip),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child:
-                    Image.asset('assets/figma/avatar.png', fit: BoxFit.cover),
+              GiAvatar(
+                name: name,
+                photoUrl: context.watch<AuthProvider>().photoUrl,
+                size: FigSize.chipMd,
+                radius: FigRadius.chip,
+                bordered: true,
               ),
               const SizedBox(width: FigSpace.lg),
               Expanded(

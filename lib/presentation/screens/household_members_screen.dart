@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -13,6 +14,10 @@ import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
 import '../widgets/gi_text_field.dart';
 import '../../data/api_service.dart';
+import '../providers/auth_provider.dart';
+
+/// Nombre de comptes qu'un foyer peut ouvrir, limite posee par le serveur.
+const int kMaxHouseholdMembers = 4;
 
 class HouseholdMembersScreen extends StatefulWidget {
   const HouseholdMembersScreen({super.key});
@@ -80,6 +85,31 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     }
   }
 
+  /// Renvoie au membre un mot de passe temporaire par courriel.
+  Future<void> _resendAccess(Map<String, dynamic> member) async {
+    final t = AppL10n.of(context);
+    try {
+      await _api.resendMemberAccess((member['id'] ?? '').toString());
+      if (!mounted) return;
+      showGiAlert<void>(
+        context: context,
+        title: t.resendAccess,
+        message: t.accessResent,
+        closeLabel: t.close,
+        primaryLabel: t.close,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showGiAlert<void>(
+        context: context,
+        title: t.errorTitle,
+        message: e.toString().replaceFirst('Exception: ', ''),
+        closeLabel: t.close,
+        primaryLabel: t.close,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
@@ -143,15 +173,51 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                             FigSpace.pagePadding, 0, FigSpace.pagePadding, 120),
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
+                          Text(
+                              t.memberCount(
+                                  kMaxHouseholdMembers, _members.length),
+                              style:
+                                  FigText.field.copyWith(color: c.textMuted)),
+                          const SizedBox(height: FigSpace.md),
+                          // Chaque membre recoit un vrai compte : le dire
+                          // evite d'inscrire un voisin par megarde.
+                          Container(
+                            padding: const EdgeInsets.all(FigSpace.lg),
+                            decoration: BoxDecoration(
+                              color: FigAccent.chipFill(FigBrand.amber),
+                              border: Border.all(
+                                  color: FigAccent.chipBorder(FigBrand.amber)),
+                              borderRadius:
+                                  BorderRadius.circular(FigRadius.chip),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/figma/icons/info_16.svg',
+                                  colorFilter: const ColorFilter.mode(
+                                      FigBrand.amber, BlendMode.srcIn),
+                                ),
+                                const SizedBox(width: FigSpace.md),
+                                Expanded(
+                                  child: Text(
+                                      t.householdHint(kMaxHouseholdMembers),
+                                      style: FigText.body.copyWith(
+                                          height: 1.4, color: c.textBody)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: FigSpace.lg),
                           // Le titulaire du bien, toujours en tete et sans
                           // menu : il ne peut ni etre modifie ni retire.
                           _memberCard(
                             c,
-                            name: t.you,
-                            relation: t.primaryResident,
-                            accessLabel: t.fullAccess,
-                            accessColor: FigAlert.success,
-                            photo: null,
+                            name: _meName(t),
+                            relation: t.mainResident,
+                            statusLabel: (_me?['email'] ?? '').toString(),
+                            statusColor: c.textMuted,
+                            photo: _api.mediaUrl(_me?['photo']),
                             member: null,
                           ),
                           // Figma : les cartes sont espacees de 4, pas de 12.
@@ -160,11 +226,13 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                             _memberCard(
                               c,
                               name: (m['fullName'] ?? '').toString(),
-                              relation: (m['relation'] ?? '').toString(),
-                              accessLabel: _accessLabel(
-                                  t, (m['accessLevel'] ?? 'RESIDENT').toString()),
-                              accessColor: FigBrand.amber,
-                              photo: (m['photo'] ?? '').toString(),
+                              relation: [
+                                (m['relation'] ?? '').toString(),
+                                (m['email'] ?? '').toString(),
+                              ].where((e) => e.isNotEmpty).join(' - '),
+                              statusLabel: _statusLabel(t, m),
+                              statusColor: _statusColor(m),
+                              photo: _api.mediaUrl(m['photo']),
                               member: Map<String, dynamic>.from(m),
                             ),
                           ],
@@ -177,8 +245,10 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
               padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
                   FigSpace.pagePadding, FigSpace.xxl),
               child: GiPrimaryButton(
-                label: t.addMember,
-                onPressed: () => _openForm(),
+                label: _isFull
+                    ? t.maxMembersReached(kMaxHouseholdMembers)
+                    : t.addMember,
+                onPressed: _isFull ? null : () => _openForm(),
               ),
             ),
           ],
@@ -187,12 +257,28 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     );
   }
 
-  String _accessLabel(AppL10n t, String level) => switch (level.toUpperCase()) {
-        'FULL' => t.fullAccess,
-        'VISITOR' || 'VISITEUR' => t.visitorAccess,
-        'CUSTOM' || 'PERSONNALISE' => t.customAccess,
-        _ => t.residentAccess,
-      };
+  bool get _isFull => _members.length >= kMaxHouseholdMembers;
+
+  Map<String, dynamic>? get _me => context.read<AuthProvider>().user;
+
+  String _meName(AppL10n t) {
+    final name = (_me?['name'] ?? '').toString().trim();
+    return name.isEmpty ? t.you : '$name (${t.you})';
+  }
+
+  /// Un membre n'a pas toujours de compte : l'invitation peut echouer, ou
+  /// l'administration l'avoir desactive. L'etat se lit sur la carte.
+  String _statusLabel(AppL10n t, Map m) {
+    if (m['linkedUserId'] == null) return t.noAccountChip;
+    return m['accountActive'] == false
+        ? t.accountDisabledChip
+        : t.accountActiveChip;
+  }
+
+  Color _statusColor(Map m) {
+    if (m['linkedUserId'] == null) return FigNeutral.n40;
+    return m['accountActive'] == false ? FigAlert.error : FigAlert.success;
+  }
 
   /// Carte de membre — Figma 0:4180 : avatar rond de 36, ecart 12, trois
   /// lignes de texte espacees de 4, et le menu a trois points de 20.
@@ -200,8 +286,8 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
     GiColors c, {
     required String name,
     required String relation,
-    required String accessLabel,
-    required Color accessColor,
+    required String statusLabel,
+    required Color statusColor,
     required String? photo,
     required Map<String, dynamic>? member,
   }) {
@@ -228,10 +314,14 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: FigText.body.copyWith(color: c.textMuted)),
                 ],
-                const SizedBox(height: FigSpace.xs),
-                Text(accessLabel,
-                    style: FigText.body.copyWith(
-                        fontWeight: FontWeight.w500, color: accessColor)),
+                if (statusLabel.isNotEmpty) ...[
+                  const SizedBox(height: FigSpace.xs),
+                  Text(statusLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.body.copyWith(
+                          fontWeight: FontWeight.w500, color: statusColor)),
+                ],
               ],
             ),
           ),
@@ -322,6 +412,26 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                   ],
                 ),
               ),
+              if (member['linkedUserId'] != null &&
+                  member['accountActive'] != false) ...[
+                const SizedBox(height: FigSpace.md),
+                GiCard(
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _resendAccess(member);
+                  },
+                  child: Row(
+                    children: [
+                      SvgPicture.asset('assets/figma/icons/mail_16.svg',
+                          colorFilter:
+                              ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                      const SizedBox(width: FigSpace.lg),
+                      Text(t.resendAccess,
+                          style: FigText.field.copyWith(color: c.textBody)),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: FigSpace.md),
               GiCard(
                 onTap: () {
@@ -370,16 +480,13 @@ class _MemberFormScreen extends StatefulWidget {
 class _MemberFormScreenState extends State<_MemberFormScreen> {
   final ApiService _api = ApiService();
   final _nameCtrl = TextEditingController();
-  final _contactCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
 
-  String _accessLevel = 'RESIDENT';
   String _relation = '';
   String? _photoDataUrl;
   bool _saving = false;
   bool _nameTouched = false;
-
-  /// Niveaux d'acces du Figma, dans son ordre.
-  static const _levels = ['FULL', 'RESIDENT', 'VISITOR', 'CUSTOM'];
 
   /// Relations proposees par la maquette. La liste reste ouverte : la
   /// relation est enregistree telle quelle, on ne fait que l'aider a la
@@ -401,8 +508,8 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
     if (e != null) {
       _nameCtrl.text = (e['fullName'] ?? '').toString();
       _relation = (e['relation'] ?? '').toString();
-      _contactCtrl.text = (e['phone'] ?? '').toString();
-      _accessLevel = (e['accessLevel'] ?? 'RESIDENT').toString();
+      _emailCtrl.text = (e['email'] ?? '').toString();
+      _phoneCtrl.text = (e['phone'] ?? '').toString();
       _photoDataUrl = (e['photoUrl'] ?? '').toString().isEmpty
           ? null
           : (e['photoUrl']).toString();
@@ -412,23 +519,10 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
   @override
   void dispose() {
     _nameCtrl.dispose();
-    _contactCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
-
-  String _levelLabel(AppL10n t, String level) => switch (level) {
-        'FULL' => t.accessFull,
-        'VISITOR' => t.accessVisitor,
-        'CUSTOM' => t.accessCustom,
-        _ => t.accessResident,
-      };
-
-  String _levelDesc(AppL10n t, String level) => switch (level) {
-        'FULL' => t.accessFullDesc,
-        'VISITOR' => t.accessVisitorDesc,
-        'CUSTOM' => t.accessCustomDesc,
-        _ => t.accessResidentDesc,
-      };
 
   String _relationLabel(AppL10n t, String key) => switch (key) {
         'relFather' => t.relFather,
@@ -452,10 +546,15 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
         () => _photoDataUrl = 'data:$mime;base64,${base64Encode(file.bytes!)}');
   }
 
+  bool get _emailLooksValid {
+    final value = _emailCtrl.text.trim();
+    return value.contains('@') && value.contains('.') && value.length > 5;
+  }
+
   Future<void> _save() async {
     final t = AppL10n.of(context);
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
+    if (name.isEmpty || !_emailLooksValid) {
       setState(() => _nameTouched = true);
       return;
     }
@@ -465,16 +564,16 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
       if (id != null) {
         await _api.updateHouseholdMember(id,
             fullName: name,
+            email: _emailCtrl.text.trim().toLowerCase(),
             relation: _relation,
-            accessLevel: _accessLevel,
-            phone: _contactCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
             photoDataUrl: _photoDataUrl);
       } else {
         await _api.addHouseholdMember(
             fullName: name,
+            email: _emailCtrl.text.trim().toLowerCase(),
             relation: _relation,
-            accessLevel: _accessLevel,
-            phone: _contactCtrl.text.trim(),
+            phone: _phoneCtrl.text.trim(),
             photoDataUrl: _photoDataUrl);
       }
       if (mounted) Navigator.pop(context, true);
@@ -558,24 +657,53 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
                   ),
                   const SizedBox(height: FigSpace.xl),
                   GiTextField(
-                    label: t.emailOrPhone,
-                    hint: t.emailOrPhoneHint,
-                    controller: _contactCtrl,
+                    label: t.emailLabel,
+                    hint: t.emailHint,
+                    controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    errorText:
+                        _nameTouched && !_emailLooksValid ? t.emailRequired : null,
+                  ),
+                  const SizedBox(height: FigSpace.xl),
+                  GiTextField(
+                    label: t.phoneLabel,
+                    hint: t.phoneHint,
+                    controller: _phoneCtrl,
+                    keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.done,
                   ),
                   const SizedBox(height: FigSpace.xl),
                   _relationField(c, t),
                   const SizedBox(height: FigSpace.xl),
-                  Text(t.selectAccessLevel,
-                      style: FigText.titleMd.copyWith(color: c.textBody)),
-                  const SizedBox(height: FigSpace.lg),
-                  // Les quatre cartes sont collees par un ecart de 4, comme
-                  // dans la maquette : elles forment un bloc, pas une liste.
-                  for (var i = 0; i < _levels.length; i++) ...[
-                    if (i > 0) const SizedBox(height: FigSpace.xs),
-                    _levelCard(c, t, _levels[i]),
-                  ],
+                  // Le compte est cree par le serveur, qui envoie lui-meme
+                  // le mot de passe : autant le dire avant d'enregistrer.
+                  Container(
+                    padding: const EdgeInsets.all(FigSpace.lg),
+                    decoration: BoxDecoration(
+                      color: FigAccent.chipFill(FigBrand.amber),
+                      border: Border.all(
+                          color: FigAccent.chipBorder(FigBrand.amber)),
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/figma/icons/mail_16.svg',
+                          colorFilter: const ColorFilter.mode(
+                              FigBrand.amber, BlendMode.srcIn),
+                        ),
+                        const SizedBox(width: FigSpace.md),
+                        Expanded(
+                          child: Text(
+                              t.householdHint(kMaxHouseholdMembers),
+                              style: FigText.body
+                                  .copyWith(height: 1.4, color: c.textBody)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -735,50 +863,4 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
     );
   }
 
-  /// Carte de niveau d'acces : titre 16 Medium, description 13, et le bouton
-  /// radio du Figma a droite.
-  Widget _levelCard(GiColors c, AppL10n t, String level) {
-    final selected = _accessLevel == level;
-    return GiPressable(
-      pressedScale: 0.99,
-      onTap: () => setState(() => _accessLevel = level),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        padding: const EdgeInsets.all(FigSpace.cardPadding),
-        decoration: BoxDecoration(
-          color: selected ? FigAccent.chipFill(FigBrand.amber) : c.card,
-          border: Border.all(
-              color: selected ? FigBrand.amber : c.cardBorder),
-          borderRadius: BorderRadius.circular(FigRadius.card),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_levelLabel(t, level),
-                      style: FigText.statValue
-                          .copyWith(height: 1.2, color: c.textBody)),
-                  const SizedBox(height: 2),
-                  Text(_levelDesc(t, level),
-                      style: FigText.body
-                          .copyWith(height: 1.2, color: c.textMuted)),
-                ],
-              ),
-            ),
-            const SizedBox(width: FigSpace.md),
-            SvgPicture.asset(
-              selected
-                  ? 'assets/figma/icons/radio_on.svg'
-                  : 'assets/figma/icons/radio_off.svg',
-              width: 16,
-              height: 16,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

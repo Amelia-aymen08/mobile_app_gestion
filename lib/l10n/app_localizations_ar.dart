@@ -788,4 +788,220 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get apartmentRequired => 'اختر شقة';
+
+  @override
+  String get ticketHistory => 'سجل المعالجة';
+
+  @override
+  String get ticketInfo => 'رسائل من الإدارة';
+
+  @override
+  String get pipelineOpened => 'تم الإبلاغ';
+
+  @override
+  String get pipelineStarted => 'قيد المعالجة';
+
+  @override
+  String get pipelineClosed => 'مغلق';
+
+  @override
+  String get pipelinePending => 'في الانتظار';
+
+  @override
+  String get historyCreated => 'تم إنشاء البلاغ';
+
+  @override
+  String historyStatusFromTo(String from, String to) {
+    return 'الحالة: $from ← $to';
+  }
+
+  @override
+  String historyStatus(String status) {
+    return 'الحالة: $status';
+  }
+
+  @override
+  String get historyAssigned => 'تكفّل الفريق بالبلاغ';
+
+  @override
+  String get historyInfo => 'رسالة من الإدارة';
+
+  @override
+  String get historyAttachment => 'تمت إضافة مرفقات';
+
+  @override
+  String get actorYou => 'أنت';
+
+  @override
+  String get actorTeam => 'تقني';
+
+  @override
+  String get actorAdmin => 'الإدارة';
+
+  @override
+  String attachmentsTitle(int count) {
+    return 'المرفقات ($count)';
+  }
+
+  @override
+  String get attachmentsHint => '4 ملفات كحد أقصى، 10 ميغابايت إجمالاً.';
+
+  @override
+  String get attachmentTooMany => '4 ملفات كحد أقصى.';
+
+  @override
+  String get attachmentTooBig => '10 ميغابايت إجمالاً كحد أقصى.';
+
+  @override
+  String get noAppToOpen => 'لا يوجد تطبيق يفتح هذا الملف.';
+
+  @override
+  String get openFailed => 'تعذّر فتح الملف.';
+
+  @override
+  String get documentsTitle => 'الوثائق';
+
+  @override
+  String get documentsSubtitle => 'وثائق الإدارة';
+
+  @override
+  String get emptyDocumentsTitle => 'لا توجد وثائق';
+
+  @override
+  String get emptyDocumentsBody => 'لم تنشر الإدارة أي وثيقة حتى الآن.';
+
+  @override
+  String get downloadLabel => 'تنزيل';
+
+  @override
+  String get openLabel => 'فتح';
+
+  @override
+  String get residenceDetails => 'إقامتي';
+
+  @override
+  String get amenitiesTitle => 'المرافق';
+
+  @override
+  String get aboutTitle => 'نبذة';
+
+  @override
+  String memberCount(int count, int max) {
+    return '$count من $max أعضاء';
+  }
+
+  @override
+  String householdHint(int max) {
+    return 'يتلقى كل عضو بيانات الدخول عبر بريده الإلكتروني. يمكنك إضافة $max أشخاص كحد أقصى.';
+  }
+
+  @override
+  String get accountActiveChip => 'الحساب مفعّل';
+
+  @override
+  String get accountDisabledChip => 'الحساب معطّل';
+
+  @override
+  String get noAccountChip => 'بدون حساب';
+
+  @override
+  String get resendAccess => 'إعادة إرسال البيانات';
+
+  @override
+  String get accessResent => 'أُعيد إرسال بيانات الدخول عبر البريد.';
+
+  @override
+  String maxMembersReached(int max) {
+    return 'بلغت الحد الأقصى $max أعضاء';
+  }
+
+  @override
+  String get mainResident => 'المقيم الرئيسي';
+
+  @override
+  String get noOtherMember => 'لا يوجد أعضاء آخرون بعد.';
+
+  @override
+  String get removePhoto => 'إزالة الصورة';
+
+  @override
+  String get photoTooBig => 'الصورة كبيرة جدًا (5 ميغابايت كحد أقصى).';
+
+  @override
+  String get accountDisabled => 'تم تعطيل هذا الحساب. يرجى الاتصال بالإدارة.';
+
+  @override
+  String get editLabelShort => 'تعديل';
+
+  @override
+  String get amenity_climatisation => 'تكييف مركزي';
+
+  @override
+  String get amenity_reception => 'الاستقبال';
+
+  @override
+  String get amenity_bache_eau => 'خزان مياه';
+
+  @override
+  String get amenity_ascenseur => 'مصعد';
+
+  @override
+  String get amenity_cuisine => 'مطبخ مجهز';
+
+  @override
+  String get amenity_groupe_electrogene => 'مولد كهربائي';
+
+  @override
+  String get amenity_parking => 'موقف سيارات';
+
+  @override
+  String get amenity_domotique => 'أتمتة المنزل';
+
+  @override
+  String get amenity_dressing => 'غرفة ملابس';
+
+  @override
+  String get amenity_isolation_phonique => 'عزل صوتي';
+
+  @override
+  String get amenity_aire_jeux => 'مساحة ألعاب';
+
+  @override
+  String get amenity_piscine_commune => 'مسبح مشترك';
+
+  @override
+  String get amenity_piscine_privative => 'مسبح خاص';
+
+  @override
+  String get amenity_fenetre => 'نوافذ مزدوجة';
+
+  @override
+  String get amenity_salle_eau => 'حمّام';
+
+  @override
+  String get amenity_salle_sport => 'قاعة رياضة';
+
+  @override
+  String get amenity_spa => 'سبا / حمّام / ساونا';
+
+  @override
+  String get amenity_gestion_copropriete => 'تسيير الملكية المشتركة';
+
+  @override
+  String get amenity_creche => 'حضانة';
+
+  @override
+  String get unsupportedFileType => 'نوع الملف غير مدعوم.';
+
+  @override
+  String get remindIn24h => 'ذكّرني بعد 24 ساعة';
+
+  @override
+  String get reminderSetTitle => 'تم ضبط التذكير';
+
+  @override
+  String get reminderSetBody => 'سيصلك إشعار يذكّرك بهذا الإعلان بعد 24 ساعة.';
+
+  @override
+  String get reminderUnavailable => 'التذكير متاح في تطبيق الهاتف فقط.';
 }

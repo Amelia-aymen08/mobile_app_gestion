@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_alert_dialog.dart';
+import '../services/system_notification_service.dart';
 // `intl` exporte aussi un type TextDirection, qui masque celui de Flutter et
 // casse la lecture du sens d'ecriture.
 import 'package:intl/intl.dart' hide TextDirection;
@@ -361,6 +363,8 @@ class NoticeDetailScreen extends StatelessWidget {
               _instructionsCard(c, t, instructions),
             ],
             const SizedBox(height: FigSpace.xxl),
+            _reminderButton(context, t),
+            const SizedBox(height: FigSpace.md),
             _actions(context, t),
           ],
         ),
@@ -643,6 +647,60 @@ class NoticeDetailScreen extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+
+  /// Rappel differe. Un avis se lit souvent au mauvais moment — en chemin,
+  /// au travail — et l'action qu'il demande se perd. Le bouton programme une
+  /// notification locale : rien ne part au serveur, le telephone s'en
+  /// charge, meme application fermee.
+  Widget _reminderButton(BuildContext context, AppL10n t) {
+    final c = GiColors.of(context);
+    return GiPressable(
+      pressedScale: 0.98,
+      onTap: () => _scheduleReminder(context, t),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: c.card,
+          border: Border.all(color: c.cardBorder),
+          borderRadius: BorderRadius.circular(FigRadius.cta),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.asset('assets/figma/icons/bell_16.svg',
+                colorFilter: ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+            const SizedBox(width: FigSpace.md),
+            Flexible(
+              child: Text(t.remindIn24h,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: FigText.button
+                      .copyWith(fontSize: 14, color: c.textBody)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _scheduleReminder(BuildContext context, AppL10n t) async {
+    final title = (notice['title'] ?? t.notices).toString();
+    final ok = await SystemNotificationService.instance.scheduleIn(
+      key: 'notice-${notice['id'] ?? title}',
+      title: title,
+      message: (notice['body'] ?? notice['message'] ?? '').toString(),
+      delay: const Duration(hours: 24),
+    );
+    if (!context.mounted) return;
+    showGiAlert<void>(
+      context: context,
+      title: ok ? t.reminderSetTitle : t.notificationsTitle,
+      message: ok ? t.reminderSetBody : t.reminderUnavailable,
+      closeLabel: t.close,
+      primaryLabel: t.close,
     );
   }
 

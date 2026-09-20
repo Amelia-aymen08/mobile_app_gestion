@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_alert_dialog.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
@@ -33,7 +34,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
   String? _selectedSubCategory;
 
   String _priority = 'Moyenne';
-  PlatformFile? _attachment;
+  final List<PlatformFile> _attachments = [];
 
   String _apartmentNumberFromLotNumber(dynamic lotNumber) {
     final raw = (lotNumber ?? '').toString().trim();
@@ -128,32 +129,53 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     return parts.join(' • ');
   }
 
+  /// Quatre fichiers au maximum, dix megaoctets en tout : ce sont les
+  /// limites du serveur. Les verifier ici evite un televersement perdu et
+  /// dit tout de suite ce qui bloque.
   Future<void> _pickAttachment() async {
+    final t = AppL10n.of(context);
+    final restants = 4 - _attachments.length;
+    if (restants <= 0) return;
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx'],
+      allowedExtensions: const [
+        'pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx'
+      ],
+      allowMultiple: true,
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
-    final picked = result.files.first;
-    if (picked.bytes == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Impossible de lire le fichier sélectionné.')));
+
+    final picked = result.files.where((f) => f.bytes != null).toList();
+    if (picked.isEmpty) return;
+    if (picked.length > restants) {
+      _warn(t.attachmentTooMany);
       return;
     }
-    if (picked.size > 2 * 1024 * 1024) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Fichier trop grand (max 2 Mo).')));
+
+    final total = [..._attachments, ...picked]
+        .fold<int>(0, (sum, f) => sum + (f.bytes?.length ?? 0));
+    if (total > 10 * 1024 * 1024) {
+      _warn(t.attachmentTooBig);
       return;
     }
-    final mime = _mimeTypeForFilename(picked.name);
-    if (mime == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Type de fichier non supporté.')));
+    if (picked.any((f) => _mimeTypeForFilename(f.name) == null)) {
+      _warn(t.unsupportedFileType);
       return;
     }
-    setState(() => _attachment = picked);
+    setState(() => _attachments.addAll(picked));
+  }
+
+  void _warn(String message) {
+    final t = AppL10n.of(context);
+    showGiAlert<void>(
+      context: context,
+      title: t.errorTitle,
+      message: message,
+      closeLabel: t.close,
+      primaryLabel: t.close,
+    );
   }
 
   Future<void> _submit() async {
@@ -182,16 +204,20 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
 
       final created = await _api.createTicket(payload);
 
-      if (_attachment != null && _attachment!.bytes != null) {
-        final mime = _mimeTypeForFilename(_attachment!.name);
-        if (mime != null) {
-          await _api.uploadTicketAttachment(
-            ticketId: created['id'].toString(),
-            bytes: _attachment!.bytes!,
-            filename: _attachment!.name,
-            mimeType: mime,
-          );
-        }
+      final files = _attachments
+          .where((f) => f.bytes != null)
+          .map((f) => UploadFile(
+                bytes: f.bytes!,
+                filename: f.name,
+                mimeType: _mimeTypeForFilename(f.name) ??
+                    'application/octet-stream',
+              ))
+          .toList();
+      if (files.isNotEmpty) {
+        await _api.uploadTicketAttachments(
+          ticketId: created['id'].toString(),
+          files: files,
+        );
       }
 
       if (!mounted) return;
@@ -489,46 +515,103 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     );
   }
 
-  /// Zone de piece jointe : fond ambre a 5 %, trait a 10 %, rayon 8.
-  /// Une fois un fichier choisi, la zone affiche son nom et permet de le
-  /// retirer — le Figma ne prevoit pas cet etat, mais sans lui on ne peut
-  /// pas revenir sur une piece jointe par erreur.
+  /// Zone de pieces jointes : fond ambre a 5 %, trait a 10 %, rayon 8.
+  /// Les fichiers deja choisis sont listes au-dessus, chacun avec sa croix :
+  /// sans cela on ne peut pas revenir sur une piece jointe par erreur.
   Widget _attachBox(GiColors c, AppL10n t) {
-    final has = _attachment != null;
-    return GiPressable(
-      pressedScale: 0.98,
-      onTap: has ? () => setState(() => _attachment = null) : _pickAttachment,
-      child: Container(
-        padding: const EdgeInsets.all(FigSpace.cardPadding),
-        decoration: BoxDecoration(
-          color: FigAccent.chipFill(FigBrand.amber),
-          border: Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
-          borderRadius: BorderRadius.circular(FigRadius.field),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset(
-                has
-                    ? 'assets/figma/icons/close_16.svg'
-                    : 'assets/figma/icons/camera_24.svg',
-                width: 18,
-                height: 18,
-                colorFilter: ColorFilter.mode(
-                    has ? FigAlert.error : FigBrand.amber, BlendMode.srcIn)),
-            const SizedBox(width: FigSpace.lg),
-            Flexible(
-              child: Text(
-                has ? _attachment!.name : t.attachPhoto,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: FigText.field.copyWith(color: c.textBody),
+    final full = _attachments.length >= 4;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < _attachments.length; i++) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: FigSpace.md),
+            padding: const EdgeInsets.all(FigSpace.lg),
+            decoration: BoxDecoration(
+              color: c.card,
+              border: Border.all(color: c.cardBorder),
+              borderRadius: BorderRadius.circular(FigRadius.field),
+            ),
+            child: Row(
+              children: [
+                SvgPicture.asset('assets/figma/icons/documents_20.svg',
+                    width: 16,
+                    height: 16,
+                    colorFilter:
+                        ColorFilter.mode(c.textMuted, BlendMode.srcIn)),
+                const SizedBox(width: FigSpace.lg),
+                Expanded(
+                  child: Text(_attachments[i].name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.body.copyWith(color: c.textBody)),
+                ),
+                const SizedBox(width: FigSpace.md),
+                Text(_formatBytes(_attachments[i].size),
+                    style: FigText.caption.copyWith(color: c.textFaint)),
+                const SizedBox(width: FigSpace.md),
+                GiPressable(
+                  pressedScale: 0.82,
+                  ensureMinTapTarget: true,
+                  onTap: () => setState(() => _attachments.removeAt(i)),
+                  child: SvgPicture.asset('assets/figma/icons/close_16.svg',
+                      width: 14,
+                      height: 14,
+                      colorFilter: const ColorFilter.mode(
+                          FigAlert.error, BlendMode.srcIn)),
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (!full)
+          GiPressable(
+            pressedScale: 0.98,
+            onTap: _pickAttachment,
+            child: Container(
+              padding: const EdgeInsets.all(FigSpace.cardPadding),
+              decoration: BoxDecoration(
+                color: FigAccent.chipFill(FigBrand.amber),
+                border: Border.all(color: FigAccent.chipBorder(FigBrand.amber)),
+                borderRadius: BorderRadius.circular(FigRadius.field),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset('assets/figma/icons/camera_24.svg',
+                          width: 18,
+                          height: 18,
+                          colorFilter: const ColorFilter.mode(
+                              FigBrand.amber, BlendMode.srcIn)),
+                      const SizedBox(width: FigSpace.lg),
+                      Flexible(
+                        child: Text(t.attachPhoto,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                FigText.field.copyWith(color: c.textBody)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: FigSpace.xs),
+                  Text(t.attachmentsHint,
+                      textAlign: TextAlign.center,
+                      style: FigText.caption.copyWith(color: c.textFaint)),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
+  }
+
+  String _formatBytes(num bytes) {
+    if (bytes < 1024) return '${bytes.toInt()} o';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} Ko';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
   }
 }
 

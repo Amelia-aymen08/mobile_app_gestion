@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 class SystemNotificationService {
   SystemNotificationService._();
@@ -48,6 +51,52 @@ class SystemNotificationService {
     } catch (_) {
       // Never let a plugin/permission hiccup keep the caller waiting forever.
       _initialized = true;
+    }
+  }
+
+  /// Programme une notification pour plus tard.
+  ///
+  /// Sert au rappel « dans 24 h » d'un avis : le systeme la delivre meme si
+  /// l'application n'a pas ete rouverte entre-temps. Sur le web il n'y a pas
+  /// de planificateur : l'appel est sans effet et retourne false, a charge de
+  /// l'ecran de le dire.
+  Future<bool> scheduleIn({
+    required String key,
+    required String title,
+    required String message,
+    required Duration delay,
+  }) async {
+    if (kIsWeb) return false;
+    if (!_initialized) await init();
+
+    try {
+      // La base de fuseaux n'est chargee qu'ici : elle ne sert qu'aux
+      // notifications differees et pese quelques centaines de kilo-octets.
+      tzdata.initializeTimeZones();
+      final when = tz.TZDateTime.now(tz.local).add(delay);
+
+      await _plugin.zonedSchedule(
+        key.hashCode & 0x7fffffff,
+        title,
+        message,
+        when,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'gestimou_default',
+            'Gérance Immo Service',
+            channelDescription: 'Notifications Gérance Immo Service',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+      return true;
+    } catch (_) {
+      // Rappel differe indisponible (permission d'alarme refusee, plateforme
+      // sans planificateur) : l'appelant en informe la personne.
+      return false;
     }
   }
 

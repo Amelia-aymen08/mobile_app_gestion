@@ -7,10 +7,57 @@ import '../../data/api_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
-  
+
+  AuthProvider() {
+    // L'administration peut desactiver un compte : n'importe quel appel
+    // repond alors 403 ACCOUNT_DISABLED. On coupe la session sur place,
+    // quel que soit l'ecran ouvert.
+    ApiService.onAccountDisabled = _handleAccountDisabled;
+  }
+
   bool _isLoading = false;
   String? _token;
   Map<String, dynamic>? _user;
+  String? _notice;
+
+  /// Message a afficher une seule fois sur l'ecran de connexion, quand la
+  /// session a ete coupee par le serveur.
+  String? consumeNotice() {
+    final n = _notice;
+    _notice = null;
+    return n;
+  }
+
+  /// Compte cree via un foyer, et non par l'administration.
+  bool get isHouseholdMember => _user?['isHouseholdMember'] == true;
+
+  /// Photo de profil, deja en URL absolue.
+  String? get photoUrl => _apiService.mediaUrl(_user?['photo']);
+
+  void _handleAccountDisabled() {
+    if (_token == null) return;
+    _notice = 'accountDisabled';
+    _token = null;
+    _user = null;
+    _apiService.setToken(null);
+    SharedPreferences.getInstance().then((prefs) async {
+      final deviceId = prefs.getString('device_id');
+      await prefs.clear();
+      if (deviceId != null && deviceId.trim().isNotEmpty) {
+        await prefs.setString('device_id', deviceId);
+      }
+    });
+    notifyListeners();
+  }
+
+  /// Met a jour la photo apres que l'API l'a acceptee.
+  Future<void> setPhoto(String? photo) async {
+    if (_user == null) return;
+    _user = {..._user!, 'photo': photo};
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user', json.encode(_user));
+    notifyListeners();
+  }
 
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _token != null;
@@ -79,6 +126,8 @@ class AuthProvider with ChangeNotifier {
           'role': me['role'],
           'profession': me['profession'],
           'zone': me['zone'],
+          'photo': me['photo'],
+          'isHouseholdMember': me['isHouseholdMember'] == true,
           'mustChangePassword': me['mustChangePassword'] == true,
         };
         await prefs.setString('user', json.encode(_user));
@@ -115,6 +164,8 @@ class AuthProvider with ChangeNotifier {
         'role': data['role'],
         'profession': data['profession'],
         'zone': data['zone'],
+        'photo': data['photo'],
+        'isHouseholdMember': data['isHouseholdMember'] == true,
         'mustChangePassword': data['mustChangePassword'] == true,
       };
       
