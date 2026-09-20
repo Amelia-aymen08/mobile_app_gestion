@@ -1958,6 +1958,84 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Autres'**
   String get docCatOther;
+
+  /// No description provided for @changePasswordSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Créez un nouveau mot de passe pour protéger votre compte.'**
+  String get changePasswordSubtitle;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe actuel'**
+  String get currentPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau mot de passe'**
+  String get newPassword;
+
+  /// No description provided for @newPasswordHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'8 caractères minimum'**
+  String get newPasswordHint;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmer le mot de passe'**
+  String get confirmPassword;
+
+  /// No description provided for @confirmPasswordHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Saisissez à nouveau le mot de passe'**
+  String get confirmPasswordHint;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In fr, this message translates to:
+  /// **'8 caractères minimum'**
+  String get passwordTooShort;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les deux mots de passe diffèrent'**
+  String get passwordMismatch;
+
+  /// No description provided for @passwordChangedTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe modifié'**
+  String get passwordChangedTitle;
+
+  /// No description provided for @passwordChangedBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre nouveau mot de passe est enregistré. Utilisez-le à votre prochaine connexion.'**
+  String get passwordChangedBody;
+
+  /// No description provided for @paymentsUpToDate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Charges à jour'**
+  String get paymentsUpToDate;
+
+  /// No description provided for @chatReadOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette conversation est en lecture seule. L\'administration vous répond ici.'**
+  String get chatReadOnly;
+
+  /// No description provided for @chatEmptyReadOnly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun message pour le moment. L\'administration écrira ici si votre signalement demande une précision.'**
+  String get chatEmptyReadOnly;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

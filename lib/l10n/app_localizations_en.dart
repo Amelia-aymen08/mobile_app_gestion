@@ -1018,4 +1018,47 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get docCatOther => 'Other';
+
+  @override
+  String get changePasswordSubtitle =>
+      'Create a new password to keep your account safe.';
+
+  @override
+  String get currentPassword => 'Current password';
+
+  @override
+  String get newPassword => 'New password';
+
+  @override
+  String get newPasswordHint => '8 characters minimum';
+
+  @override
+  String get confirmPassword => 'Confirm password';
+
+  @override
+  String get confirmPasswordHint => 'Type the password again';
+
+  @override
+  String get passwordTooShort => '8 characters minimum';
+
+  @override
+  String get passwordMismatch => 'The two passwords differ';
+
+  @override
+  String get passwordChangedTitle => 'Password changed';
+
+  @override
+  String get passwordChangedBody =>
+      'Your new password is saved. Use it the next time you sign in.';
+
+  @override
+  String get paymentsUpToDate => 'All charges paid';
+
+  @override
+  String get chatReadOnly =>
+      'This conversation is read-only. The administration replies here.';
+
+  @override
+  String get chatEmptyReadOnly =>
+      'No message yet. The administration will write here if your report needs anything.';
 }

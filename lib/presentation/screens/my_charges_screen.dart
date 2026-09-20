@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-// `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
-import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../data/api_service.dart';
+import '../../data/charges.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/gi_appear.dart';
@@ -82,23 +81,9 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     }
   }
 
-  int _periodMonths(Map charge) {
-    DateTime? s, e;
-    try { s = DateTime.parse((charge['periodStart'] ?? '').toString()); } catch (_) {}
-    try { e = DateTime.parse((charge['periodEnd'] ?? '').toString()); } catch (_) {}
-    if (s == null || e == null) return 1;
-    return ((e.year - s.year) * 12 + (e.month - s.month)).clamp(1, 120);
-  }
+  int _amountValue(Map charge) => Charges.amount(charge);
 
-  /// Montant reel d'une charge : une charge pluri-mensuelle vaut son montant
-  /// de base multiplie par le nombre de mois de la periode.
-  int _amountValue(Map charge) {
-    final base = int.tryParse((charge['amount'] ?? '0').toString()) ?? 0;
-    final months = (charge['type'] ?? '').toString() == 'Charge' ? _periodMonths(charge) : 1;
-    return base * months;
-  }
-
-  String _formatAmount(int value) => '${NumberFormat.decimalPattern('fr_FR').format(value)} DZD';
+  String _formatAmount(int value) => Charges.format(value);
 
   /// Replie le detail des charges. Le Figma prevoit ce bouton « Masquer » :
   /// la liste peut etre longue et l'historique se trouve juste en dessous.
@@ -109,17 +94,10 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
     final c = GiColors.of(context);
     final t = AppL10n.of(context);
 
-    final due = _charges.where((e) => e['status'] != 'Payé').toList()
-      ..sort((a, b) => (a['periodEnd'] ?? '')
-          .toString()
-          .compareTo((b['periodEnd'] ?? '').toString()));
-    final paidHistory = _charges.where((e) => e['status'] == 'Payé').toList()
-      ..sort((a, b) => (b['periodEnd'] ?? '')
-          .toString()
-          .compareTo((a['periodEnd'] ?? '').toString()));
+    final due = Charges.due(_charges);
+    final paidHistory = Charges.paid(_charges);
 
-    final totalDue = due.fold<int>(
-        0, (sum, e) => sum + _amountValue(e));
+    final totalDue = Charges.totalDue(_charges);
 
     return Scaffold(
       backgroundColor: c.scaffold,

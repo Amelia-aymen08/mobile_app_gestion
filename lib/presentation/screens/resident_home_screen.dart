@@ -7,6 +7,7 @@ import '../widgets/gi_avatar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
+import '../../data/charges.dart';
 import '../providers/auth_provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
@@ -39,6 +40,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
   List<dynamic> _properties = [];
   Map<String, dynamic> _chargesSummary = {};
+  List<dynamic> _charges = const [];
   List<dynamic> _tickets = [];
   bool _loadingDashboard = true;
 
@@ -93,11 +95,16 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             : Future.value(<dynamic>[]),
         _api.getMyChargesSummary(),
         _api.getTickets(),
+        // La carte de l'accueil doit annoncer le meme montant que l'ecran
+        // des paiements : elle part donc des memes charges, et non du
+        // montant annuel du resume.
+        _api.getMyCharges(),
       ]);
       if (!mounted) return;
       setState(() {
         _properties = results[0] as List<dynamic>;
         _chargesSummary = Map<String, dynamic>.from(results[1] as Map);
+        _charges = results[3] as List<dynamic>;
         _tickets = (results[2] as List<dynamic>)
           ..sort((a, b) => (b is Map ? b['createdAt'] : '')
               .toString()
@@ -636,9 +643,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   Widget _statsRow(GiColors c, AppL10n t, int open, int inProgress) {
-    final amount = _chargesSummary['annualAmount'];
-    final due = _chargesSummary['nextPaymentDate']?.toString();
-    final dueDate = due == null ? null : DateTime.tryParse(due)?.toLocal();
+    final totalDue = Charges.totalDue(_charges);
+    final dueDate = Charges.nextDueDate(_charges, _chargesSummary);
 
     // IntrinsicHeight est indispensable : dans une ListView la hauteur est
     // non bornee, et un Row en CrossAxisAlignment.stretch ne peut alors pas
@@ -652,11 +658,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               c,
               asset: 'assets/figma/icons/payment_15.svg',
               accent: FigAccent.amber,
-              label: t.nextPayment,
-              value: amount == null ? '—' : '$amount DZD',
-              sub: dueDate == null
-                  ? ''
-                  : t.paymentDeadline(_formatDate(dueDate)),
+              label: totalDue > 0 ? t.nextPayment : t.paymentsUpToDate,
+              value: Charges.format(totalDue),
+              sub: totalDue > 0 && dueDate != null
+                  ? t.paymentDeadline(_formatDate(dueDate))
+                  : '',
               subColor: FigBrand.amber,
               onTap: () => setState(() => _tab = 3),
             ),
@@ -727,48 +733,42 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   Widget _quickActionsGrid(GiColors c, AppL10n t) {
-    final actions = <(String?, IconData?, Color, String, VoidCallback)>[
+    final actions = <(String, Color, String, VoidCallback)>[
       (
         'assets/figma/icons/alert_20.svg',
-        null,
         FigAccent.red,
         t.reports,
         () => setState(() => _tab = 2)
       ),
       (
         'assets/figma/icons/notice_20.svg',
-        null,
         FigAccent.violet,
         t.notices,
         () => setState(() => _tab = 1)
       ),
       (
         'assets/figma/icons/payment_20.svg',
-        null,
         FigAccent.amber,
         t.payments,
         () => setState(() => _tab = 3)
       ),
       (
         'assets/figma/icons/documents_20.svg',
-        null,
         FigAccent.blue,
         t.documents,
         () => _push(const DocumentsScreen())
       ),
       (
         'assets/figma/icons/profile_20.svg',
-        null,
         FigAccent.purple,
         t.profile,
         () => _push(const ResidentProfileScreen())
       ),
       // Absente du Figma : la maquette ne prevoit que cinq actions, mais
-      // l'ajout d'un bien existe dans l'app. On garde la fonctionnalite en
-      // lui appliquant le meme habillage, faute d'icone fournie.
+      // l'ajout d'un bien existe dans l'app. Elle reprend le plus du Figma,
+      // celui du bouton « nouveau signalement ».
       (
-        null,
-        null,
+        'assets/figma/icons/plus_16.svg',
         FigAlert.success,
         t.addProperty,
         () => _push(const PropertyAddRequestScreen())
@@ -802,8 +802,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   Widget _quickTile(
-      GiColors c, (String?, IconData?, Color, String, VoidCallback) a) {
-    final (asset, icon, accent, label, onTap) = a;
+      GiColors c, (String, Color, String, VoidCallback) a) {
+    final (asset, accent, label, onTap) = a;
     return GiCard(
       onTap: onTap,
       child: Column(
@@ -811,10 +811,8 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         children: [
           GiIconChip(
             accent: accent,
-            icon: asset != null
-                ? SvgPicture.asset(asset,
-                    colorFilter: ColorFilter.mode(accent, BlendMode.srcIn))
-                : Icon(icon, size: 20, color: accent),
+            icon: SvgPicture.asset(asset,
+                colorFilter: ColorFilter.mode(accent, BlendMode.srcIn)),
           ),
           const SizedBox(height: FigSpace.lg),
           // Les tuiles du Figma sont taillees pour « Reports ».

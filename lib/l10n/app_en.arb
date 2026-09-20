@@ -309,5 +309,18 @@
   "docCatSav": "After-sales",
   "docCatAdmin": "Administrative",
   "docCatContracts": "Contracts",
-  "docCatOther": "Other"
+  "docCatOther": "Other",
+  "changePasswordSubtitle": "Create a new password to keep your account safe.",
+  "currentPassword": "Current password",
+  "newPassword": "New password",
+  "newPasswordHint": "8 characters minimum",
+  "confirmPassword": "Confirm password",
+  "confirmPasswordHint": "Type the password again",
+  "passwordTooShort": "8 characters minimum",
+  "passwordMismatch": "The two passwords differ",
+  "passwordChangedTitle": "Password changed",
+  "passwordChangedBody": "Your new password is saved. Use it the next time you sign in.",
+  "paymentsUpToDate": "All charges paid",
+  "chatReadOnly": "This conversation is read-only. The administration replies here.",
+  "chatEmptyReadOnly": "No message yet. The administration will write here if your report needs anything."
 }

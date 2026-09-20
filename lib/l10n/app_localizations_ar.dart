@@ -1019,4 +1019,45 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get docCatOther => 'أخرى';
+
+  @override
+  String get changePasswordSubtitle => 'أنشئ كلمة مرور جديدة لحماية حسابك.';
+
+  @override
+  String get currentPassword => 'كلمة المرور الحالية';
+
+  @override
+  String get newPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get newPasswordHint => '8 أحرف على الأقل';
+
+  @override
+  String get confirmPassword => 'تأكيد كلمة المرور';
+
+  @override
+  String get confirmPasswordHint => 'أعد إدخال كلمة المرور';
+
+  @override
+  String get passwordTooShort => '8 أحرف على الأقل';
+
+  @override
+  String get passwordMismatch => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String get passwordChangedTitle => 'تم تغيير كلمة المرور';
+
+  @override
+  String get passwordChangedBody =>
+      'تم حفظ كلمة المرور الجديدة. استخدمها في تسجيل الدخول القادم.';
+
+  @override
+  String get paymentsUpToDate => 'لا مستحقات';
+
+  @override
+  String get chatReadOnly => 'هذه المحادثة للقراءة فقط. ترد الإدارة هنا.';
+
+  @override
+  String get chatEmptyReadOnly =>
+      'لا توجد رسائل بعد. ستكتب الإدارة هنا إذا احتاج بلاغك إلى توضيح.';
 }

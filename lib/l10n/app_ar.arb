@@ -309,5 +309,18 @@
   "docCatSav": "خدمة ما بعد البيع",
   "docCatAdmin": "إداري",
   "docCatContracts": "العقود",
-  "docCatOther": "أخرى"
+  "docCatOther": "أخرى",
+  "changePasswordSubtitle": "أنشئ كلمة مرور جديدة لحماية حسابك.",
+  "currentPassword": "كلمة المرور الحالية",
+  "newPassword": "كلمة المرور الجديدة",
+  "newPasswordHint": "8 أحرف على الأقل",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "confirmPasswordHint": "أعد إدخال كلمة المرور",
+  "passwordTooShort": "8 أحرف على الأقل",
+  "passwordMismatch": "كلمتا المرور غير متطابقتين",
+  "passwordChangedTitle": "تم تغيير كلمة المرور",
+  "passwordChangedBody": "تم حفظ كلمة المرور الجديدة. استخدمها في تسجيل الدخول القادم.",
+  "paymentsUpToDate": "لا مستحقات",
+  "chatReadOnly": "هذه المحادثة للقراءة فقط. ترد الإدارة هنا.",
+  "chatEmptyReadOnly": "لا توجد رسائل بعد. ستكتب الإدارة هنا إذا احتاج بلاغك إلى توضيح."
 }

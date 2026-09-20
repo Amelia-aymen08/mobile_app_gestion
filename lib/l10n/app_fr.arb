@@ -466,5 +466,18 @@
   "docCatSav": "SAV",
   "docCatAdmin": "Administratif",
   "docCatContracts": "Contrats",
-  "docCatOther": "Autres"
+  "docCatOther": "Autres",
+  "changePasswordSubtitle": "Créez un nouveau mot de passe pour protéger votre compte.",
+  "currentPassword": "Mot de passe actuel",
+  "newPassword": "Nouveau mot de passe",
+  "newPasswordHint": "8 caractères minimum",
+  "confirmPassword": "Confirmer le mot de passe",
+  "confirmPasswordHint": "Saisissez à nouveau le mot de passe",
+  "passwordTooShort": "8 caractères minimum",
+  "passwordMismatch": "Les deux mots de passe diffèrent",
+  "passwordChangedTitle": "Mot de passe modifié",
+  "passwordChangedBody": "Votre nouveau mot de passe est enregistré. Utilisez-le à votre prochaine connexion.",
+  "paymentsUpToDate": "Charges à jour",
+  "chatReadOnly": "Cette conversation est en lecture seule. L'administration vous répond ici.",
+  "chatEmptyReadOnly": "Aucun message pour le moment. L'administration écrira ici si votre signalement demande une précision."
 }

@@ -1,6 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-import 'dart:convert';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -32,9 +30,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scrollCtrl = ScrollController();
 
   bool _loading = true;
-  bool _sending = false;
   List<Map<String, dynamic>> _messages = [];
-  final List<String> _pendingAttachments = [];
 
   @override
   void initState() {
@@ -71,42 +67,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!_scrollCtrl.hasClients) return;
     _scrollCtrl.animateTo(_scrollCtrl.position.maxScrollExtent,
         duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-  }
-
-  Future<void> _pickAttachment() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true, allowMultiple: true);
-    if (result == null) return;
-    for (final file in result.files) {
-      if (file.bytes == null) continue;
-      final ext = (file.extension ?? 'jpg').toLowerCase();
-      final mime = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
-      setState(() => _pendingAttachments.add('data:$mime;base64,${base64Encode(file.bytes!)}'));
-      if (_pendingAttachments.length >= 6) break;
-    }
-  }
-
-  Future<void> _send() async {
-    final text = _textCtrl.text.trim();
-    if (text.isEmpty && _pendingAttachments.isEmpty) return;
-    setState(() => _sending = true);
-    try {
-      final attachments = List<String>.from(_pendingAttachments);
-      final sent = await _api.sendTicketMessage(widget.ticketId,
-          body: text.isEmpty ? null : text, attachmentDataUrls: attachments);
-      setState(() {
-        _messages.add(Map<String, dynamic>.from(sent));
-        _textCtrl.clear();
-        _pendingAttachments.clear();
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
-      }
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
   }
 
   String _dayLabel(DateTime d) {
@@ -196,7 +156,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: CircularProgressIndicator(color: FigBrand.amber))
                   : _messages.isEmpty
                       ? Center(
-                          child: Text(t.noMessages,
+                          child: Text(t.chatEmptyReadOnly,
                               style:
                                   FigText.body.copyWith(color: c.textMuted)))
                       : ListView.builder(
@@ -228,7 +188,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           },
                         ),
             ),
-            _composer(c, t),
+            _readOnlyNote(c, t),
           ],
         ),
       ),
@@ -327,95 +287,35 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Barre de saisie : champ de 50 de haut avec le trombone a l'interieur,
-  /// puis le bouton d'envoi carre de 48.
-  Widget _composer(GiColors c, AppL10n t) {
+  /// Le resident ne repond pas ici : le signalement porte deja sa
+  /// description, et l'administration s'en sert pour transmettre une
+  /// information. Une barre de saisie laisserait croire a un echange.
+  Widget _readOnlyNote(GiColors c, AppL10n t) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          FigSpace.xl, 0, FigSpace.xl, FigSpace.xxl),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: FigSpace.xl),
-              decoration: BoxDecoration(
-                color: c.card,
-                border: Border.all(color: c.cardBorder),
-                borderRadius: BorderRadius.circular(FigRadius.field),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textCtrl,
-                      cursorColor: FigBrand.amber,
-                      style: FigText.field.copyWith(color: c.fieldText),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _send(),
-                      decoration: InputDecoration(
-                        hintText: t.typeMessage,
-                        hintStyle:
-                            FigText.field.copyWith(color: c.fieldHint),
-                        filled: false,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: FigSpace.md),
-                  GiPressable(
-                    pressedScale: 0.82,
-                    ensureMinTapTarget: true,
-                    onTap: _pickAttachment,
-                    child: SvgPicture.asset(
-                      'assets/figma/icons/attach_20.svg',
-                      colorFilter:
-                          ColorFilter.mode(c.textMuted, BlendMode.srcIn),
-                    ),
-                  ),
-                ],
-              ),
+          FigSpace.pagePadding, 0, FigSpace.pagePadding, FigSpace.xxl),
+      child: Container(
+        padding: const EdgeInsets.all(FigSpace.lg),
+        decoration: BoxDecoration(
+          color: c.card,
+          border: Border.all(color: c.cardBorder),
+          borderRadius: BorderRadius.circular(FigRadius.field),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SvgPicture.asset(
+              'assets/figma/icons/info_16.svg',
+              colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn),
             ),
-          ),
-          const SizedBox(width: FigSpace.md),
-          GiPressable(
-            pressedScale: 0.90,
-            onTap: _sending ? null : _send,
-            child: Container(
-              width: 48,
-              height: 50,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: _sending ? c.card : FigBrand.amber,
-                border: Border.all(
-                    color: _sending ? c.cardBorder : FigBrand.amber),
-                borderRadius: BorderRadius.circular(FigRadius.field),
-              ),
-              child: _sending
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation(c.textMuted)),
-                    )
-                  : Transform.flip(
-                      flipX:
-                          Directionality.of(context) == TextDirection.rtl,
-                      child: SvgPicture.asset(
-                        'assets/figma/icons/send_16.svg',
-                        colorFilter: const ColorFilter.mode(
-                            Colors.black, BlendMode.srcIn),
-                      ),
-                    ),
+            const SizedBox(width: FigSpace.md),
+            Expanded(
+              child: Text(t.chatReadOnly,
+                  style:
+                      FigText.body.copyWith(height: 1.4, color: c.textMuted)),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -226,11 +227,23 @@ class _BottomBlock extends StatelessWidget {
     final titleColor = isDark ? FigBrand.amber : FigBrand.navy;
     final bodyColor = isDark ? FigNeutral.n20 : FigNeutral.n80;
 
+    // Figma : le bloc « All Content » occupe les 360 derniers pixels. Cette
+    // hauteur suppose la police du systeme a sa taille normale et un ecran
+    // en portrait. Elle suit donc l'agrandissement du texte, sans jamais
+    // depasser les trois quarts de l'ecran — au-dela, la photo disparaitrait.
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final scaled = MediaQuery.textScalerOf(context).scale(360);
+    final blockHeight =
+        math.min(math.max(360.0, scaled), screenHeight * 0.74);
+    // Ecran court : le haut du bloc se resserre, et les reperes de position
+    // s'effacent — ils repetent une information que les trois photos disent
+    // deja.
+    final short = blockHeight < 400;
+
     return SafeArea(
       top: false,
       child: SizedBox(
-        // Figma : le bloc « All Content » occupe les 360 derniers pixels.
-        height: 360,
+        height: blockHeight,
         child: ClipRect(
           child: Stack(
             children: [
@@ -247,9 +260,9 @@ class _BottomBlock extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(
-                    FigSpace.pagePadding, 75, FigSpace.pagePadding, 29),
-                child: _content(titleColor, bodyColor),
+                padding: EdgeInsets.fromLTRB(FigSpace.pagePadding,
+                    short ? 24 : 75, FigSpace.pagePadding, short ? 16 : 29),
+                child: _content(titleColor, bodyColor, short),
               ),
             ],
           ),
@@ -258,26 +271,38 @@ class _BottomBlock extends StatelessWidget {
     );
   }
 
-  Widget _content(Color titleColor, Color bodyColor) {
+  Widget _content(Color titleColor, Color bodyColor, bool short) {
     return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          // Les reperes restent en haut du bloc et les boutons en bas :
+          // l'espace libre se place entre les deux, et le texte prend ce
+          // qu'il lui faut sans jamais pousser les boutons hors du cadre.
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _Dots(count: pageCount, current: page, isDark: isDark),
-            const SizedBox(height: FigSpace.lg),
+            if (!short)
+              _Dots(count: pageCount, current: page, isDark: isDark)
+            else
+              const SizedBox.shrink(),
             // Hauteur reservee au texte : sans elle, les boutons remonteraient
-            // et redescendraient a chaque changement de slide.
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 129),
-              child: _AnimatedText(
-                animation: animation,
-                forward: forward,
-                title: title,
-                body: body,
-                titleColor: titleColor,
-                bodyColor: bodyColor,
+            // et redescendraient a chaque changement de slide. Le texte
+            // defile s'il ne tient pas — police du systeme agrandie, ecran
+            // etroit — plutot que d'etre coupe.
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 129),
+                  child: _AnimatedText(
+                    animation: animation,
+                    forward: forward,
+                    title: title,
+                    body: body,
+                    titleColor: titleColor,
+                    bodyColor: bodyColor,
+                  ),
+                ),
               ),
             ),
-            const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

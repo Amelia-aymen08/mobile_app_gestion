@@ -1020,4 +1020,47 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get docCatOther => 'Autres';
+
+  @override
+  String get changePasswordSubtitle =>
+      'Créez un nouveau mot de passe pour protéger votre compte.';
+
+  @override
+  String get currentPassword => 'Mot de passe actuel';
+
+  @override
+  String get newPassword => 'Nouveau mot de passe';
+
+  @override
+  String get newPasswordHint => '8 caractères minimum';
+
+  @override
+  String get confirmPassword => 'Confirmer le mot de passe';
+
+  @override
+  String get confirmPasswordHint => 'Saisissez à nouveau le mot de passe';
+
+  @override
+  String get passwordTooShort => '8 caractères minimum';
+
+  @override
+  String get passwordMismatch => 'Les deux mots de passe diffèrent';
+
+  @override
+  String get passwordChangedTitle => 'Mot de passe modifié';
+
+  @override
+  String get passwordChangedBody =>
+      'Votre nouveau mot de passe est enregistré. Utilisez-le à votre prochaine connexion.';
+
+  @override
+  String get paymentsUpToDate => 'Charges à jour';
+
+  @override
+  String get chatReadOnly =>
+      'Cette conversation est en lecture seule. L\'administration vous répond ici.';
+
+  @override
+  String get chatEmptyReadOnly =>
+      'Aucun message pour le moment. L\'administration écrira ici si votre signalement demande une précision.';
 }
