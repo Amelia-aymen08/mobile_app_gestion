@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Import for kDebugMode
 import 'package:http_parser/http_parser.dart';
 
-import 'demo_client.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -70,16 +69,10 @@ class ApiService {
 
   http.Client _client = _GuardedClient(http.Client());
 
-  /// MODE DEMONSTRATION — a retirer avant la mise en production.
-  /// Rebranche le faux serveur au redemarrage quand la session restauree
-  /// appartient a un profil de demonstration. Sans cela, le jeton survit au
-  /// rechargement mais les appels repartent vers le vrai back-end.
-  bool restoreDemoSession(String email) {
-    final profile = demoProfileByEmail(email);
-    if (profile == null) return false;
-    _client = DemoClient(profile);
-    return true;
-  }
+  /// Remplace le client HTTP. Reserve aux tests, qui font repondre un faux
+  /// serveur a la place du back-end ; l'application ne s'en sert jamais.
+  @visibleForTesting
+  void useClient(http.Client client) => _client = client;
   final String baseUrl = const String.fromEnvironment(
     'API_URL',
     defaultValue: 'https://landing.aymenpromotion-dz.com/api',
@@ -207,19 +200,6 @@ class ApiService {
 
   Future<Map<String, dynamic>> login(String email, String password,
       {String? deviceId, String? deviceName}) async {
-    // MODE DEMONSTRATION — a retirer avant la mise en production.
-    // Deux adresses ouvrent une session servie en local par DemoClient, sans
-    // aucun appel au back-end. Le reste de l'app ne voit pas la difference :
-    // c'est le client HTTP qui est remplace, pas le code des ecrans.
-    final demo = demoProfileFor(email, password);
-    if (demo != null) {
-      _client = DemoClient(demo);
-    } else if (isDemoEmail(email)) {
-      throw ApiException(401, 'Mot de passe de démonstration incorrect.');
-    } else if (_client is DemoClient) {
-      _client = _GuardedClient(http.Client());
-    }
-
     final payload = <String, dynamic>{
       'email': email,
       'password': password,

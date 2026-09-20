@@ -1,3 +1,8 @@
+// Faux serveur utilise par les tests.
+//
+// Il repond a la place du back-end, avec des donnees fixes : les tests de
+// mise en page peuvent ainsi ouvrir chaque ecran rempli, sans reseau et sans
+// compte. Ce fichier ne fait pas partie de l'application.
 import 'dart:async';
 import 'dart:convert';
 

@@ -112,9 +112,6 @@ class AuthProvider with ChangeNotifier {
       _token = token;
       _apiService.setToken(_token);
       _user = decodedUser;
-      // MODE DEMONSTRATION — a retirer avant la mise en production.
-      final savedEmail = (decodedUser?['email'] ?? '').toString();
-      if (savedEmail.isNotEmpty) _apiService.restoreDemoSession(savedEmail);
       notifyListeners();
 
       try {

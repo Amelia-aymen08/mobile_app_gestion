@@ -14,7 +14,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:gestimou_mobile/data/api_service.dart';
-import 'package:gestimou_mobile/data/demo_client.dart';
+
+import 'support/fake_server.dart';
 import 'package:gestimou_mobile/l10n/app_localizations.dart';
 import 'package:gestimou_mobile/presentation/providers/auth_provider.dart';
 import 'package:gestimou_mobile/presentation/providers/locale_provider.dart';
@@ -51,7 +52,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     // Le faux serveur repond a la place du back-end.
-    ApiService().restoreDemoSession(demoMulti.email);
+    ApiService().useClient(DemoClient(demoMulti));
   });
 
   Widget harness(Widget screen,
