@@ -754,7 +754,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         null,
         FigAccent.blue,
         t.documents,
-        () => _openSwitch()
+        () => _push(const DocumentsScreen())
       ),
       (
         'assets/figma/icons/profile_20.svg',

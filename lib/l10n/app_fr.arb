@@ -368,7 +368,7 @@
   "noAppToOpen": "Aucune application ne peut ouvrir ce fichier.",
   "openFailed": "Impossible d'ouvrir le fichier.",
   "documentsTitle": "Documents",
-  "documentsSubtitle": "Documents de l'administration",
+  "documentsSubtitle": "Documents de votre résidence",
   "emptyDocumentsTitle": "Aucun document",
   "emptyDocumentsBody": "L'administration n'a publié aucun document pour le moment.",
   "downloadLabel": "Télécharger",

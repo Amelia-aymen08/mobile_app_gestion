@@ -859,7 +859,7 @@ class AppL10nFr extends AppL10n {
   String get documentsTitle => 'Documents';
 
   @override
-  String get documentsSubtitle => 'Documents de l\'administration';
+  String get documentsSubtitle => 'Documents de votre résidence';
 
   @override
   String get emptyDocumentsTitle => 'Aucun document';

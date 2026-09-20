@@ -862,7 +862,7 @@ class AppL10nAr extends AppL10n {
   String get documentsTitle => 'الوثائق';
 
   @override
-  String get documentsSubtitle => 'وثائق الإدارة';
+  String get documentsSubtitle => 'وثائق إقامتك';
 
   @override
   String get emptyDocumentsTitle => 'لا توجد وثائق';

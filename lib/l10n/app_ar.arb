@@ -259,7 +259,7 @@
   "noAppToOpen": "لا يوجد تطبيق يفتح هذا الملف.",
   "openFailed": "تعذّر فتح الملف.",
   "documentsTitle": "الوثائق",
-  "documentsSubtitle": "وثائق الإدارة",
+  "documentsSubtitle": "وثائق إقامتك",
   "emptyDocumentsTitle": "لا توجد وثائق",
   "emptyDocumentsBody": "لم تنشر الإدارة أي وثيقة حتى الآن.",
   "downloadLabel": "تنزيل",

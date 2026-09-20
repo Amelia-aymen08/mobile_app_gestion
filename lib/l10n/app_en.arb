@@ -259,7 +259,7 @@
   "noAppToOpen": "No app can open this file.",
   "openFailed": "The file could not be opened.",
   "documentsTitle": "Documents",
-  "documentsSubtitle": "Documents from the administration",
+  "documentsSubtitle": "Documents for your residence",
   "emptyDocumentsTitle": "No documents",
   "emptyDocumentsBody": "The administration has not published any document yet.",
   "downloadLabel": "Download",

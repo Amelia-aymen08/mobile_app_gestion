@@ -857,7 +857,7 @@ class AppL10nEn extends AppL10n {
   String get documentsTitle => 'Documents';
 
   @override
-  String get documentsSubtitle => 'Documents from the administration';
+  String get documentsSubtitle => 'Documents for your residence';
 
   @override
   String get emptyDocumentsTitle => 'No documents';

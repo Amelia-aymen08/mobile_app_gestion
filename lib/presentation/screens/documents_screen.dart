@@ -227,7 +227,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Widget _documentCard(GiColors c, AppL10n t, Map<String, dynamic> doc) {
     final accent = _accentFor(doc);
     final busy = _busyId == (doc['id'] ?? '').toString();
+    // La residence d'abord : un resident qui possede plusieurs biens doit
+    // voir a laquelle se rapporte le document.
     final meta = [
+      (doc['residenceName'] ?? '').toString(),
       (doc['category'] ?? '').toString(),
       _formatBytes(doc['size']),
       _formatDate(doc['createdAt']),

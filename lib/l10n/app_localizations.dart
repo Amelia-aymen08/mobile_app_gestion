@@ -1656,7 +1656,7 @@ abstract class AppL10n {
   /// No description provided for @documentsSubtitle.
   ///
   /// In fr, this message translates to:
-  /// **'Documents de l\'administration'**
+  /// **'Documents de votre résidence'**
   String get documentsSubtitle;
 
   /// No description provided for @emptyDocumentsTitle.

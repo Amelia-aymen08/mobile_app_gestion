@@ -396,6 +396,7 @@ class DemoClient extends http.BaseClient {
       'type': 'application/pdf',
       'size': 428000,
       'category': 'Reglement',
+      'residenceName': 'Angelite',
       'createdAt': _iso(40),
     },
     {
@@ -404,6 +405,7 @@ class DemoClient extends http.BaseClient {
       'type': 'application/pdf',
       'size': 1260000,
       'category': 'Assemblee generale',
+      'residenceName': 'Angelite',
       'createdAt': _iso(18),
     },
     {
@@ -412,6 +414,7 @@ class DemoClient extends http.BaseClient {
       'type': 'application/pdf',
       'size': 96000,
       'category': 'Securite',
+      'residenceName': 'Angelite',
       'createdAt': _iso(6),
     },
   ];
