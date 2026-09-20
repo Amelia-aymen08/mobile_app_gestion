@@ -69,7 +69,7 @@ class GeranceImmoServiceApp extends StatelessWidget {
           builder: (context, child) => GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: child,
+            child: _GiScaffoldFrame(child: child),
           ),
           home: const AppEntry(),
         ),
@@ -117,4 +117,37 @@ class GiScrollBehavior extends MaterialScrollBehavior {
         PointerDeviceKind.trackpad,
         PointerDeviceKind.stylus,
       };
+}
+
+/// Cadre applique a tous les ecrans.
+///
+/// Deux reglages qui ne dependent d'aucun ecran en particulier :
+///
+/// 1. La taille de police du systeme est ramenee dans une plage utilisable.
+///    Android et iOS laissent la pousser jusqu'a deux fois : les cartes du
+///    Figma, dont plusieurs ont une hauteur fixe, deborderaient. La borne
+///    haute reste genereuse (1,25) pour rester lisible.
+/// 2. Au-dela de 600 de large — tablette, fenetre de navigateur — le contenu
+///    est centre sur une colonne de 560. Une maquette dessinee pour 375 ne
+///    gagne rien a etre etiree sur toute la largeur.
+class _GiScaffoldFrame extends StatelessWidget {
+  final Widget? child;
+  const _GiScaffoldFrame({required this.child});
+
+  static const maxContentWidth = 560.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final scale = media.textScaler.clamp(minScaleFactor: 0.85, maxScaleFactor: 1.25);
+
+    Widget content = child ?? const SizedBox.shrink();
+    if (media.size.width > 600) {
+      content = Align(
+        alignment: Alignment.topCenter,
+        child: SizedBox(width: maxContentWidth, child: content),
+      );
+    }
+    return MediaQuery(data: media.copyWith(textScaler: scale), child: content);
+  }
 }

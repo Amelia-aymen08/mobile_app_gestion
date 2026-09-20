@@ -512,6 +512,11 @@ class NoticeDetailScreen extends StatelessWidget {
               // Epingle du Figma plutot que l'icone Material.
               SvgPicture.asset(
                 'assets/figma/icons/pin_location.svg',
+                // Taille donnee explicitement : un SVG n'a pas de dimension
+                // intrinseque, et la chronologie mesure ses lignes avec un
+                // IntrinsicHeight. Ce sont les valeurs du fichier.
+                width: 8,
+                height: 12,
                 colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
               ),
               if (!last)
@@ -756,29 +761,42 @@ class NoticeDetailScreen extends StatelessWidget {
 }
 
 /// Trait pointille vertical reliant les etapes de la chronologie.
+/// Trait pointille dessine, et non compose de petits blocs.
+///
+/// La version precedente mesurait la hauteur disponible avec un
+/// LayoutBuilder. Or la chronologie aligne ses lignes avec un
+/// IntrinsicHeight, qui a besoin de connaitre la hauteur de ses enfants
+/// avant de les disposer : un LayoutBuilder ne sait pas repondre, et la
+/// mise en page echouait. Un CustomPaint s'adapte a la place qu'on lui
+/// laisse, sans avoir a la mesurer.
 class _DashedLine extends StatelessWidget {
   final Color color;
   const _DashedLine({required this.color});
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const dash = 3.0, gap = 3.0;
-        final count = (constraints.maxHeight / (dash + gap)).floor();
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: List.generate(
-            count < 0 ? 0 : count,
-            (_) => Container(
-              width: 1.5,
-              height: dash,
-              margin: const EdgeInsets.only(bottom: gap),
-              color: color,
-            ),
-          ),
-        );
-      },
-    );
+  Widget build(BuildContext context) => CustomPaint(
+        size: const Size(1.5, double.infinity),
+        painter: _DashedLinePainter(color),
+      );
+}
+
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+  const _DashedLinePainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const dash = 3.0, gap = 3.0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    for (var y = 0.0; y < size.height; y += dash + gap) {
+      final end = (y + dash).clamp(0.0, size.height);
+      canvas.drawLine(Offset(size.width / 2, y), Offset(size.width / 2, end), paint);
+    }
   }
+
+  @override
+  bool shouldRepaint(_DashedLinePainter old) => old.color != color;
 }

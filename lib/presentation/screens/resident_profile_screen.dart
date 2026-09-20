@@ -216,9 +216,15 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                   ),
                 ),
                 const SizedBox(width: FigSpace.xl),
-                Text(t.profile,
-                    style: FigText.titleMd
-                        .copyWith(fontSize: 18, color: c.textBody)),
+                // Expanded : avec la police du systeme agrandie, le titre
+                // deborde sur un petit ecran.
+                Expanded(
+                  child: Text(t.profile,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.titleMd
+                          .copyWith(fontSize: 18, color: c.textBody)),
+                ),
               ],
             ),
             const SizedBox(height: FigSpace.xl),

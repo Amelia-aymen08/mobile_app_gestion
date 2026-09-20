@@ -116,6 +116,10 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final t = AppL10n.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = _firstName;
+    // En paysage, ou sur un tres petit ecran, l'en-tete du Figma — logo de
+    // 98 puis titre et sous-titre — ne laisse plus de place aux cartes. On
+    // le resserre plutot que de faire defiler un ecran de selection.
+    final compact = MediaQuery.sizeOf(context).height < 620;
 
     return Scaffold(
       backgroundColor: c.scaffold,
@@ -131,7 +135,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
               padding: const EdgeInsets.fromLTRB(
                   FigSpace.pagePadding, 22, FigSpace.pagePadding, 0),
               child: SizedBox(
-                height: 98,
+                height: compact ? 56 : 98,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -139,7 +143,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                       isDark
                           ? 'assets/brand/gis_logo_vertical_dark.png'
                           : 'assets/brand/gis_logo_vertical_light.png',
-                      height: 98,
+                      height: compact ? 56 : 98,
                       fit: BoxFit.contain,
                     ),
                     PositionedDirectional(
@@ -173,7 +177,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: FigSpace.xxl),
+            SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
             // Titre centre du Figma, sur 295 de large.
             SizedBox(
               width: 295,
@@ -190,18 +194,22 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                       textAlign: TextAlign.center,
                       style: FigText.greeting
                           .copyWith(height: 1.2, color: c.textBody)),
-                  const SizedBox(height: 9),
-                  SizedBox(
-                    width: 248,
-                    child: Text(t.selectResidenceSubtitle,
-                        textAlign: TextAlign.center,
-                        style: FigText.field
-                            .copyWith(height: 1.2, color: c.textMuted)),
-                  ),
+                  // Le sous-titre explique le titre ; sur un ecran court il
+                  // coute plus de place qu'il n'apporte.
+                  if (!compact) ...[
+                    const SizedBox(height: 9),
+                    SizedBox(
+                      width: 248,
+                      child: Text(t.selectResidenceSubtitle,
+                          textAlign: TextAlign.center,
+                          style: FigText.field
+                              .copyWith(height: 1.2, color: c.textMuted)),
+                    ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(height: FigSpace.xxl),
+            SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
             Expanded(
               child: _loading
                   ? const Center(

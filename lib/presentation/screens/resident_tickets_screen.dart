@@ -276,9 +276,22 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                   unselectedLabelColor: c.textMuted,
                   labelStyle: FigText.bodyActive,
                   unselectedLabelStyle: FigText.body,
+                  // Un Tab ne sait pas rogner son libelle : avec la police
+                  // du systeme agrandie, « Parties communes » depassait sur
+                  // un ecran de 320. FittedBox le ramene dans sa moitie.
                   tabs: [
-                    Tab(text: t.tabMyReports),
-                    Tab(text: t.tabCommonAreas),
+                    Tab(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(t.tabMyReports),
+                      ),
+                    ),
+                    Tab(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(t.tabCommonAreas),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -407,13 +420,21 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                           color: c.textFaint, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: FigSpace.xs),
-                    Text(_fmt(ticket['createdAt']),
-                        style: FigText.caption.copyWith(color: c.textFaint)),
+                    // Flexible aussi sur la date : avec la police du systeme
+                    // agrandie, reference et date ne tiennent plus cote a
+                    // cote sur un petit ecran.
+                    Flexible(
+                      child: Text(_fmt(ticket['createdAt']),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              FigText.caption.copyWith(color: c.textFaint)),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: FigSpace.xl),
-              _badge(_statusLabel(t, status), _statusColor(status)),
+              Flexible(child: _badge(_statusLabel(t, status), _statusColor(status))),
             ],
           ),
         ],

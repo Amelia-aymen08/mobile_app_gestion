@@ -123,10 +123,18 @@ class _LoginScreenState extends State<LoginScreen> {
           GiWatermark(isDark: isDark),
           SafeArea(
             child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
+              builder: (context, constraints) {
+                // Le rythme du Figma pousse le bouton vers le bas de
+                // l'ecran. Cela n'a de sens que s'il y a de la hauteur a
+                // occuper : en paysage, ou clavier ouvert, on repasse a une
+                // colonne qui defile simplement.
+                final tall = constraints.maxHeight >= 620;
+                return SingleChildScrollView(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
+                  constraints: BoxConstraints(
+                      minHeight: tall ? constraints.maxHeight : 0),
+                  child: _MaybeIntrinsic(
+                    enabled: tall,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: FigSpace.pagePadding),
@@ -213,7 +221,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             // Espace souple : il absorbe l'ecart entre la frame
                             // de 812 du Figma et la hauteur reelle de l'ecran,
                             // sans deformer les blocs.
-                            const Expanded(child: SizedBox(height: 48)),
+                            // Sur un ecran court l'espace extensible
+                            // disparait : il ne reste que l'ecart minimal.
+                            if (tall)
+                              const Expanded(child: SizedBox(height: 48))
+                            else
+                              const SizedBox(height: 32),
                             GiPrimaryButton(
                               label: t.loginCta,
                               isLoading: auth.isLoading,
@@ -278,7 +291,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-              ),
+              );
+              },
             ),
           ),
         ],
@@ -299,3 +313,21 @@ class _LoginScreenState extends State<LoginScreen> {
 /// visible, sans le texte de la marque. C'est ce cadrage qui donne l'angle
 /// dessine dans la maquette.
 ///
+
+/// Applique IntrinsicHeight seulement quand on en a besoin.
+///
+/// IntrinsicHeight mesure ses enfants avant de les disposer, ce qui permet
+/// a un Expanded de vivre dans une zone qui defile. Mais la mesure d'un
+/// texte suppose qu'il tient sur une ligne : des qu'il revient a la ligne,
+/// la hauteur reelle depasse la mesure et Flutter signale un debordement.
+/// On ne s'en sert donc que sur les ecrans assez hauts, la ou l'espace
+/// extensible sert a quelque chose.
+class _MaybeIntrinsic extends StatelessWidget {
+  final bool enabled;
+  final Widget child;
+  const _MaybeIntrinsic({required this.enabled, required this.child});
+
+  @override
+  Widget build(BuildContext context) =>
+      enabled ? IntrinsicHeight(child: child) : child;
+}

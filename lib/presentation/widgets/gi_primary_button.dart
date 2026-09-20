@@ -63,7 +63,14 @@ class GiPrimaryButton extends StatelessWidget {
                     key: const ValueKey('label'),
                     duration: const Duration(milliseconds: 220),
                     style: FigText.button.copyWith(color: fg),
-                    child: Text(label),
+                    // Le libelle se reduit plutot que de deborder : un
+                    // bouton de largeur imposee, une traduction plus longue
+                    // ou la police du systeme agrandie suffisent a le faire
+                    // sortir du cadre.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(label, maxLines: 1),
+                    ),
                   ),
           ),
         ),

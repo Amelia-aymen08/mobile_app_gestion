@@ -153,9 +153,15 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                     ),
                   ),
                   const SizedBox(width: FigSpace.xl),
-                  Text(t.householdMembers,
-                      style: FigText.titleMd
-                          .copyWith(fontSize: 18, color: c.textBody)),
+                  // Expanded : avec la police du systeme agrandie, un titre
+                  // libre depasse la largeur de l'ecran.
+                  Expanded(
+                    child: Text(t.householdMembers,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FigText.titleMd
+                            .copyWith(fontSize: 18, color: c.textBody)),
+                  ),
                 ],
               ),
             ),
