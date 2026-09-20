@@ -304,5 +304,10 @@
   "remindIn24h": "Remind me in 24 h",
   "reminderSetTitle": "Reminder set",
   "reminderSetBody": "A notification will remind you of this notice in 24 hours.",
-  "reminderUnavailable": "Reminders are only available in the mobile app."
+  "reminderUnavailable": "Reminders are only available in the mobile app.",
+  "docCatSecurity": "Safety",
+  "docCatSav": "After-sales",
+  "docCatAdmin": "Administrative",
+  "docCatContracts": "Contracts",
+  "docCatOther": "Other"
 }

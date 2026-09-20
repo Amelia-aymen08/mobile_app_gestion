@@ -1928,6 +1928,36 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Le rappel n\'est disponible que sur l\'application mobile.'**
   String get reminderUnavailable;
+
+  /// No description provided for @docCatSecurity.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sécurité'**
+  String get docCatSecurity;
+
+  /// No description provided for @docCatSav.
+  ///
+  /// In fr, this message translates to:
+  /// **'SAV'**
+  String get docCatSav;
+
+  /// No description provided for @docCatAdmin.
+  ///
+  /// In fr, this message translates to:
+  /// **'Administratif'**
+  String get docCatAdmin;
+
+  /// No description provided for @docCatContracts.
+  ///
+  /// In fr, this message translates to:
+  /// **'Contrats'**
+  String get docCatContracts;
+
+  /// No description provided for @docCatOther.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres'**
+  String get docCatOther;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

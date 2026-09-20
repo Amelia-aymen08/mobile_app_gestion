@@ -461,5 +461,10 @@
   "remindIn24h": "Me le rappeler dans 24 h",
   "reminderSetTitle": "Rappel programmé",
   "reminderSetBody": "Une notification vous rappellera cet avis dans 24 heures.",
-  "reminderUnavailable": "Le rappel n'est disponible que sur l'application mobile."
+  "reminderUnavailable": "Le rappel n'est disponible que sur l'application mobile.",
+  "docCatSecurity": "Sécurité",
+  "docCatSav": "SAV",
+  "docCatAdmin": "Administratif",
+  "docCatContracts": "Contrats",
+  "docCatOther": "Autres"
 }

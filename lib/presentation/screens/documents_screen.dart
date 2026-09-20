@@ -35,6 +35,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   List<Map<String, dynamic>> _documents = const [];
   String? _busyId;
 
+  /// Categorie retenue. `null` = toutes.
+  String? _category;
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +94,55 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     } finally {
       if (mounted) setState(() => _busyId = null);
     }
+  }
+
+
+  /// Categories presentes dans ce que le serveur a renvoye, dans l'ordre
+  /// d'usage de la gestion ; toute categorie inconnue est ajoutee ensuite,
+  /// par ordre alphabetique, plutot que d'etre perdue.
+  List<String> get _categories {
+    const known = ['securite', 'sav', 'administratif', 'contrats'];
+    final present = _documents
+        .map((d) => (d['category'] ?? '').toString().trim())
+        .where((c) => c.isNotEmpty)
+        .toSet();
+    final ordered = <String>[];
+    for (final key in known) {
+      final match = present.firstWhere((c) => _normalize(c) == key,
+          orElse: () => '');
+      if (match.isNotEmpty) ordered.add(match);
+    }
+    final rest = present.where((c) => !ordered.contains(c)).toList()..sort();
+    return [...ordered, ...rest];
+  }
+
+  List<Map<String, dynamic>> get _visible => _category == null
+      ? _documents
+      : _documents
+          .where((d) => (d['category'] ?? '').toString() == _category)
+          .toList();
+
+  /// Libelle traduit d'une categorie connue. Le serveur ecrit en francais :
+  /// en anglais ou en arabe, une categorie qu'on ne reconnait pas s'affiche
+  /// telle quelle, ce qui vaut mieux qu'une case vide.
+  String _categoryLabel(AppL10n t, String raw) => switch (_normalize(raw)) {
+        'securite' => t.docCatSecurity,
+        'sav' => t.docCatSav,
+        'administratif' => t.docCatAdmin,
+        'contrats' => t.docCatContracts,
+        'autres' || 'autre' => t.docCatOther,
+        _ => raw,
+      };
+
+  static String _normalize(String value) {
+    const accents = {
+      'à': 'a', 'â': 'a', 'ä': 'a', 'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+      'î': 'i', 'ï': 'i', 'ô': 'o', 'ö': 'o', 'ù': 'u', 'û': 'u', 'ü': 'u',
+      'ç': 'c',
+    };
+    var out = value.trim().toLowerCase();
+    accents.forEach((a, b) => out = out.replaceAll(a, b));
+    return out.replaceAll(RegExp(r'[^a-z]'), '');
   }
 
   /// Poids lisible. Le serveur renvoie des octets.
@@ -180,6 +232,35 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               ),
             ),
             const SizedBox(height: 20),
+            // Les documents arrivent classes par la gestion : securite, SAV,
+            // administratif, contrats. La rangee ne montre que les
+            // categories reellement presentes.
+            if (_categories.length > 1) ...[
+              SizedBox(
+                height: 28,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: FigSpace.pagePadding),
+                  children: [
+                    GiFilterChip(
+                      label: t.filterAll,
+                      selected: _category == null,
+                      onTap: () => setState(() => _category = null),
+                    ),
+                    for (final category in _categories) ...[
+                      const SizedBox(width: FigSpace.xs),
+                      GiFilterChip(
+                        label: _categoryLabel(t, category),
+                        selected: _category == category,
+                        onTap: () => setState(() => _category = category),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
             Expanded(
               child: _loading
                   ? const Center(
@@ -188,7 +269,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       color: FigBrand.amber,
                       backgroundColor: c.card,
                       onRefresh: _load,
-                      child: _documents.isEmpty
+                      child: _visible.isEmpty
                           ? ListView(
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: const EdgeInsets.fromLTRB(
@@ -208,12 +289,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                               padding: const EdgeInsets.fromLTRB(
                                   FigSpace.pagePadding, 0,
                                   FigSpace.pagePadding, 40),
-                              itemCount: _documents.length,
+                              itemCount: _visible.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: FigSpace.lg),
                               itemBuilder: (_, i) => GiAppear(
                                 index: i,
-                                child: _documentCard(c, t, _documents[i]),
+                                child: _documentCard(c, t, _visible[i]),
                               ),
                             ),
                     ),
@@ -231,7 +312,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     // voir a laquelle se rapporte le document.
     final meta = [
       (doc['residenceName'] ?? '').toString(),
-      (doc['category'] ?? '').toString(),
+      if (_category == null) _categoryLabel(t, (doc['category'] ?? '').toString()),
       _formatBytes(doc['size']),
       _formatDate(doc['createdAt']),
     ].where((s) => s.isNotEmpty).join(' · ');

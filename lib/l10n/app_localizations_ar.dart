@@ -1004,4 +1004,19 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get reminderUnavailable => 'التذكير متاح في تطبيق الهاتف فقط.';
+
+  @override
+  String get docCatSecurity => 'السلامة';
+
+  @override
+  String get docCatSav => 'خدمة ما بعد البيع';
+
+  @override
+  String get docCatAdmin => 'إداري';
+
+  @override
+  String get docCatContracts => 'العقود';
+
+  @override
+  String get docCatOther => 'أخرى';
 }

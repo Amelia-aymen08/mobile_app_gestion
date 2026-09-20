@@ -1003,4 +1003,19 @@ class AppL10nEn extends AppL10n {
   @override
   String get reminderUnavailable =>
       'Reminders are only available in the mobile app.';
+
+  @override
+  String get docCatSecurity => 'Safety';
+
+  @override
+  String get docCatSav => 'After-sales';
+
+  @override
+  String get docCatAdmin => 'Administrative';
+
+  @override
+  String get docCatContracts => 'Contracts';
+
+  @override
+  String get docCatOther => 'Other';
 }

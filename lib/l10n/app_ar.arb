@@ -304,5 +304,10 @@
   "remindIn24h": "ذكّرني بعد 24 ساعة",
   "reminderSetTitle": "تم ضبط التذكير",
   "reminderSetBody": "سيصلك إشعار يذكّرك بهذا الإعلان بعد 24 ساعة.",
-  "reminderUnavailable": "التذكير متاح في تطبيق الهاتف فقط."
+  "reminderUnavailable": "التذكير متاح في تطبيق الهاتف فقط.",
+  "docCatSecurity": "السلامة",
+  "docCatSav": "خدمة ما بعد البيع",
+  "docCatAdmin": "إداري",
+  "docCatContracts": "العقود",
+  "docCatOther": "أخرى"
 }

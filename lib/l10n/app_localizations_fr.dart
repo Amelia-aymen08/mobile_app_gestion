@@ -1005,4 +1005,19 @@ class AppL10nFr extends AppL10n {
   @override
   String get reminderUnavailable =>
       'Le rappel n\'est disponible que sur l\'application mobile.';
+
+  @override
+  String get docCatSecurity => 'Sécurité';
+
+  @override
+  String get docCatSav => 'SAV';
+
+  @override
+  String get docCatAdmin => 'Administratif';
+
+  @override
+  String get docCatContracts => 'Contrats';
+
+  @override
+  String get docCatOther => 'Autres';
 }
