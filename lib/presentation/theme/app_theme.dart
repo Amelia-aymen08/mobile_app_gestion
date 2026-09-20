@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'design_tokens.dart';
 import 'gi_colors.dart';
@@ -32,28 +31,6 @@ const splashGradientDark = LinearGradient(
   colors: [brandNavy, Color(0xFF39424C)],
 );
 
-// ─── Background — simple (no blur) ───────────────────────────────────────────
-BoxDecoration appBg() => const BoxDecoration(
-  image: DecorationImage(
-    image: AssetImage('assets/background.png'),
-    fit: BoxFit.cover,
-  ),
-);
-
-// ─── Background — blurred image + subtle dark overlay ────────────────────────
-Widget appBgWidget({required Widget child}) {
-  return Stack(
-    fit: StackFit.expand,
-    children: [
-      ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(sigmaX: 7, sigmaY: 7),
-        child: Image.asset('assets/background.png', fit: BoxFit.cover),
-      ),
-      Container(color: const Color(0x20000000)),
-      child,
-    ],
-  );
-}
 
 // ─── Theme ───────────────────────────────────────────────────────────────────
 ThemeData buildAppTheme() {

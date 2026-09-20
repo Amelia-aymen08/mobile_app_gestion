@@ -41,9 +41,9 @@ class _AppEntryState extends State<AppEntry> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       for (final asset in const [
-        'assets/onboarding-who-we-are.png',
-        'assets/figma/onboarding/photo_2.png',
-        'assets/figma/onboarding/photo_3.png',
+        'assets/onboarding-who-we-are.jpg',
+        'assets/figma/onboarding/photo_2.jpg',
+        'assets/figma/onboarding/photo_3.jpg',
       ]) {
         precacheImage(AssetImage(asset), context);
       }

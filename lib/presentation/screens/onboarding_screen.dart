@@ -28,9 +28,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     with SingleTickerProviderStateMixin {
   /// Photos de fond, dans l'ordre des frames du Figma.
   static const _photos = [
-    'assets/onboarding-who-we-are.png',
-    'assets/figma/onboarding/photo_2.png',
-    'assets/figma/onboarding/photo_3.png',
+    'assets/onboarding-who-we-are.jpg',
+    'assets/figma/onboarding/photo_2.jpg',
+    'assets/figma/onboarding/photo_3.jpg',
   ];
 
   /// Page demandee : pilote les points, le fond et les boutons, tout de suite.
