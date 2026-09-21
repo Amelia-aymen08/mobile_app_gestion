@@ -513,6 +513,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 child: asset != null
                     ? Image.asset(asset,
                         fit: BoxFit.cover,
+                        filterQuality: FilterQuality.medium,
                         alignment: AlignmentDirectional.centerEnd
                             .resolve(Directionality.of(context)))
                     : (url != null

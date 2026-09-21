@@ -346,6 +346,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                 child: asset != null
                     ? Image.asset(asset,
                         fit: BoxFit.cover,
+                        filterQuality: FilterQuality.medium,
                         alignment: AlignmentDirectional.centerEnd
                             .resolve(Directionality.of(context)))
                     : (url != null

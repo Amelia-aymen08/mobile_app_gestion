@@ -215,7 +215,8 @@ class _ResidenceDetailsScreenState extends State<ResidenceDetailsScreen> {
         fit: StackFit.expand,
         children: [
           if (asset != null)
-            Image.asset(asset, fit: BoxFit.cover)
+            Image.asset(asset,
+                fit: BoxFit.cover, filterQuality: FilterQuality.medium)
           else if (url != null)
             Image.network(url,
                 fit: BoxFit.cover,

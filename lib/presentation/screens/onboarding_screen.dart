@@ -167,6 +167,11 @@ class _Photo extends StatelessWidget {
           asset,
           fit: BoxFit.cover,
           alignment: Alignment.center,
+          // Ces photos sont plus petites que l'ecran d'un telephone : elles
+          // sont donc agrandies. Le filtrage par defaut de Flutter est le
+          // plus rapide, et le plus grossier ; celui-ci adoucit nettement
+          // l'agrandissement.
+          filterQuality: FilterQuality.medium,
           errorBuilder: (_, __, ___) =>
               ColoredBox(color: GiColors.of(context).scaffold),
         ),

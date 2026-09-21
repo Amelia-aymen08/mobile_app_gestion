@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'design_tokens.dart';
@@ -46,13 +45,6 @@ ThemeData buildAppTheme() {
 
   return ThemeData(
     useMaterial3: true,
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: <TargetPlatform, PageTransitionsBuilder>{
-        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-      },
-    ),
     fontFamily: FigText.family,
     extensions: <ThemeExtension<dynamic>>[GiColors.light],
     colorScheme: scheme,
@@ -186,13 +178,6 @@ ThemeData buildAppThemeDark() {
 
   return ThemeData(
     useMaterial3: true,
-    pageTransitionsTheme: const PageTransitionsTheme(
-      builders: <TargetPlatform, PageTransitionsBuilder>{
-        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
-      },
-    ),
     fontFamily: FigText.family,
     extensions: <ThemeExtension<dynamic>>[GiColors.dark],
     colorScheme: scheme,
