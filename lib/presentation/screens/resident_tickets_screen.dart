@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../services/file_opener.dart';
@@ -317,40 +318,67 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
 
   Widget _buildList(GiColors c, AppL10n t, List<dynamic> tickets) {
     final filtered = tickets.whereType<Map>().where(_matchesFilter).toList();
-    return RefreshIndicator(
-      color: FigBrand.amber,
-      backgroundColor: c.card,
-      onRefresh: () => Future.wait([_fetchMy(), _fetchCopro()]),
-      child: filtered.isEmpty
-          ? ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                  FigSpace.pagePadding, 24, FigSpace.pagePadding, 150),
-              children: [
-                GiEmptyState(
-                  illustration: 'assets/figma/empty/reports.svg',
-                  title: t.emptyReportsTitle,
-                  message: t.emptyReportsBody,
-                  action: SizedBox(
-                    width: 187,
-                    child: GiPrimaryButton(
-                      label: t.newReport,
-                      onPressed: _createNew,
+    // Tirer pour actualiser, facon iOS : l'indicateur vit dans l'espace que
+    // le geste ouvre au-dessus de la liste. Il n'existe donc que pendant le
+    // geste et le chargement. Le RefreshIndicator de Material se dessinait
+    // par-dessus la liste et pouvait rester fige a mi-course — l'ecran
+    // s'ouvrait alors avec la fleche affichee.
+    return CustomScrollView(
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      slivers: [
+        CupertinoSliverRefreshControl(
+          onRefresh: () => Future.wait([_fetchMy(), _fetchCopro()]),
+          builder: _refreshIndicator,
+        ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(FigSpace.pagePadding,
+              filtered.isEmpty ? 24 : 0, FigSpace.pagePadding, 150),
+          sliver: filtered.isEmpty
+              ? SliverToBoxAdapter(
+                  child: GiEmptyState(
+                    illustration: 'assets/figma/empty/reports.svg',
+                    title: t.emptyReportsTitle,
+                    message: t.emptyReportsBody,
+                    action: SizedBox(
+                      width: 187,
+                      child: GiPrimaryButton(
+                        label: t.newReport,
+                        onPressed: _createNew,
+                      ),
                     ),
                   ),
+                )
+              : SliverList.separated(
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: FigSpace.lg),
+                  itemBuilder: (context, i) => GiAppear(
+                      index: i, child: _reportCard(c, t, filtered[i])),
                 ),
-              ],
-            )
-          : ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                  FigSpace.pagePadding, 0, FigSpace.pagePadding, 150),
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => const SizedBox(height: FigSpace.lg),
-              itemBuilder: (context, i) => GiAppear(
-                  index: i, child: _reportCard(c, t, filtered[i])),
-            ),
+        ),
+      ],
     );
+  }
+
+  /// Indicateur ambre : il se revele au fil du geste, puis tourne pendant
+  /// le chargement.
+  static Widget _refreshIndicator(
+    BuildContext context,
+    RefreshIndicatorMode mode,
+    double pulledExtent,
+    double refreshTriggerPullDistance,
+    double refreshIndicatorExtent,
+  ) {
+    final progress =
+        (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
+    final Widget indicator = switch (mode) {
+      RefreshIndicatorMode.inactive => const SizedBox.shrink(),
+      RefreshIndicatorMode.drag => CupertinoActivityIndicator.partiallyRevealed(
+          progress: progress, color: FigBrand.amber, radius: 12),
+      _ => const CupertinoActivityIndicator(color: FigBrand.amber, radius: 12),
+    };
+    return Center(child: Opacity(opacity: progress, child: indicator));
   }
 
   /// Carte de signalement — composant "Report Card" du Figma (0:4930).

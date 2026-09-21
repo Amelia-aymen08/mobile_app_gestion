@@ -88,7 +88,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final c = GiColors.of(context);
     final t = AppL10n.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -96,7 +95,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final bodies = [t.onbBody1, t.onbBody2, t.onbBody3];
 
     return Scaffold(
-      backgroundColor: c.scaffold,
+      // Fond sombre, proche du ciel des photos : si un bord de l'image ne
+      // couvre pas l'ecran, rien de clair n'apparait.
+      backgroundColor: FigBrand.navy,
       body: GestureDetector(
         // Un glissement compte de deux facons : vif, ou simplement long.
         // Ne regarder que la vitesse ignorait les gestes poses, et l'ecran
@@ -162,18 +163,25 @@ class _Photo extends StatelessWidget {
   // contraintes d'expansion du Stack a son enfant. Sans lui, l'image se cadre
   // sur son ratio naturel et laisse une bande vide en haut de l'ecran.
   @override
+  //
+  // Transform.scale deborde legerement l'ecran : un arrondi de pixel ou une
+  // premiere ligne claire dans le fichier faisait apparaitre un mince filet
+  // blanc tout en haut.
   Widget build(BuildContext context) => SizedBox.expand(
-        child: Image.asset(
-          asset,
-          fit: BoxFit.cover,
-          alignment: Alignment.center,
-          // Ces photos sont plus petites que l'ecran d'un telephone : elles
-          // sont donc agrandies. Le filtrage par defaut de Flutter est le
-          // plus rapide, et le plus grossier ; celui-ci adoucit nettement
-          // l'agrandissement.
-          filterQuality: FilterQuality.medium,
-          errorBuilder: (_, __, ___) =>
-              ColoredBox(color: GiColors.of(context).scaffold),
+        child: Transform.scale(
+          scale: 1.01,
+          child: Image.asset(
+            asset,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            // Ces photos sont plus petites que l'ecran d'un telephone : elles
+            // sont donc agrandies. Le filtrage par defaut de Flutter est le
+            // plus rapide, et le plus grossier ; celui-ci adoucit nettement
+            // l'agrandissement.
+            filterQuality: FilterQuality.medium,
+            errorBuilder: (_, __, ___) =>
+                ColoredBox(color: GiColors.of(context).scaffold),
+          ),
         ),
       );
 }
@@ -250,38 +258,43 @@ class _BottomBlock extends StatelessWidget {
     // depasser les trois quarts de l'ecran — au-dela, la photo disparaitrait.
     final screenHeight = MediaQuery.sizeOf(context).height;
     final scaled = MediaQuery.textScalerOf(context).scale(360);
-    final blockHeight =
-        math.min(math.max(360.0, scaled), screenHeight * 0.74);
+    final blockHeight = math.min(math.max(360.0, scaled), screenHeight * 0.74);
     // Ecran court — paysage, tres petit telephone : le haut du bloc se
     // resserre et les reperes de position s'effacent, faute de place.
     final short = screenHeight < 620;
 
-    return SafeArea(
-      top: false,
-      child: SizedBox(
-        height: blockHeight,
-        child: ClipRect(
-          child: Stack(
-            children: [
-              // L'arc, dessine en premier pour rester derriere le texte.
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 462,
-                child: OverflowBox(
-                  maxWidth: double.infinity,
-                  alignment: Alignment.topCenter,
-                  child: _Arc(isDark: isDark),
-                ),
+    // L'arc et le voile descendent jusqu'au bord de l'ecran, sous la barre
+    // d'accueil de l'iPhone. Seul le contenu s'ecarte de cette zone. Un
+    // SafeArea autour du bloc laissait sinon une bande de photo sombre, non
+    // voilee, tout en bas.
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    return SizedBox(
+      height: blockHeight + bottomInset,
+      child: ClipRect(
+        child: Stack(
+          children: [
+            // L'arc, dessine en premier pour rester derriere le texte.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 462,
+              child: OverflowBox(
+                maxWidth: double.infinity,
+                alignment: Alignment.topCenter,
+                child: _Arc(isDark: isDark),
               ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(FigSpace.pagePadding,
-                    short ? 24 : 75, FigSpace.pagePadding, short ? 16 : 29),
-                child: _content(titleColor, bodyColor, short),
-              ),
-            ],
-          ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding,
+                  short ? 24 : 75,
+                  FigSpace.pagePadding,
+                  (short ? 16 : 29) + bottomInset),
+              child: _content(titleColor, bodyColor, short),
+            ),
+          ],
         ),
       ),
     );
@@ -289,62 +302,62 @@ class _BottomBlock extends StatelessWidget {
 
   Widget _content(Color titleColor, Color bodyColor, bool short) {
     return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          // Les reperes restent en haut du bloc et les boutons en bas :
-          // l'espace libre se place entre les deux, et le texte prend ce
-          // qu'il lui faut sans jamais pousser les boutons hors du cadre.
+      crossAxisAlignment: CrossAxisAlignment.start,
+      // Les reperes restent en haut du bloc et les boutons en bas :
+      // l'espace libre se place entre les deux, et le texte prend ce
+      // qu'il lui faut sans jamais pousser les boutons hors du cadre.
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (!short)
+          _Dots(count: pageCount, current: page, isDark: isDark)
+        else
+          const SizedBox.shrink(),
+        // Hauteur reservee au texte : sans elle, les boutons remonteraient
+        // et redescendraient a chaque changement de slide. Le texte
+        // defile s'il ne tient pas — police du systeme agrandie, ecran
+        // etroit — plutot que d'etre coupe.
+        Flexible(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 129),
+              child: _AnimatedText(
+                animation: animation,
+                forward: forward,
+                title: title,
+                body: body,
+                titleColor: titleColor,
+                bodyColor: bodyColor,
+              ),
+            ),
+          ),
+        ),
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (!short)
-              _Dots(count: pageCount, current: page, isDark: isDark)
-            else
-              const SizedBox.shrink(),
-            // Hauteur reservee au texte : sans elle, les boutons remonteraient
-            // et redescendraient a chaque changement de slide. Le texte
-            // defile s'il ne tient pas — police du systeme agrandie, ecran
-            // etroit — plutot que d'etre coupe.
-            Flexible(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 129),
-                  child: _AnimatedText(
-                    animation: animation,
-                    forward: forward,
-                    title: title,
-                    body: body,
-                    titleColor: titleColor,
-                    bodyColor: bodyColor,
+            // « Passer » disparait sur la derniere slide, sans deplacer le
+            // bouton principal qui reste ancre a droite.
+            AnimatedOpacity(
+              opacity: isLast ? 0 : 1,
+              duration: const Duration(milliseconds: 240),
+              child: IgnorePointer(
+                ignoring: isLast,
+                child: GiPressable(
+                  pressedScale: 0.94,
+                  onTap: onSkip,
+                  child: Text(
+                    skipLabel,
+                    style: FigText.button.copyWith(
+                      color: isDark ? FigNeutral.n10 : Colors.black,
+                    ),
                   ),
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // « Passer » disparait sur la derniere slide, sans deplacer le
-                // bouton principal qui reste ancre a droite.
-                AnimatedOpacity(
-                  opacity: isLast ? 0 : 1,
-                  duration: const Duration(milliseconds: 240),
-                  child: IgnorePointer(
-                    ignoring: isLast,
-                    child: GiPressable(
-                      pressedScale: 0.94,
-                      onTap: onSkip,
-                      child: Text(
-                        skipLabel,
-                        style: FigText.button.copyWith(
-                          color: isDark ? FigNeutral.n10 : Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                _NextButton(label: nextLabel, onTap: onNext),
-              ],
-            ),
+            _NextButton(label: nextLabel, onTap: onNext),
           ],
+        ),
+      ],
     );
   }
 }
@@ -391,7 +404,8 @@ class _Dots extends StatelessWidget {
   final int current;
   final bool isDark;
 
-  const _Dots({required this.count, required this.current, required this.isDark});
+  const _Dots(
+      {required this.count, required this.current, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -443,10 +457,10 @@ class _AnimatedText extends StatelessWidget {
       animation: animation,
       builder: (context, _) {
         final v = animation.value;
-        final titleT = const Interval(0.0, 0.65, curve: Curves.easeOutCubic)
-            .transform(v);
-        final bodyT = const Interval(0.30, 1.0, curve: Curves.easeOutCubic)
-            .transform(v);
+        final titleT =
+            const Interval(0.0, 0.65, curve: Curves.easeOutCubic).transform(v);
+        final bodyT =
+            const Interval(0.30, 1.0, curve: Curves.easeOutCubic).transform(v);
         final dir = forward ? 1.0 : -1.0;
 
         Widget shift(double t, Widget child) => Opacity(
@@ -470,8 +484,8 @@ class _AnimatedText extends StatelessWidget {
             shift(
               bodyT,
               Text(body,
-                  style: FigText.field
-                      .copyWith(height: 1.36, color: bodyColor)),
+                  style:
+                      FigText.field.copyWith(height: 1.36, color: bodyColor)),
             ),
           ],
         );
