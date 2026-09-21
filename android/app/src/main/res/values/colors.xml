@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Fond de l'icone adaptative. -->
     <color name="ic_launcher_background">#F6F3EC</color>
+    <!-- Creme de la marque, fond de la fenetre avant la premiere image de
+         Flutter : sans lui, un eclair blanc s'intercale au demarrage. -->
+    <color name="launch_background">#F6F3EC</color>
 </resources>

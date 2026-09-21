@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
@@ -13,6 +14,13 @@ import 'presentation/services/system_notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // La barre d'etat prend la couleur de l'ecran au lieu du gris pose par
+  // Android. Les icones restent sombres : nos fonds sont clairs, et le
+  // theme sombre les repasse en clair au moment ou il s'applique.
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: Colors.transparent,
+  ));
   final themeProvider = ThemeProvider();
   final localeProvider = LocaleProvider();
   await Future.wait([themeProvider.restore(), localeProvider.restore()]);
@@ -90,15 +98,19 @@ class GeranceImmoServiceApp extends StatelessWidget {
 class GiScrollBehavior extends MaterialScrollBehavior {
   const GiScrollBehavior();
 
+  /// Arrive en bout de liste, le contenu continue un peu, resiste, puis
+  /// revient : le geste dit de lui-meme qu'il n'y a plus rien en dessous.
+  /// Un arret net laisse croire a un blocage.
+  ///
   /// `RangeMaintainingScrollPhysics` en parent : quand une image finit de se
   /// charger au-dessus de ce qu'on lit, elle conserve la position au lieu de
   /// faire sauter la liste. C'est la principale source de saccade a l'usage.
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const ClampingScrollPhysics(parent: RangeMaintainingScrollPhysics());
+      const BouncingScrollPhysics(parent: RangeMaintainingScrollPhysics());
 
-  /// Le halo bleu d'Android en bout de liste n'existe pas dans le Figma, et
-  /// jure avec l'ambre. L'arret net suffit a dire qu'on est au bout.
+  /// Le halo bleu d'Android en bout de liste n'existe pas dans le Figma et
+  /// jure avec l'ambre. Le rebond dit deja qu'on est au bout.
   @override
   Widget buildOverscrollIndicator(
           BuildContext context, Widget child, ScrollableDetails details) =>

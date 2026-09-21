@@ -127,54 +127,47 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         bottom: false,
         child: Column(
           children: [
-            // Bandeau du Figma : logo vertical de 87 x 98 centre. La pastille
-            // de retour n'existe pas dans la maquette, mais sans elle on ne
-            // peut plus revenir a l'accueil : elle est posee a gauche, a la
-            // place qu'elle occupe sur l'ecran « Changer de residence ».
+            // La pastille de retour occupe sa propre ligne, en haut a
+            // gauche, la ou on la cherche. Posee sur le logo, elle avait
+            // l'air d'en faire partie.
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   FigSpace.pagePadding, 22, FigSpace.pagePadding, 0),
-              child: SizedBox(
-                height: compact ? 56 : 98,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset(
-                      isDark
-                          ? 'assets/brand/gis_logo_vertical_dark.png'
-                          : 'assets/brand/gis_logo_vertical_light.png',
-                      height: compact ? 56 : 98,
-                      fit: BoxFit.contain,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: GiPressable(
+                  onTap: () => Navigator.pop(context),
+                  pressedScale: 0.88,
+                  child: Container(
+                    width: FigSize.chipMd,
+                    height: FigSize.chipMd,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: c.headerChipBg,
+                      border: Border.all(color: c.headerChipBorder),
+                      borderRadius: BorderRadius.circular(FigRadius.chip),
                     ),
-                    PositionedDirectional(
-                      start: 0,
-                      top: 0,
-                      child: GiPressable(
-                        onTap: () => Navigator.pop(context),
-                        pressedScale: 0.88,
-                        child: Container(
-                          width: FigSize.chipMd,
-                          height: FigSize.chipMd,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: c.headerChipBg,
-                            border: Border.all(color: c.headerChipBorder),
-                            borderRadius: BorderRadius.circular(FigRadius.chip),
-                          ),
-                          child: Transform.flip(
-                            flipX:
-                                Directionality.of(context) == TextDirection.rtl,
-                            child: SvgPicture.asset(
-                              'assets/figma/icons/back_14.svg',
-                              colorFilter:
-                                  ColorFilter.mode(c.textBody, BlendMode.srcIn),
-                            ),
-                          ),
-                        ),
+                    child: Transform.flip(
+                      flipX: Directionality.of(context) == TextDirection.rtl,
+                      child: SvgPicture.asset(
+                        'assets/figma/icons/back_14.svg',
+                        colorFilter:
+                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
                       ),
                     ),
-                  ],
+                  ),
                 ),
+              ),
+            ),
+            // Logo vertical du Figma, centre sous la pastille.
+            Padding(
+              padding: EdgeInsets.only(top: compact ? FigSpace.md : FigSpace.lg),
+              child: Image.asset(
+                isDark
+                    ? 'assets/brand/gis_logo_vertical_dark.png'
+                    : 'assets/brand/gis_logo_vertical_light.png',
+                height: compact ? 48 : 90,
+                fit: BoxFit.contain,
               ),
             ),
             SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),

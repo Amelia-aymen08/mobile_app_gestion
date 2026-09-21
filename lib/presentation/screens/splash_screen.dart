@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 2200),
+    duration: const Duration(milliseconds: 1600),
   )..forward();
 
   @override
@@ -47,8 +47,11 @@ class _SplashScreenState extends State<SplashScreen>
           double phase(double start, double end, Curve curve) =>
               curve.transform(Interval(start, end).transform(v).clamp(0.0, 1.0));
 
-          final halo = phase(0.00, 0.55, Curves.easeOut);
-          final logo = phase(0.10, 0.70, Curves.easeOutCubic);
+          // Le logo est deja la, bien visible, des la premiere image : il ne
+          // « grandit » plus depuis un point minuscule. L'animation se
+          // contente de l'asseoir, et le halo monte derriere lui.
+          final halo = phase(0.00, 0.70, Curves.easeOut);
+          final logo = phase(0.00, 0.45, Curves.easeOutCubic);
 
           return Stack(
             fit: StackFit.expand,
@@ -73,11 +76,13 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               Center(
                 child: Opacity(
-                  opacity: logo,
+                  // Jamais completement transparent : le logo apparait pose,
+                  // pas surgi de nulle part.
+                  opacity: 0.35 + 0.65 * logo,
                   // Le logo grandit a peine : au-dela, l'entree tire l'oeil
                   // plus que la marque elle-meme.
                   child: Transform.scale(
-                    scale: 0.94 + 0.06 * logo,
+                    scale: 0.985 + 0.015 * logo,
                     child: Image.asset(
                       isDark
                           ? 'assets/brand/gis_logo_vertical_dark.png'

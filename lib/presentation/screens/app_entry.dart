@@ -53,9 +53,9 @@ class _AppEntryState extends State<AppEntry> {
   Future<void> _init() async {
     // Duree minimale d'affichage du splash : sans elle, une session deja
     // restauree le fait disparaitre avant que son animation ne se voie.
-    // 2,8 s laisse l'animation se jouer en entier et le logo se poser.
+    // Deux secondes : l'animation dure 1,6 s, le logo reste pose ensuite.
     final minimumSplash =
-        Future<void>.delayed(const Duration(milliseconds: 2800));
+        Future<void>.delayed(const Duration(milliseconds: 2000));
     final auth = context.read<AuthProvider>();
     final prefs = await SharedPreferences.getInstance();
     await auth.restoreSession();

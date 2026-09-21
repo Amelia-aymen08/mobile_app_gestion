@@ -182,6 +182,9 @@ class _BackChip extends StatelessWidget {
       child: Container(
         width: FigSize.chipMd,
         height: FigSize.chipMd,
+        // Sans alignement, le Container etire la fleche de 14 sur les 32 de
+        // la pastille : elle paraissait deux fois trop grosse.
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: c.headerChipBg,
           border: Border.all(color: c.headerChipBorder),
