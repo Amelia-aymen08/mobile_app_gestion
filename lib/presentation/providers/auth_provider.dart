@@ -84,6 +84,17 @@ class AuthProvider with ChangeNotifier {
       id = _generateDeviceId();
       await prefs.setString('device_id', id);
     }
+    // AIDE AU TEST — a retirer avant la mise en production.
+    // En test local l'app est servie sur plusieurs ports, et le navigateur
+    // cloisonne son stockage par port : chaque port tirait son propre
+    // identifiant et consommait une place d'appareil sur le compte. Sur
+    // 127.0.0.1, les quatre ports comptent donc pour un seul appareil.
+    if (kIsWeb) {
+      final host = Uri.base.host;
+      if (host == '127.0.0.1' || host == 'localhost') {
+        id = 'web-test-local';
+      }
+    }
     // `Platform` vient de dart:io et leve une exception sur le web : il faut
     // ecarter ce cas avant toute lecture.
     final os = kIsWeb
