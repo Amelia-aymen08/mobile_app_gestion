@@ -609,6 +609,7 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
           children: [
             Expanded(
               child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
                     FigSpace.pagePadding,
                     MediaQuery.paddingOf(context).top > 0 ? 22 : 32,

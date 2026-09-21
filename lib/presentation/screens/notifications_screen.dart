@@ -266,6 +266,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       onRefresh: _load,
                       child: list.isEmpty
                           ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               padding: const EdgeInsets.fromLTRB(
                                   FigSpace.pagePadding, 24,
                                   FigSpace.pagePadding, 40),
@@ -280,6 +281,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               ],
                             )
                           : ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               padding: const EdgeInsets.fromLTRB(
                                   FigSpace.pagePadding, 0,
                                   FigSpace.pagePadding, 40),
@@ -427,6 +429,7 @@ class _NotificationDetailScreen extends StatelessWidget {
       backgroundColor: c.scaffold,
       body: SafeArea(
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
               FigSpace.pagePadding,
               MediaQuery.paddingOf(context).top > 0 ? 22 : 32,

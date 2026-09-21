@@ -130,6 +130,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 // colonne qui defile simplement.
                 final tall = constraints.maxHeight >= 620;
                 return SingleChildScrollView(
+                // Toujours defilable : sans cela, un contenu qui tient dans
+                // l'ecran ne rebondit pas, et la page parait figee la ou
+                // toutes les autres repondent.
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
                       minHeight: tall ? constraints.maxHeight : 0),

@@ -140,6 +140,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           children: [
             Expanded(
               child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
                     FigSpace.pagePadding,
                     MediaQuery.paddingOf(context).top > 0 ? 22 : 32,

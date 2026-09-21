@@ -243,6 +243,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           GiWatermark(isDark: isDark),
           SafeArea(
             child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 23,
                   FigSpace.pagePadding, FigSpace.xxl),
               children: [
@@ -559,6 +560,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               ),
               Flexible(
                 child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   shrinkWrap: true,
                   padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
                       FigSpace.pagePadding, FigSpace.xxl),

@@ -215,6 +215,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
       backgroundColor: c.scaffold,
       body: SafeArea(
         child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(
               FigSpace.pagePadding,
               MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
@@ -452,6 +453,7 @@ class _PropertyAddRequestScreenState extends State<PropertyAddRequestScreen> {
               ),
               Flexible(
                 child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   shrinkWrap: true,
                   padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
                       FigSpace.pagePadding, FigSpace.xxl),

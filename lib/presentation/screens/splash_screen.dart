@@ -89,6 +89,11 @@ class _SplashScreenState extends State<SplashScreen>
                           : 'assets/brand/gis_logo_vertical_light.png',
                       height: 184,
                       fit: BoxFit.contain,
+                      // Decode a la taille d'affichage : sinon la premiere
+                      // image du splash attend le decodage de 717 pixels de
+                      // cote, et l'animation demarre en retard.
+                      cacheHeight: 460,
+                      filterQuality: FilterQuality.medium,
                     ),
                   ),
                 ),

@@ -160,6 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               style:
                                   FigText.body.copyWith(color: c.textMuted)))
                       : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           controller: _scrollCtrl,
                           padding: const EdgeInsets.fromLTRB(
                               FigSpace.pagePadding, 0,

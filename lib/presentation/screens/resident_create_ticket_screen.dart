@@ -245,6 +245,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
         child: Form(
           key: _formKey,
           child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
                 FigSpace.pagePadding,
                 MediaQuery.paddingOf(context).top > 0 ? 22 : 32,

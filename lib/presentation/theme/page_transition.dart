@@ -1,55 +1,54 @@
 import 'package:flutter/material.dart';
 
-/// Ouverture d'un ecran : un fondu et un leger glissement.
+/// Ouverture d'un ecran : le nouveau glisse par-dessus l'ancien.
 ///
-/// La transition par defaut d'Android agrandit et fait disparaitre l'ecran
-/// entier. C'est couteux a dessiner : sur un telephone de milieu de gamme
-/// l'animation saute, et le passage parait casse. Un fondu double d'un
-/// glissement de quelques pour cent coute presque rien et se lit comme un
-/// mouvement continu.
+/// Aucun fondu. Un fondu rend les deux pages visibles en meme temps pendant
+/// la moitie de l'animation : on voit le texte de l'ancienne a travers la
+/// nouvelle, ce qui se lit comme un defaut d'affichage. Ici la page qui
+/// arrive est opaque du premier au dernier pixel ; elle recouvre, elle ne se
+/// melange pas.
 ///
-/// La courbe fait l'essentiel du chemin dans le premier tiers : l'ecran
-/// parait arriver vite, sans pour autant s'interrompre net.
+/// La page qu'on quitte recule d'un quart de la largeur, ce qui donne la
+/// profondeur sans jamais la laisser transparaitre.
+///
+/// 240 ms : assez pour que le mouvement se lise, assez court pour qu'on ne
+/// l'attende pas. La transition par defaut d'Android en met 450 et agrandit
+/// tout l'ecran, ce qui saute sur un telephone de milieu de gamme.
 class GiPageTransitionsBuilder extends PageTransitionsBuilder {
   const GiPageTransitionsBuilder();
 
   @override
+  Duration get transitionDuration => const Duration(milliseconds: 240);
+
+  @override
   Widget buildTransitions<T>(
-    PageRoute<T> route,
+    PageRoute<T>? route,
     BuildContext context,
     Animation<double> animation,
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final entering = CurvedAnimation(
+    final incoming = Tween<Offset>(
+      begin: const Offset(1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
       parent: animation,
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
-    );
+    ));
 
-    // L'ecran qu'on quitte recule a peine : il reste present sous le
-    // nouveau, ce qui donne la profondeur sans le faire disparaitre.
-    final leaving = CurvedAnimation(
+    final outgoing = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(-0.25, 0),
+    ).animate(CurvedAnimation(
       parent: secondaryAnimation,
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
-    );
+    ));
 
-    return FadeTransition(
-      opacity: entering,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.05, 0),
-          end: Offset.zero,
-        ).animate(entering),
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: Offset.zero,
-            end: const Offset(-0.02, 0),
-          ).animate(leaving),
-          child: child,
-        ),
-      ),
+    return SlideTransition(
+      position: outgoing,
+      child: SlideTransition(position: incoming, child: child),
     );
   }
 }

@@ -64,6 +64,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       backgroundColor: c.scaffold,
       body: SafeArea(
         child: SingleChildScrollView(
+          // Rebond en bout de course, comme partout ailleurs.
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
               FigSpace.pagePadding, FigSpace.xl, FigSpace.pagePadding, 32),
           child: Column(
