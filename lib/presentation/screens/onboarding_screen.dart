@@ -42,6 +42,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   int _shown = 0;
 
   bool _forward = true;
+
+  /// Distance parcourue par le doigt pendant le glissement en cours.
+  double _dragOffset = 0;
   bool _busy = false;
 
   late final AnimationController _text = AnimationController(
@@ -95,13 +98,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Scaffold(
       backgroundColor: c.scaffold,
       body: GestureDetector(
+        // Un glissement compte de deux facons : vif, ou simplement long.
+        // Ne regarder que la vitesse ignorait les gestes poses, et l'ecran
+        // paraissait ne pas repondre.
+        onHorizontalDragStart: (_) => _dragOffset = 0,
+        onHorizontalDragUpdate: (details) => _dragOffset += details.delta.dx,
         onHorizontalDragEnd: (details) {
-          final v = details.primaryVelocity ?? 0;
-          if (v.abs() < 200) return;
+          final velocity = details.primaryVelocity ?? 0;
+          final distance = _dragOffset;
+          _dragOffset = 0;
+          final backward = velocity > 120 || distance > 60;
+          final forward = velocity < -120 || distance < -60;
+          if (!backward && !forward) return;
           // En arabe l'interface est inversee : le geste doit l'etre aussi.
           final rtl = Directionality.of(context) == TextDirection.rtl;
-          final forward = rtl ? v > 0 : v < 0;
-          _goTo(_page + (forward ? 1 : -1));
+          final goForward = rtl ? backward : forward;
+          _goTo(_page + (goForward ? 1 : -1));
         },
         child: Stack(
           fit: StackFit.expand,
@@ -235,10 +247,9 @@ class _BottomBlock extends StatelessWidget {
     final scaled = MediaQuery.textScalerOf(context).scale(360);
     final blockHeight =
         math.min(math.max(360.0, scaled), screenHeight * 0.74);
-    // Ecran court : le haut du bloc se resserre, et les reperes de position
-    // s'effacent — ils repetent une information que les trois photos disent
-    // deja.
-    final short = blockHeight < 400;
+    // Ecran court — paysage, tres petit telephone : le haut du bloc se
+    // resserre et les reperes de position s'effacent, faute de place.
+    final short = screenHeight < 620;
 
     return SafeArea(
       top: false,
