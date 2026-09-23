@@ -483,5 +483,6 @@
   "annualCharge": "Charge annuelle",
   "upToDateTitle": "À jour",
   "amountOwed": "Argent dû",
-  "apartmentShortLabel": "Appart."
+  "apartmentShortLabel": "Appart.",
+  "apartmentUpper": "APPARTEMENT"
 }

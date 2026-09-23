@@ -1075,4 +1075,7 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get apartmentShortLabel => 'Appart.';
+
+  @override
+  String get apartmentUpper => 'APPARTEMENT';
 }

@@ -326,5 +326,6 @@
   "annualCharge": "Annual charge",
   "upToDateTitle": "Up to date",
   "amountOwed": "Amount owed",
-  "apartmentShortLabel": "Unit"
+  "apartmentShortLabel": "Unit",
+  "apartmentUpper": "APARTMENT"
 }

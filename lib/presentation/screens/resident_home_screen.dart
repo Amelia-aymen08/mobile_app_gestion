@@ -41,6 +41,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
   List<dynamic> _properties = [];
   Map<String, dynamic> _chargesSummary = {};
+
+  /// Vrai quand on a ouvert les paiements depuis la carte de l'accueil. Dans
+  /// ce cas seulement, un glissement vers la droite ramene a l'accueil : on
+  /// y est entre comme dans une page, on en sort comme d'une page. Arrive
+  /// par la barre du bas, l'onglet reste un onglet.
+  bool _chargesFromHome = false;
   List<dynamic> _charges = const [];
   List<dynamic> _tickets = [];
   bool _loadingDashboard = true;
@@ -140,7 +146,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         closeLabel: t.close,
         primaryLabel: t.viewPayment,
         onPrimary: () {
-          if (mounted) setState(() => _tab = 3);
+          if (mounted) {
+            setState(() {
+              _chargesFromHome = false;
+              _tab = 3;
+            });
+          }
         },
       );
     } catch (_) {}
@@ -226,6 +237,43 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   }
 
   // ─── Build ────────────────────────────────────────────────
+
+  /// Enveloppe les paiements pour qu'un glissement vers la droite ramene a
+  /// l'accueil, quand on y est arrive depuis la carte « Prochain paiement ».
+  ///
+  /// Le geste ne fait rien si l'onglet a ete choisi dans la barre du bas :
+  /// il n'y aurait nulle part ou revenir.
+  Widget _swipeBackToHome(Widget child) {
+    return GestureDetector(
+      // `deferToChild` : les listes de l'ecran gardent la main sur leurs
+      // propres gestes, on n'intercepte que ce qui leur echappe.
+      behavior: HitTestBehavior.deferToChild,
+      onHorizontalDragStart: (_) => _chargesDrag = 0,
+      onHorizontalDragUpdate: (details) => _chargesDrag += details.delta.dx,
+      onHorizontalDragEnd: (details) {
+        final distance = _chargesDrag;
+        final velocity = details.primaryVelocity ?? 0;
+        _chargesDrag = 0;
+        if (!_chargesFromHome) return;
+        // En arabe la lecture est inversee : le retour se fait vers la
+        // gauche.
+        final rtl = Directionality.of(context) == TextDirection.rtl;
+        final back = rtl
+            ? (velocity < -140 || distance < -70)
+            : (velocity > 140 || distance > 70);
+        if (!back) return;
+        setState(() {
+          _chargesFromHome = false;
+          _tab = 0;
+        });
+      },
+      child: child,
+    );
+  }
+
+  /// Distance parcourue par le doigt sur l'onglet des paiements.
+  double _chargesDrag = 0;
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -239,7 +287,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           _homeTab(user, dark),
           const NoticesScreen(),
           const ResidentTicketsScreen(),
-          const MyChargesScreen(),
+          _swipeBackToHome(const MyChargesScreen()),
           _moreTab(user, dark),
         ],
       ),
@@ -676,7 +724,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   ? t.paymentDeadline(_formatDate(dueDate))
                   : '',
               subColor: FigBrand.amber,
-              onTap: () => setState(() => _tab = 3),
+              onTap: () => setState(() {
+                _chargesFromHome = true;
+                _tab = 3;
+              }),
             ),
           ),
           const SizedBox(width: FigSpace.lg),
@@ -762,7 +813,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         'assets/figma/icons/payment_20.svg',
         FigAccent.amber,
         t.payments,
-        () => setState(() => _tab = 3)
+        () => setState(() {
+          _chargesFromHome = false;
+          _tab = 3;
+        })
       ),
       (
         'assets/figma/icons/documents_20.svg',
@@ -1148,7 +1202,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 cell(t.residenceUpper, resName),
                 Container(width: 1, height: 35, color: c.innerBorder),
                 const SizedBox(width: FigSpace.lg),
-                cell(t.blockUpper, block),
+                cell(t.apartmentUpper, lot),
               ],
             ),
           ),

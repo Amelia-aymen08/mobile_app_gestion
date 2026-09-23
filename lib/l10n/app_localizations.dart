@@ -2060,6 +2060,12 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Appart.'**
   String get apartmentShortLabel;
+
+  /// No description provided for @apartmentUpper.
+  ///
+  /// In fr, this message translates to:
+  /// **'APPARTEMENT'**
+  String get apartmentUpper;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -326,5 +326,6 @@
   "annualCharge": "الرسوم السنوية",
   "upToDateTitle": "لا مستحقات",
   "amountOwed": "المبلغ المستحق",
-  "apartmentShortLabel": "الشقة"
+  "apartmentShortLabel": "الشقة",
+  "apartmentUpper": "الشقة"
 }
