@@ -7,6 +7,7 @@ import '../widgets/gi_avatar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
+import '../../data/person_name.dart';
 import '../../data/charges.dart';
 import '../providers/auth_provider.dart';
 import '../../l10n/app_localizations.dart';
@@ -323,8 +324,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   Widget _homeTab(Map? user, bool dark) {
     final c = GiColors.of(context);
     final t = AppL10n.of(context);
-    final name = (user?['name'] ?? user?['fullName'] ?? '').toString();
-    final firstName = name.trim().isEmpty ? '' : name.trim().split(' ').first;
+    final firstName = PersonName.firstName(user?['name'] ?? user?['fullName']);
 
     final openTickets = _tickets.where((e) {
       final s = (e is Map ? e['status'] : '').toString().toUpperCase();
@@ -970,7 +970,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   Widget _moreTab(Map? user, bool dark) {
     final c = GiColors.of(context);
     final t = AppL10n.of(context);
-    final name = (user?['name'] ?? user?['fullName'] ?? '').toString();
+    final name = PersonName.format(user?['name'] ?? user?['fullName']);
 
     final property = _properties.isNotEmpty && _properties.first is Map
         ? Map<String, dynamic>.from(_properties.first as Map)

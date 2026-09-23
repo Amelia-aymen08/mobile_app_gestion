@@ -14,6 +14,7 @@ import '../widgets/gi_refresh.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../data/api_service.dart';
+import '../../data/person_name.dart';
 
 class MyPropertiesScreen extends StatefulWidget {
   /// Bien affiche au moment de l'ouverture : la selection demarre dessus
@@ -105,10 +106,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
   /// mais l'ecran sert a choisir « sa » residence : nommer la personne rend
   /// le choix personnel plutot qu'administratif.
   String get _firstName {
-    final full =
-        (context.read<AuthProvider>().user?['name'] ?? '').toString().trim();
-    if (full.isEmpty) return '';
-    return full.split(RegExp(r'\s+')).first;
+    return PersonName.firstName(context.read<AuthProvider>().user?['name']);
   }
 
   @override

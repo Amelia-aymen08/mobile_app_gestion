@@ -336,11 +336,17 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                     illustration: 'assets/figma/empty/reports.svg',
                     title: t.emptyReportsTitle,
                     message: t.emptyReportsBody,
-                    action: SizedBox(
-                      width: 187,
-                      child: GiPrimaryButton(
-                        label: t.newReport,
-                        onPressed: _createNew,
+                    // Le Figma fixe 187 de large pour « New Report ». En
+                    // francais le libelle fait pres du double : la largeur
+                    // suit donc le texte, sans descendre sous celle de la
+                    // maquette.
+                    action: ConstrainedBox(
+                      constraints: const BoxConstraints(minWidth: 187),
+                      child: IntrinsicWidth(
+                        child: GiPrimaryButton(
+                          label: t.newReport,
+                          onPressed: _createNew,
+                        ),
                       ),
                     ),
                   ),

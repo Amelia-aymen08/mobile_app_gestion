@@ -39,7 +39,10 @@ class GiPrimaryButton extends StatelessWidget {
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+        // 24 et non 40 : sur un bouton pleine largeur la difference ne se
+        // voit pas, et sur un bouton etroit elle rend au libelle la place
+        // qu'il lui faut pour rester a sa taille.
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(FigRadius.cta),

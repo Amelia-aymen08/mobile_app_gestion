@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/gi_avatar.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../../data/api_service.dart';
+import '../../data/person_name.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -169,7 +170,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
     final theme = context.watch<ThemeProvider>();
     final locale = context.watch<LocaleProvider>();
 
-    final name = (user?['name'] ?? user?['fullName'] ?? '').toString();
+    final name = PersonName.format(user?['name'] ?? user?['fullName']);
     final email = (user?['email'] ?? '').toString();
     final phone = (user?['phone'] ?? '').toString();
 

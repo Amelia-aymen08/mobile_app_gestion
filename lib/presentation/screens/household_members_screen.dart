@@ -15,6 +15,7 @@ import '../widgets/gi_primary_button.dart';
 import '../widgets/gi_refresh.dart';
 import '../widgets/gi_text_field.dart';
 import '../../data/api_service.dart';
+import '../../data/person_name.dart';
 import '../providers/auth_provider.dart';
 
 /// Nombre de comptes qu'un foyer peut ouvrir, limite posee par le serveur.
@@ -269,7 +270,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
   Map<String, dynamic>? get _me => context.read<AuthProvider>().user;
 
   String _meName(AppL10n t) {
-    final name = (_me?['name'] ?? '').toString().trim();
+    final name = PersonName.format(_me?['name']);
     return name.isEmpty ? t.you : '$name (${t.you})';
   }
 
