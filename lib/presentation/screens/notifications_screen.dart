@@ -12,6 +12,7 @@ import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_refresh.dart';
 
 /// Notifications du resident.
 ///
@@ -260,37 +261,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: FigBrand.amber))
-                  : RefreshIndicator(
-                      color: FigBrand.amber,
-                      backgroundColor: c.card,
-                      onRefresh: _load,
-                      child: list.isEmpty
-                          ? ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(
-                                  FigSpace.pagePadding, 24,
-                                  FigSpace.pagePadding, 40),
-                              children: [
-                                GiEmptyState(
-                                  illustration:
-                                      'assets/figma/empty/notices.svg',
-                                  title: t.emptyNotificationsTitle,
-                                  message:
-                                      _error ?? t.emptyNotificationsBody,
+                  : CustomScrollView(
+                      physics: giRefreshPhysics,
+                      slivers: [
+                        GiRefreshControl(onRefresh: _load),
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(FigSpace.pagePadding,
+                              list.isEmpty ? 24 : 0, FigSpace.pagePadding, 40),
+                          sliver: list.isEmpty
+                              ? SliverToBoxAdapter(
+                                  child: GiEmptyState(
+                                    illustration:
+                                        'assets/figma/empty/notices.svg',
+                                    title: t.emptyNotificationsTitle,
+                                    message:
+                                        _error ?? t.emptyNotificationsBody,
+                                  ),
+                                )
+                              : SliverList.separated(
+                                  itemCount: list.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: FigSpace.lg),
+                                  itemBuilder: (_, i) => GiAppear(
+                                      index: i, child: _card(c, t, list[i])),
                                 ),
-                              ],
-                            )
-                          : ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(
-                                  FigSpace.pagePadding, 0,
-                                  FigSpace.pagePadding, 40),
-                              itemCount: list.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: FigSpace.lg),
-                              itemBuilder: (_, i) =>
-                                  GiAppear(index: i, child: _card(c, t, list[i])),
-                            ),
+                        ),
+                      ],
                     ),
             ),
           ],

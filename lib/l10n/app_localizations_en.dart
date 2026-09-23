@@ -1070,4 +1070,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get amountOwed => 'Amount owed';
+
+  @override
+  String get apartmentShortLabel => 'Unit';
 }

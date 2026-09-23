@@ -52,11 +52,16 @@ class GiAvatar extends StatelessWidget {
       // Un BoxDecoration ne peut pas porter a la fois une forme ronde et un
       // rayon : les deux cas sont donc construits separement.
       decoration: radius == null
-          ? BoxDecoration(shape: BoxShape.circle, color: fill, border: border)
+          ? BoxDecoration(shape: BoxShape.circle, color: fill)
           : BoxDecoration(
-              borderRadius: BorderRadius.circular(radius!),
-              color: fill,
-              border: border),
+              borderRadius: BorderRadius.circular(radius!), color: fill),
+      // Le trait est peint par-dessus la photo, apres le rognage. Pose dans
+      // `decoration`, il passait dessous : la photo le mangeait et les
+      // angles arrivaient en marches d'escalier.
+      foregroundDecoration: radius == null
+          ? BoxDecoration(shape: BoxShape.circle, border: border)
+          : BoxDecoration(
+              borderRadius: BorderRadius.circular(radius!), border: border),
       child: url == null || url.isEmpty
           ? _fallback()
           : Image.network(url,

@@ -14,6 +14,7 @@ import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_refresh.dart';
 
 /// Documents publies par l'administration — section « Residence Documents »
 /// de la frame Figma « More LT » (0:4370), ici deployee en ecran.
@@ -265,38 +266,36 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: FigBrand.amber))
-                  : RefreshIndicator(
-                      color: FigBrand.amber,
-                      backgroundColor: c.card,
-                      onRefresh: _load,
-                      child: _visible.isEmpty
-                          ? ListView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(
-                                  FigSpace.pagePadding, 24,
-                                  FigSpace.pagePadding, 40),
-                              children: [
-                                GiEmptyState(
-                                  illustration:
-                                      'assets/figma/empty/notices.svg',
-                                  title: t.emptyDocumentsTitle,
-                                  message: _error ?? t.emptyDocumentsBody,
+                  : CustomScrollView(
+                      physics: giRefreshPhysics,
+                      slivers: [
+                        GiRefreshControl(onRefresh: _load),
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(
+                              FigSpace.pagePadding,
+                              _visible.isEmpty ? 24 : 0,
+                              FigSpace.pagePadding,
+                              40),
+                          sliver: _visible.isEmpty
+                              ? SliverToBoxAdapter(
+                                  child: GiEmptyState(
+                                    illustration:
+                                        'assets/figma/empty/notices.svg',
+                                    title: t.emptyDocumentsTitle,
+                                    message: _error ?? t.emptyDocumentsBody,
+                                  ),
+                                )
+                              : SliverList.separated(
+                                  itemCount: _visible.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: FigSpace.lg),
+                                  itemBuilder: (_, i) => GiAppear(
+                                    index: i,
+                                    child: _documentCard(c, t, _visible[i]),
+                                  ),
                                 ),
-                              ],
-                            )
-                          : ListView.separated(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(
-                                  FigSpace.pagePadding, 0,
-                                  FigSpace.pagePadding, 40),
-                              itemCount: _visible.length,
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: FigSpace.lg),
-                              itemBuilder: (_, i) => GiAppear(
-                                index: i,
-                                child: _documentCard(c, t, _visible[i]),
-                              ),
-                            ),
+                        ),
+                      ],
                     ),
             ),
           ],

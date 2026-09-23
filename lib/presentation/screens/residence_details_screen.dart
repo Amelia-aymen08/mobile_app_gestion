@@ -10,6 +10,7 @@ import '../theme/residence_images.dart';
 import '../widgets/gi_appear.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_refresh.dart';
 
 /// Fiche d'une residence : photo, adresse, presentation et commodites.
 ///
@@ -141,15 +142,14 @@ class _ResidenceDetailsScreenState extends State<ResidenceDetailsScreen> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: FigBrand.amber))
-                  : RefreshIndicator(
-                      color: FigBrand.amber,
-                      backgroundColor: c.card,
-                      onRefresh: _load,
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
+                  : CustomScrollView(
+                      physics: giRefreshPhysics,
+                      slivers: [
+                        GiRefreshControl(onRefresh: _load),
+                        SliverPadding(
                         padding: const EdgeInsets.fromLTRB(
                             FigSpace.pagePadding, 0, FigSpace.pagePadding, 40),
-                        children: [
+                        sliver: SliverList.list(children: [
                           GiAppear(child: _cover(c, name, address)),
                           if (description.isNotEmpty) ...[
                             const SizedBox(height: FigSpace.lg),
@@ -186,8 +186,9 @@ class _ResidenceDetailsScreenState extends State<ResidenceDetailsScreen> {
                                 style: FigText.body
                                     .copyWith(color: FigAlert.error)),
                           ],
-                        ],
-                      ),
+                        ]),
+                        ),
+                      ],
                     ),
             ),
           ],
@@ -207,6 +208,9 @@ class _ResidenceDetailsScreenState extends State<ResidenceDetailsScreen> {
       height: FigSize.heroH,
       decoration: BoxDecoration(
         color: c.card,
+        borderRadius: BorderRadius.circular(FigRadius.card),
+      ),
+      foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(FigRadius.card),
         border: Border.all(color: c.heroBorder),
       ),

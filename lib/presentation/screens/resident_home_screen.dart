@@ -16,6 +16,7 @@ import '../widgets/gi_bottom_nav.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_refresh.dart';
 import '../widgets/gi_settings.dart';
 import '../theme/residence_images.dart';
 import 'login_screen.dart';
@@ -289,14 +290,14 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
     return SafeArea(
       bottom: false,
-      child: RefreshIndicator(
-        color: FigBrand.amber,
-        backgroundColor: c.card,
-        onRefresh: () async {
-          await _fetchDashboard();
-          await _fetchUnread();
-        },
-        child: ListView(
+      child: CustomScrollView(
+        physics: giRefreshPhysics,
+        slivers: [
+          GiRefreshControl(onRefresh: () async {
+            await _fetchDashboard();
+            await _fetchUnread();
+          }),
+          SliverPadding(
           // Le Figma pose l'en-tete a 66 dans une frame de 812, soit 22 sous
           // la barre d'etat. Sur un ecran sans encoche, SafeArea ne retire
           // rien et 22 colle au bord : on garde 22 comme minimum et on laisse
@@ -306,7 +307,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
               MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
               FigSpace.pagePadding,
               150),
-          children: [
+          sliver: SliverList.list(children: [
             _header(c, t, firstName),
             const SizedBox(height: 20),
             _heroSection(c, t),
@@ -322,8 +323,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                 style: FigText.titleMd.copyWith(color: c.textBody)),
             const SizedBox(height: FigSpace.lg),
             _recentActivity(c),
-          ],
-        ),
+          ]),
+          ),
+        ],
       ),
     );
   }
@@ -476,6 +478,11 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
         decoration: BoxDecoration(
           color: c.card,
           borderRadius: BorderRadius.circular(FigRadius.card),
+        ),
+        // Trait ambre peint par-dessus la photo, sinon le rognage le coupe
+        // dans les angles.
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(FigRadius.card),
           border: Border.all(color: c.heroBorder),
         ),
         clipBehavior: Clip.antiAlias,
@@ -613,7 +620,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
 
     final divider = Container(width: 1, height: 37, color: c.innerBorder);
     final floor = (property['floor'] ?? '').toString();
-    final surface = (property['surface'] ?? '').toString();
+    final lot = (property['lotNumber'] ?? '').toString();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -633,10 +640,12 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
           children: [
             cell(t.floor, floor),
             divider,
-            cell(t.area, surface.isEmpty ? '' : '$surface m²'),
+            cell(t.apartmentShortLabel, lot),
             divider,
-            cell(t.status, status.isEmpty ? t.statusActive : status,
-                valueColor: FigAlert.success),
+            // Le serveur renvoie l'etat du lot — « Vendu » — qui regarde la
+            // vente, pas le resident. Ce qui l'interesse est que son compte
+            // et sa residence sont actifs.
+            cell(t.status, t.statusActive, valueColor: FigAlert.success),
           ],
         ),
       ),

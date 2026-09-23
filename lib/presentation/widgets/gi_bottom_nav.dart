@@ -58,7 +58,11 @@ class GiBottomNav extends StatelessWidget {
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 2.85, sigmaY: 2.85),
           child: Container(
-            padding: const EdgeInsets.all(FigSpace.xl),
+            // Barre resserree : le Figma la dessine a 80 de haut, ce qui
+            // pese sur un ecran de telephone. Le padding vertical passe de
+            // 16 a 10 ; les icones et les libelles gardent leur taille.
+            padding: const EdgeInsets.symmetric(
+                horizontal: FigSpace.xl, vertical: 10),
             decoration: BoxDecoration(
               color: c.navbarBg,
               borderRadius: BorderRadius.circular(FigRadius.navbar),
@@ -183,7 +187,7 @@ class _GiNavTab extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: FigSpace.md),
+                const SizedBox(height: FigSpace.sm),
                 DefaultTextStyle(
                   style: FigText.body.copyWith(
                     color: color,

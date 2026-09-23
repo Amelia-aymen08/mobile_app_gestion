@@ -10,6 +10,7 @@ import '../theme/residence_images.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
+import '../widgets/gi_refresh.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../data/api_service.dart';
@@ -209,12 +210,11 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                       child: CircularProgressIndicator(color: FigBrand.amber))
                   : Stack(
                       children: [
-                        RefreshIndicator(
-                          color: FigBrand.amber,
-                          backgroundColor: c.card,
-                          onRefresh: _fetchAll,
-                          child: ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
+                        CustomScrollView(
+                          physics: giRefreshPhysics,
+                          slivers: [
+                            GiRefreshControl(onRefresh: _fetchAll),
+                            SliverPadding(
                             padding: const EdgeInsets.fromLTRB(
                                 FigSpace.pagePadding,
                                 0,
@@ -223,7 +223,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                 // on reserve sa hauteur pour que la derniere
                                 // carte reste atteignable.
                                 104),
-                            children: [
+                            sliver: SliverList.list(children: [
                               Text(t.yourProperties(_properties.length),
                                   style: FigText.field.copyWith(
                                       height: 1.2, color: c.textMuted)),
@@ -247,8 +247,9 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                         c, t, _properties[i] as Map, i),
                                   ),
                                 ],
-                            ],
-                          ),
+                            ]),
+                            ),
+                          ],
                         ),
                         // Voile sous le bouton : la carte passe dessous sans
                         // venir buter sur le libelle.
@@ -320,6 +321,11 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         height: FigSize.heroH,
         decoration: BoxDecoration(
           color: isSelected ? FigBrand.amber.withValues(alpha: 0.20) : c.card,
+          borderRadius: BorderRadius.circular(FigRadius.card),
+        ),
+        // Trait peint par-dessus la photo : pose dessous, le rognage le
+        // coupait dans les angles.
+        foregroundDecoration: BoxDecoration(
           borderRadius: BorderRadius.circular(FigRadius.card),
           border: Border.all(
               color: isSelected
@@ -491,10 +497,10 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
             cell(t.floor, floor),
             divider,
             const SizedBox(width: FigSpace.lg),
-            cell(t.area, surface.isEmpty ? '' : '$surface m²'),
+            cell(t.apartmentShortLabel, lot),
             divider,
             const SizedBox(width: FigSpace.lg),
-            cell(t.unitLabel, lot),
+            cell(t.status, t.statusActive),
           ],
         ),
       ),

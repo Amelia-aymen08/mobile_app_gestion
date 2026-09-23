@@ -10,6 +10,7 @@ import '../theme/gi_colors.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
+import '../widgets/gi_refresh.dart';
 import '../widgets/gi_pressable.dart';
 
 class MyChargesScreen extends StatefulWidget {
@@ -106,18 +107,17 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
         child: _loading
             ? const Center(
                 child: CircularProgressIndicator(color: FigBrand.amber))
-            : RefreshIndicator(
-                color: FigBrand.amber,
-                backgroundColor: c.card,
-                onRefresh: _load,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+            : CustomScrollView(
+                physics: giRefreshPhysics,
+                slivers: [
+                  GiRefreshControl(onRefresh: _load),
+                  SliverPadding(
                   padding: EdgeInsets.fromLTRB(
                       FigSpace.pagePadding,
                       MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
                       FigSpace.pagePadding,
                       150),
-                  children: [
+                  sliver: SliverList.list(children: [
                     GiScreenHeader(
                       iconAsset: 'assets/figma/icons/payment_20.svg',
                       accent: FigAccent.amber,
@@ -140,8 +140,9 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
                         GiAppear(
                             index: i, child: _historyCard(c, paidHistory[i])),
                       ],
-                  ],
-                ),
+                  ]),
+                  ),
+                ],
               ),
       ),
     );

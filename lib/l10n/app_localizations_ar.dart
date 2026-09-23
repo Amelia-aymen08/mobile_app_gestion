@@ -1069,4 +1069,7 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get amountOwed => 'المبلغ المستحق';
+
+  @override
+  String get apartmentShortLabel => 'الشقة';
 }

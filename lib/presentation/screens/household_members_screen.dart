@@ -12,6 +12,7 @@ import '../widgets/gi_alert_dialog.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
+import '../widgets/gi_refresh.dart';
 import '../widgets/gi_text_field.dart';
 import '../../data/api_service.dart';
 import '../providers/auth_provider.dart';
@@ -170,15 +171,14 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: FigBrand.amber))
-                  : RefreshIndicator(
-                      color: FigBrand.amber,
-                      backgroundColor: c.card,
-                      onRefresh: _load,
-                      child: ListView(
+                  : CustomScrollView(
+                      physics: giRefreshPhysics,
+                      slivers: [
+                        GiRefreshControl(onRefresh: _load),
+                        SliverPadding(
                         padding: const EdgeInsets.fromLTRB(
                             FigSpace.pagePadding, 0, FigSpace.pagePadding, 120),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
+                        sliver: SliverList.list(children: [
                           Text(
                               t.memberCount(
                                   kMaxHouseholdMembers, _members.length),
@@ -242,8 +242,9 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
                               member: Map<String, dynamic>.from(m),
                             ),
                           ],
-                        ],
-                      ),
+                        ]),
+                        ),
+                      ],
                     ),
             ),
             // Le Figma pose le bouton a 52 du bas, hors de la liste.

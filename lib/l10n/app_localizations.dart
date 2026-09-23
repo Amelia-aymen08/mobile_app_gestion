@@ -2054,6 +2054,12 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Argent dû'**
   String get amountOwed;
+
+  /// No description provided for @apartmentShortLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appart.'**
+  String get apartmentShortLabel;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

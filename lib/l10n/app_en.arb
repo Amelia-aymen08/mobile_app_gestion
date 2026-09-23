@@ -325,5 +325,6 @@
   "chatEmptyReadOnly": "No message yet. The administration will write here if your report needs anything.",
   "annualCharge": "Annual charge",
   "upToDateTitle": "Up to date",
-  "amountOwed": "Amount owed"
+  "amountOwed": "Amount owed",
+  "apartmentShortLabel": "Unit"
 }

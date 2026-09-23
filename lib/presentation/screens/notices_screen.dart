@@ -16,6 +16,7 @@ import '../widgets/gi_card.dart';
 import '../widgets/gi_header.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_refresh.dart';
 
 class NoticesScreen extends StatefulWidget {
   const NoticesScreen({super.key});
@@ -130,26 +131,27 @@ class _NoticesScreenState extends State<NoticesScreen> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: FigBrand.amber))
-                  : RefreshIndicator(
-                      color: FigBrand.amber,
-                      backgroundColor: c.card,
-                      onRefresh: _load,
-                      child: filtered.isEmpty
-                          ? ListView(
-                              physics:
-                                  const AlwaysScrollableScrollPhysics(),
+                  : CustomScrollView(
+                      physics: giRefreshPhysics,
+                      slivers: [
+                        GiRefreshControl(onRefresh: _load),
+                        if (filtered.isEmpty)
+                          SliverToBoxAdapter(
+                            child: Column(
                               children: [
                                 SizedBox(
                                     height: MediaQuery.sizeOf(context).height *
                                         0.12),
                                 _emptyState(c, t),
                               ],
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.fromLTRB(
-                                  FigSpace.pagePadding, 0,
-                                  FigSpace.pagePadding, 150),
-                              physics: const AlwaysScrollableScrollPhysics(),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.fromLTRB(
+                                FigSpace.pagePadding, 0,
+                                FigSpace.pagePadding, 150),
+                            sliver: SliverList.separated(
                               itemCount: filtered.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: FigSpace.lg),
@@ -159,6 +161,8 @@ class _NoticesScreenState extends State<NoticesScreen> {
                                     Map<String, dynamic>.from(filtered[i])),
                               ),
                             ),
+                          ),
+                      ],
                     ),
             ),
           ],
