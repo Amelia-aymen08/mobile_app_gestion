@@ -35,6 +35,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
+  /// Designe explicitement le champ du mot de passe : entre les deux se
+  /// trouve l'oeil qui devoile la saisie, et le passage au suivant s'y
+  /// arretait.
+  final _passwordFocus = FocusNode();
   final _password = TextEditingController();
   final _form = GlobalKey<FormState>();
   String? _error;
@@ -78,6 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _password.removeListener(_refreshSubmitState);
     _email.dispose();
     _password.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -188,6 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               errorText: _error,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
+                              onSubmitted: (_) =>
+                                  _passwordFocus.requestFocus(),
                               validator: (v) => v == null || v.trim().isEmpty
                                   ? t.emailRequired
                                   : null,
@@ -197,6 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               label: t.passwordLabel,
                               hint: t.passwordHint,
                               controller: _password,
+                              focusNode: _passwordFocus,
                               isPassword: true,
                               textInputAction: TextInputAction.done,
                               onSubmitted: (_) => _submit(),

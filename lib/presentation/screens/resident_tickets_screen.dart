@@ -1,5 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../services/file_opener.dart';
@@ -14,6 +13,7 @@ import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_refresh.dart';
 import '../widgets/gi_primary_button.dart';
 import 'package:provider/provider.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
@@ -318,18 +318,14 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
 
   Widget _buildList(GiColors c, AppL10n t, List<dynamic> tickets) {
     final filtered = tickets.whereType<Map>().where(_matchesFilter).toList();
-    // Tirer pour actualiser, facon iOS : l'indicateur vit dans l'espace que
-    // le geste ouvre au-dessus de la liste. Il n'existe donc que pendant le
-    // geste et le chargement. Le RefreshIndicator de Material se dessinait
-    // par-dessus la liste et pouvait rester fige a mi-course — l'ecran
-    // s'ouvrait alors avec la fleche affichee.
+    // Tirer pour actualiser, sans rien afficher : le geste recharge, et
+    // c'est la liste mise a jour qui le dit. Le disque de Material se
+    // dessinait par-dessus la liste et pouvait rester fige a mi-course.
     return CustomScrollView(
-      physics:
-          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics: giRefreshPhysics,
       slivers: [
-        CupertinoSliverRefreshControl(
+        GiRefreshControl(
           onRefresh: () => Future.wait([_fetchMy(), _fetchCopro()]),
-          builder: _refreshIndicator,
         ),
         SliverPadding(
           padding: EdgeInsets.fromLTRB(FigSpace.pagePadding,
@@ -359,26 +355,6 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
         ),
       ],
     );
-  }
-
-  /// Indicateur ambre : il se revele au fil du geste, puis tourne pendant
-  /// le chargement.
-  static Widget _refreshIndicator(
-    BuildContext context,
-    RefreshIndicatorMode mode,
-    double pulledExtent,
-    double refreshTriggerPullDistance,
-    double refreshIndicatorExtent,
-  ) {
-    final progress =
-        (pulledExtent / refreshTriggerPullDistance).clamp(0.0, 1.0);
-    final Widget indicator = switch (mode) {
-      RefreshIndicatorMode.inactive => const SizedBox.shrink(),
-      RefreshIndicatorMode.drag => CupertinoActivityIndicator.partiallyRevealed(
-          progress: progress, color: FigBrand.amber, radius: 12),
-      _ => const CupertinoActivityIndicator(color: FigBrand.amber, radius: 12),
-    };
-    return Center(child: Opacity(opacity: progress, child: indicator));
   }
 
   /// Carte de signalement — composant "Report Card" du Figma (0:4930).

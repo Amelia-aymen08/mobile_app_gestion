@@ -30,6 +30,11 @@ class GiTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final bool enabled;
 
+  /// Noeud de focus fourni par l'ecran, quand il a besoin de designer le
+  /// champ suivant lui-meme. `nextFocus()` suit l'ordre de l'arbre et peut
+  /// s'arreter sur un bouton pose entre deux champs.
+  final FocusNode? focusNode;
+
   const GiTextField({
     super.key,
     required this.label,
@@ -42,6 +47,7 @@ class GiTextField extends StatefulWidget {
     this.onSubmitted,
     this.validator,
     this.enabled = true,
+    this.focusNode,
   });
 
   @override
@@ -49,13 +55,24 @@ class GiTextField extends StatefulWidget {
 }
 
 class _GiTextFieldState extends State<GiTextField> {
-  final _focus = FocusNode();
+  FocusNode? _own;
   bool _obscure = true;
+
+  /// Celui de l'ecran s'il en fournit un, sinon le notre.
+  FocusNode get _focus => widget.focusNode ?? (_own ??= FocusNode());
 
   @override
   void initState() {
     super.initState();
     _focus.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusChanged);
+    // Seul le noeud que nous avons cree nous appartient.
+    _own?.dispose();
+    super.dispose();
   }
 
   void _onFocusChanged() => setState(() {});
@@ -72,13 +89,6 @@ class _GiTextFieldState extends State<GiTextField> {
     } else {
       FocusManager.instance.primaryFocus?.unfocus();
     }
-  }
-
-  @override
-  void dispose() {
-    _focus.removeListener(_onFocusChanged);
-    _focus.dispose();
-    super.dispose();
   }
 
   @override
