@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/api_service.dart';
 
@@ -77,13 +78,43 @@ class AuthProvider with ChangeNotifier {
     return '$a-$b$c';
   }
 
+  /// Coffre du systeme : trousseau sur iOS, stockage chiffre sur Android.
+  /// Il survit a la desinstallation, la ou les preferences sont effacees.
+  static const _coffre = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
+  /// Identifiant de l'appareil, conserve dans le coffre du systeme.
+  ///
+  /// Le serveur limite le nombre d'appareils par compte. Range dans les
+  /// preferences, l'identifiant disparaissait avec l'application : chaque
+  /// reinstallation — et TestFlight en enchaine — se presentait comme un
+  /// telephone neuf et consommait une place. Dans le coffre, il survit, et
+  /// le meme telephone reste le meme appareil.
+  ///
+  /// L'identifiant deja tire est repris tel quel s'il existe : la place
+  /// enregistree cote serveur reste la sienne, aucune n'est perdue en
+  /// chemin.
   Future<Map<String, String>> _getDevicePayload() async {
     final prefs = await SharedPreferences.getInstance();
-    var id = prefs.getString('device_id');
-    if (id == null || id.trim().isEmpty) {
-      id = _generateDeviceId();
-      await prefs.setString('device_id', id);
+    String? id;
+    try {
+      id = await _coffre.read(key: 'device_id');
+    } catch (_) {
+      // Coffre indisponible — navigateur en navigation privee, appareil
+      // verrouille. On retombe sur les preferences.
     }
+
+    id ??= prefs.getString('device_id');
+    id ??= _generateDeviceId();
+
+    // Les deux emplacements sont tenus a jour : le coffre pour survivre a
+    // la desinstallation, les preferences pour la deconnexion, qui les lit.
+    await prefs.setString('device_id', id);
+    try {
+      await _coffre.write(key: 'device_id', value: id);
+    } catch (_) {}
     // AIDE AU TEST — a retirer avant la mise en production.
     // En test local l'app est servie sur plusieurs ports, et le navigateur
     // cloisonne son stockage par port : chaque port tirait son propre
