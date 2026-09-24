@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Fond de l'icone adaptative. -->
-    <color name="ic_launcher_background">#FDF4E2</color>
-    <!-- Creme de la marque, fond de la fenetre avant la premiere image de
-         Flutter : sans lui, un eclair blanc s'intercale au demarrage. -->
-    <color name="launch_background">#F6F3EC</color>
+    <color name="ic_launcher_background">#F6F3EC</color>
+    <!-- Fond de la fenetre avant la premiere image de Flutter. L'app
+         s'ouvre en theme sombre par defaut : ce fond porte donc le bleu
+         nuit, meme quand le telephone est en clair. Sans cela, un eclair
+         creme s'intercale avant le splash. -->
+    <color name="launch_background">#0C1620</color>
 </resources>

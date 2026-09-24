@@ -20,6 +20,11 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
+    // L'app s'ouvre en theme sombre : les icones de la barre d'etat sont
+    // claires des la premiere image. Le theme les reprend ensuite, et les
+    // repasse en sombre si le resident choisit le clair.
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
   ));
   final themeProvider = ThemeProvider();
   final localeProvider = LocaleProvider();

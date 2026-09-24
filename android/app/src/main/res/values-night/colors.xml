@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Bleu nuit de la marque, meme role en theme sombre. -->
+    <!-- Meme fond qu'en theme clair : l'app s'ouvre en sombre dans les deux
+         cas. -->
     <color name="launch_background">#0C1620</color>
 </resources>
