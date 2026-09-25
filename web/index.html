@@ -18,7 +18,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Gerance Immo Service : signalez une panne, suivez vos charges et restez informe de votre residence.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -31,6 +31,14 @@
 
   <title>Gérance Immo Service</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Le navigateur peint la page avant la premiere image de Flutter. Sans
+       ce fond, un eclair blanc s'intercale avant le splash. L'app s'ouvre en
+       theme sombre par defaut : la page porte donc le bleu nuit, meme quand
+       le systeme est en clair. -->
+  <style>
+    html, body { margin: 0; padding: 0; background-color: #0C1620; }
+  </style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
