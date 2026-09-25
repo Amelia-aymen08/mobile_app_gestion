@@ -2066,6 +2066,12 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'APPARTEMENT'**
   String get apartmentUpper;
+
+  /// No description provided for @splashSlogan.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ensemble, protégeons votre habitat.'**
+  String get splashSlogan;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

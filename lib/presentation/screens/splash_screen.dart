@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 
@@ -34,6 +35,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
+    final t = AppL10n.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final reduceMotion = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
@@ -52,6 +54,9 @@ class _SplashScreenState extends State<SplashScreen>
           // contente de l'asseoir, et le halo monte derriere lui.
           final halo = phase(0.00, 0.70, Curves.easeOut);
           final logo = phase(0.00, 0.45, Curves.easeOutCubic);
+          // La signature arrive apres le logo : d'abord la marque, puis ce
+          // qu'elle promet.
+          final slogan = phase(0.35, 0.90, Curves.easeOutCubic);
 
           return Stack(
             fit: StackFit.expand,
@@ -94,6 +99,26 @@ class _SplashScreenState extends State<SplashScreen>
                       // cote, et l'animation demarre en retard.
                       cacheHeight: 460,
                       filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                ),
+              ),
+              PositionedDirectional(
+                start: FigSpace.pagePadding,
+                end: FigSpace.pagePadding,
+                bottom: 70,
+                child: Opacity(
+                  opacity: slogan,
+                  child: Transform.translate(
+                    offset: Offset(0, 10 * (1 - slogan)),
+                    child: Text(
+                      t.splashSlogan,
+                      textAlign: TextAlign.center,
+                      style: FigText.field.copyWith(
+                        height: 1.3,
+                        letterSpacing: 0.3,
+                        color: c.textMuted,
+                      ),
                     ),
                   ),
                 ),

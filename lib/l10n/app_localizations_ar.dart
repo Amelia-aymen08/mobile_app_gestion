@@ -1075,4 +1075,7 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get apartmentUpper => 'الشقة';
+
+  @override
+  String get splashSlogan => 'معًا نحمي مسكنك.';
 }
