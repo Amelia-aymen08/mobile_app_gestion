@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Fond de l'icone adaptative. -->
-    <color name="ic_launcher_background">#F6F3EC</color>
+    <color name="ic_launcher_background">#0C1620</color>
     <!-- Fond de la fenetre avant la premiere image de Flutter. L'app
          s'ouvre en theme sombre par defaut : ce fond porte donc le bleu
          nuit, meme quand le telephone est en clair. Sans cela, un eclair
