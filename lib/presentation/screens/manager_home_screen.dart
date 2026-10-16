@@ -237,15 +237,19 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         onTap: _go,
         items: [
           const GiNavItem(
-              asset: 'assets/figma/icons/nav_home.svg', label: 'Accueil'),
+              asset: 'assets/figma/icons/nav_home.svg',
+              activeAsset: 'assets/figma/icons/nav_home_fill.svg',
+              label: 'Accueil'),
           GiNavItem(
               asset: 'assets/figma/icons/nav_report.svg',
+              activeAsset: 'assets/figma/icons/nav_report_fill.svg',
               label: 'Tickets',
               badge: _store.loading
                   ? 0
                   : _store.count(AdminTicketFilter.toAssign.test)),
           const GiNavItem(
               asset: 'assets/figma/icons/nav_residence.svg',
+              activeAsset: 'assets/figma/icons/nav_residence_fill.svg',
               label: 'Résidences'),
           GiNavItem(
               asset: 'assets/figma/icons/nav_more.svg',

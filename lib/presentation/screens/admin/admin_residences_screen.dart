@@ -11,6 +11,7 @@ import '../../widgets/gi_skeleton.dart';
 import 'admin_residence_screen.dart';
 import 'admin_store.dart';
 import 'admin_ui.dart';
+import '../../widgets/gi_scroll_blur.dart';
 
 /// Carte de residence de l'administration : la carte de l'accueil resident,
 /// avec dans le bandeau ce qui interesse le gestionnaire.
@@ -107,9 +108,9 @@ class _AdminResidencesScreenState extends State<AdminResidencesScreen> {
 
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
+      body: GiScrollBlur(
         child: CustomScrollView(
+          clipBehavior: Clip.none,
           physics: giRefreshPhysics,
           slivers: [
             GiRefreshControl(onRefresh: store.load),

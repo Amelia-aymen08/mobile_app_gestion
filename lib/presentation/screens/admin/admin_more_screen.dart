@@ -12,6 +12,7 @@ import '../../widgets/gi_card.dart';
 import '../../widgets/gi_pressable.dart';
 import '../../widgets/gi_settings.dart';
 import 'admin_ui.dart';
+import '../../widgets/gi_scroll_blur.dart';
 
 /// Une entree du menu d'administration, partagee par l'onglet « Plus » du
 /// telephone et la barre laterale de l'ordinateur.
@@ -106,11 +107,11 @@ class AdminMoreScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
+      body: GiScrollBlur(
         child: AdminContent(
           maxWidth: 720,
           child: ListView(
+            clipBehavior: Clip.none,
             physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics()),
             padding: EdgeInsets.fromLTRB(

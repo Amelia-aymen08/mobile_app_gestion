@@ -10,6 +10,7 @@ import 'admin_new_ticket_screen.dart';
 import 'admin_store.dart';
 import 'admin_ticket_screen.dart';
 import 'admin_ui.dart';
+import '../../widgets/gi_scroll_blur.dart';
 
 /// Filtres de la liste des tickets.
 enum AdminTicketFilter {
@@ -163,9 +164,9 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
 
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
+      body: GiScrollBlur(
         child: CustomScrollView(
+          clipBehavior: Clip.none,
           physics: giRefreshPhysics,
           slivers: [
             GiRefreshControl(onRefresh: _store.load),

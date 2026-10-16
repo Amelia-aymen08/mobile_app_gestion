@@ -17,6 +17,7 @@ import 'admin_store.dart';
 import 'admin_ticket_screen.dart';
 import 'admin_tickets_screen.dart';
 import 'admin_ui.dart';
+import '../../widgets/gi_scroll_blur.dart';
 
 /// Accueil de l'administration.
 ///
@@ -170,9 +171,9 @@ class AdminDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
+      body: GiScrollBlur(
         child: CustomScrollView(
+          clipBehavior: Clip.none,
           physics: giRefreshPhysics,
           slivers: [
             GiRefreshControl(onRefresh: store.load),
