@@ -744,3 +744,196 @@ class _DemoFile {
   final String content;
   const _DemoFile(this.content);
 }
+
+/// Faux serveur de l'administration : plusieurs residences, une quinzaine
+/// de tickets a tous les stades, des residents et des intervenants. Sert aux
+/// tests et a parcourir l'espace d'administration sans back-end.
+class DemoAdminClient extends http.BaseClient {
+  DemoAdminClient({this.role = 'ADMIN'});
+  final String role;
+
+  static const _residences = [
+    {'id': 'r-corail', 'name': 'Corail', 'zone': 'Alger Ouest', 'address': 'Hydra, Alger — Wilaya 16', 'totalUnits': 96, 'deliveredUnits': 88, 'occupancyRate': '91%', 'image': null},
+    {'id': 'r-peridot', 'name': 'Péridot', 'zone': 'Alger Ouest', 'address': 'Chéraga, Alger — Wilaya 16', 'totalUnits': 64, 'deliveredUnits': 64, 'occupancyRate': '84%', 'image': null},
+    {'id': 'r-selenite', 'name': 'Sélénite', 'zone': 'Alger Est', 'address': 'Bab Ezzouar, Alger — Wilaya 16', 'totalUnits': 120, 'deliveredUnits': 102, 'occupancyRate': '77%', 'image': null},
+    {'id': 'r-angelite', 'name': 'Angélite', 'zone': 'Alger Ouest', 'address': 'Hydra, Alger — Wilaya 16', 'totalUnits': 48, 'deliveredUnits': 48, 'occupancyRate': '96%', 'image': null},
+  ];
+
+  static final _residents = <Map<String, dynamic>>[
+    {'id': 'o1', 'firstName': 'Amel', 'lastName': 'Benelhadj', 'email': 'amel@demo.dz', 'phone': '+213 555 10 20 30', 'residence': {'id': 'r-corail', 'name': 'Corail'}, 'block': 'A', 'floor': '1', 'doorNumber': '93'},
+    {'id': 'o2', 'firstName': 'Yacine', 'lastName': 'Belkacem', 'email': 'trois.biens@demo.dz', 'residence': {'id': 'r-corail', 'name': 'Corail'}, 'block': 'B', 'floor': '3', 'doorNumber': '302'},
+    {'id': 'o3', 'firstName': 'Mehdi', 'lastName': 'Messadi', 'email': 'un.bien@demo.dz', 'residence': {'id': 'r-angelite', 'name': 'Angélite'}, 'block': 'A', 'floor': '3', 'doorNumber': '101'},
+    {'id': 'o4', 'firstName': 'Sarah', 'lastName': 'Kaci', 'email': 'sarah@demo.dz', 'residence': {'id': 'r-peridot', 'name': 'Péridot'}, 'block': 'C', 'floor': '1', 'doorNumber': '12'},
+    {'id': 'o5', 'firstName': 'Karim', 'lastName': 'Haddad', 'email': 'karim@demo.dz', 'residence': {'id': 'r-selenite', 'name': 'Sélénite'}, 'block': 'L', 'floor': '0', 'doorNumber': '4'},
+    {'id': 'o6', 'firstName': 'Nadia', 'lastName': 'Ouali', 'email': 'nadia@demo.dz', 'residence': {'id': 'r-selenite', 'name': 'Sélénite'}, 'block': 'D', 'floor': '5', 'doorNumber': '51'},
+  ];
+
+  static Map<String, dynamic> _t(String id, String title, String category,
+          String residence, String status, String priority, int hoursAgo,
+          {String email = 'amel@demo.dz',
+          String requester = 'Amel Benelhadj',
+          String location = '',
+          String? assignee,
+          Map<String, dynamic>? sub,
+          String description = ''}) =>
+      {
+        'id': id,
+        'title': title,
+        'category': category,
+        'residenceId': residence,
+        'status': status,
+        'priority': priority,
+        'createdAt': DateTime.now()
+            .subtract(Duration(hours: hoursAgo))
+            .toIso8601String(),
+        'email': email,
+        'requester': requester,
+        'location': location,
+        'assignee': assignee,
+        'subcontractor': sub,
+        'description': description,
+        'attachments': const [],
+      };
+
+  late final List<Map<String, dynamic>> _tickets = [
+    _t('tk-a1f093', "Fuite d'eau", 'Plomberie (Partie Commune)', 'r-corail', 'Signalé', 'Haute', 3, location: 'Corail · Appartement n° 93 · Étage 1', description: "J'ai une fuite d'eau en urgence sous l'évier, l'eau coule chez le voisin du dessous."),
+    _t('tk-b2c114', 'Ascenseur B bloqué', 'Ascenseur (Partie Commune)', 'r-corail', 'Signalé', 'Urgente', 1, email: 'trois.biens@demo.dz', requester: 'Yacine Belkacem', location: 'Corail · Bloc B', description: "L'ascenseur s'arrête entre le 2e et le 3e étage."),
+    _t('tk-c3d201', 'Interphone hors service', 'Électricité (Partie Commune)', 'r-angelite', 'En cours', 'Moyenne', 30, email: 'un.bien@demo.dz', requester: 'Mehdi Messadi', location: 'Angélite · Bloc A — entrée', assignee: 'Rachid Mansouri'),
+    _t('tk-d4e388', 'Infiltration au parking', 'Plomberie (Partie Commune)', 'r-peridot', 'Signalé', 'Haute', 52, email: 'sarah@demo.dz', requester: 'Sarah Kaci', location: 'Péridot · parking, place 14'),
+    _t('tk-e5f472', 'Porte du hall qui ne ferme plus', 'Menuiserie (Partie Commune)', 'r-selenite', 'En cours', 'Moyenne', 70, email: 'karim@demo.dz', requester: 'Karim Haddad', location: 'Sélénite · hall D', sub: {'id': 's2', 'name': 'Menuiserie Benali'}),
+    _t('tk-f6a519', 'Peinture écaillée cage d\'escalier', 'Peinture (Partie Commune)', 'r-selenite', 'SAV', 'Basse', 140, email: 'nadia@demo.dz', requester: 'Nadia Ouali', location: 'Sélénite · escalier D', sub: {'id': 's3', 'name': 'Déco Peinture Alger'}),
+    _t('tk-a7b630', 'Ampoule grillée palier 3', 'Électricité (Partie Commune)', 'r-angelite', 'Terminé', 'Basse', 200, email: 'un.bien@demo.dz', requester: 'Mehdi Messadi', location: 'Angélite · escalier 3e', assignee: 'Rachid Mansouri'),
+    _t('tk-b8c745', 'Bruit dans la colonne d\'eau', 'Plomberie (Partie Commune)', 'r-corail', 'Rejeté', 'Basse', 260, location: 'Corail · Bloc A'),
+    _t('tk-c9d851', 'Climatisation local technique', 'Climatisation', 'r-peridot', 'Signalé', 'Urgente', 6, email: 'sarah@demo.dz', requester: 'Sarah Kaci', location: 'Péridot · local technique'),
+    _t('tk-d0e962', 'Éclairage parking en panne', 'Électricité (Partie Commune)', 'r-selenite', 'Signalé', 'Moyenne', 20, email: 'karim@demo.dz', requester: 'Karim Haddad', location: 'Sélénite · parking -1'),
+    _t('tk-e1f073', 'Groupe électrogène — révision', 'Électricité (Partie Commune)', 'r-corail', 'En cours', 'Haute', 96, sub: {'id': 's1', 'name': 'ElecPro Services'}),
+    _t('tk-f2a184', 'Nettoyage vitres du hall', 'Nettoyage', 'r-angelite', 'Terminé', 'Basse', 120, email: 'un.bien@demo.dz', requester: 'Mehdi Messadi', assignee: 'Équipe entretien'),
+    _t('tk-a3b295', 'Boîte aux lettres forcée', 'Sécurité', 'r-peridot', 'Signalé', 'Moyenne', 9, email: 'sarah@demo.dz', requester: 'Sarah Kaci', location: 'Péridot · hall C'),
+    _t('tk-b4c306', 'Fissure balcon 5e', 'Maçonnerie', 'r-selenite', 'Terminé', 'Haute', 30 * 24, email: 'nadia@demo.dz', requester: 'Nadia Ouali'),
+  ];
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+    final method = request.method.toUpperCase();
+    var path = request.url.path;
+    final api = path.indexOf('/api');
+    if (api >= 0) path = path.substring(api + 4);
+    Object? body;
+    if (request is http.Request && request.body.isNotEmpty) {
+      try {
+        body = jsonDecode(request.body);
+      } catch (_) {}
+    }
+    final payload = body is Map ? Map<String, dynamic>.from(body) : const {};
+    final (status, value) = _route(method, path, request.url, payload);
+    final bytes = utf8.encode(jsonEncode(value ?? {}));
+    return http.StreamedResponse(Stream.value(bytes), status,
+        headers: {'content-type': 'application/json; charset=utf-8'});
+  }
+
+  Map<String, dynamic> _user() => {
+        'id': 'admin-1',
+        'email': 'admin@demo.dz',
+        'name': 'Samia Rahmani',
+        'fullName': 'Samia Rahmani',
+        'role': role,
+        'zone': 'ALL',
+        'mustChangePassword': false,
+      };
+
+  (int, Object?) _route(
+      String method, String path, Uri url, Map payload) {
+    if (path == '/auth/login' || path == '/auth/me') {
+      return (200, {'token': 'demo-admin', ..._user()});
+    }
+    if (path == '/residences') return (200, _residences);
+    if (path.startsWith('/residences/')) {
+      final id = path.split('/').last;
+      final r = _residences.firstWhere((e) => e['id'] == id,
+          orElse: () => const {});
+      return (200, {
+        ...r,
+        'description': 'Résidence de standing signée Aymen Promotion '
+            'Immobilière, avec jardin arboré et prestations haut de gamme.',
+        'amenities': const ['ascenseur', 'parking', 'climatisation', 'groupe_electrogene'],
+      });
+    }
+    if (path == '/maintenance' && method == 'GET') return (200, _tickets);
+    if (path == '/maintenance' && method == 'POST') {
+      final t = _t('tk-n${_tickets.length}', '${payload['title'] ?? 'Ticket'}',
+          '${payload['category'] ?? ''}', '${payload['residenceId'] ?? ''}',
+          'Signalé', '${payload['priority'] ?? 'Moyenne'}', 0,
+          requester: 'Samia Rahmani', email: 'admin@demo.dz',
+          location: '${payload['location'] ?? ''}',
+          description: '${payload['description'] ?? ''}');
+      _tickets.insert(0, t);
+      return (201, t);
+    }
+    if (path == '/maintenance/categories') return (200, const []);
+    if (path.startsWith('/maintenance/') && path.endsWith('/history')) {
+      final id = path.split('/')[2];
+      final t = _tickets.firstWhere((e) => e['id'] == id, orElse: () => {});
+      final created = '${t['createdAt']}';
+      return (200, {
+        'history': [
+          {'action': 'CREATED', 'actorRole': 'RESIDENT', 'actorName': t['requester'], 'createdAt': created},
+          if ('${t['status']}' != 'Signalé')
+            {'action': 'STATUS_CHANGED', 'fromStatus': 'Signalé', 'toStatus': t['status'], 'actorRole': 'ADMIN', 'actorName': 'Samia Rahmani', 'createdAt': DateTime.parse(created).add(const Duration(hours: 2)).toIso8601String()},
+        ],
+      });
+    }
+    if (path.startsWith('/maintenance/')) {
+      final id = path.split('/').last;
+      final t = _tickets.firstWhere((e) => e['id'] == id, orElse: () => {});
+      if (method != 'GET') {
+        t.addAll(Map<String, dynamic>.from(payload));
+        if (payload.containsKey('subcontractorId')) {
+          t['subcontractor'] = payload['subcontractorId'] == null
+              ? null
+              : {'id': payload['subcontractorId'], 'name': _subName('${payload['subcontractorId']}')};
+        }
+      }
+      return (200, t);
+    }
+    if (path.startsWith('/messages/ticket/')) return (200, const []);
+    if (path == '/owners') return (200, _residents);
+    if (path == '/subcontractors') {
+      return (200, [
+        {'id': 's1', 'name': 'ElecPro Services', 'specialty': 'Électricité'},
+        {'id': 's2', 'name': 'Menuiserie Benali', 'specialty': 'Menuiserie'},
+        {'id': 's3', 'name': 'Déco Peinture Alger', 'specialty': 'Peinture'},
+        {'id': 's4', 'name': 'HydroFix', 'specialty': 'Plomberie'},
+      ]);
+    }
+    if (path == '/users') {
+      return switch (url.queryParameters['role']) {
+        'RESPONSABLE_ZONE' => (200, [
+            {'name': 'Farid Zerrouki', 'zone': 'Alger Ouest'},
+          ]),
+        'INTERVENANT' => (200, [
+            {'name': 'Rachid Mansouri', 'profession': 'Électricien'},
+            {'name': 'Équipe entretien', 'profession': 'Entretien'},
+          ]),
+        _ => (200, const []),
+      };
+    }
+    if (path == '/financial/client-status') return (200, {'status': 'Impayé'});
+    if (path == '/dashboard') {
+      return (200, {
+        'stats': {'ticketsCount': _tickets.length, 'totalResidences': 4, 'occupancyRate': '87%', 'monthlyRevenue': '4,2 M DZD'},
+      });
+    }
+    if (path == '/notifications/unread-count') return (200, {'count': 2});
+    if (path == '/notifications') return (200, const []);
+    return (200, const []);
+  }
+
+  static String _subName(String id) => switch (id) {
+        's1' => 'ElecPro Services',
+        's2' => 'Menuiserie Benali',
+        's3' => 'Déco Peinture Alger',
+        's4' => 'HydroFix',
+        _ => 'Sous-traitant',
+      };
+}
