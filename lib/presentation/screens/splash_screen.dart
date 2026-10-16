@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_brand_logo.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
@@ -88,17 +89,13 @@ class _SplashScreenState extends State<SplashScreen>
                   // plus que la marque elle-meme.
                   child: Transform.scale(
                     scale: 0.985 + 0.015 * logo,
-                    child: Image.asset(
-                      isDark
-                          ? 'assets/brand/gis_logo_vertical_dark.png'
-                          : 'assets/brand/gis_logo_vertical_light.png',
+                    // Logo vectoriel : l'image d'avant, decodee a 460 pixels
+                    // pour un affichage qui en demande plus de 550, sortait
+                    // floue.
+                    child: GiBrandLogo(
                       height: 184,
-                      fit: BoxFit.contain,
-                      // Decode a la taille d'affichage : sinon la premiere
-                      // image du splash attend le decodage de 717 pixels de
-                      // cote, et l'animation demarre en retard.
-                      cacheHeight: 460,
-                      filterQuality: FilterQuality.medium,
+                      color: GiBrandLogo.colorFor(
+                          isDark ? Brightness.dark : Brightness.light),
                     ),
                   ),
                 ),
@@ -114,10 +111,15 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Text(
                       t.splashSlogan,
                       textAlign: TextAlign.center,
+                      // Gris clair et graisse medium : en gris moyen et en
+                      // regular sur le halo dore, le texte paraissait flou.
                       style: FigText.field.copyWith(
                         height: 1.3,
-                        letterSpacing: 0.3,
-                        color: c.textMuted,
+                        letterSpacing: 0.4,
+                        fontWeight: FontWeight.w500,
+                        color: GiBrandLogo.colorFor(
+                                isDark ? Brightness.dark : Brightness.light)
+                            .withValues(alpha: 0.82),
                       ),
                     ),
                   ),

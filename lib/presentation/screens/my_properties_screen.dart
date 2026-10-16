@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_brand_logo.dart';
 import '../services/gi_haptics.dart';
 import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -273,12 +274,10 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     return Column(
       children: [
         SizedBox(height: compact ? FigSpace.md : FigSpace.lg),
-        Image.asset(
-          isDark
-              ? 'assets/brand/gis_logo_vertical_dark.png'
-              : 'assets/brand/gis_logo_vertical_light.png',
+        GiBrandLogo(
           height: compact ? 48 : 90,
-          fit: BoxFit.contain,
+          color: GiBrandLogo.colorFor(
+              isDark ? Brightness.dark : Brightness.light),
         ),
         SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
         if (name.isNotEmpty) ...[

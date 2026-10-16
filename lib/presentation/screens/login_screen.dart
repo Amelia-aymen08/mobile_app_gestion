@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import '../widgets/gi_brand_logo.dart';
 import '../services/gi_haptics.dart';
 import '../widgets/gi_alert_dialog.dart';
 import 'package:provider/provider.dart';
@@ -165,12 +166,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               // Figma et on laisse la largeur suivre, plutot
                               // que de rogner la marque pour tenir dans la
                               // boite.
-                              child: Image.asset(
-                                isDark
-                                    ? 'assets/brand/gis_logo_vertical_dark.png'
-                                    : 'assets/brand/gis_logo_vertical_light.png',
+                              child: GiBrandLogo(
                                 height: 98,
-                                fit: BoxFit.contain,
+                                color: GiBrandLogo.colorFor(isDark
+                                    ? Brightness.dark
+                                    : Brightness.light),
                               ),
                             ),
                             const SizedBox(height: 28),

@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_brand_logo.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/api_service.dart';
@@ -274,12 +275,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 const SizedBox(height: FigSpace.lg),
                 Center(
-                  child: Image.asset(
-                    isDark
-                        ? 'assets/brand/gis_logo_vertical_dark.png'
-                        : 'assets/brand/gis_logo_vertical_light.png',
+                  child: GiBrandLogo(
                     height: 98,
-                    fit: BoxFit.contain,
+                    color: GiBrandLogo.colorFor(
+                        isDark ? Brightness.dark : Brightness.light),
                   ),
                 ),
                 const SizedBox(height: 28),
