@@ -25,6 +25,7 @@ import '../providers/auth_provider.dart';
 import '../../data/api_service.dart';
 import 'resident_create_ticket_screen.dart';
 import 'chat_screen.dart';
+import '../widgets/gi_scroll_blur.dart';
 
 class ResidentTicketsScreen extends StatefulWidget {
   const ResidentTicketsScreen({super.key});
@@ -302,7 +303,8 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
             ),
             const SizedBox(height: FigSpace.xl),
             Expanded(
-              child: _loading
+              child: GiScrollBlur.edge(
+                child: _loading
                   ? const GiSkeletonList()
                   : TabBarView(
                       controller: _tabController,
@@ -311,6 +313,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
                         _buildList(c, t, _coproTickets),
                       ],
                     ),
+              ),
             ),
           ],
         ),

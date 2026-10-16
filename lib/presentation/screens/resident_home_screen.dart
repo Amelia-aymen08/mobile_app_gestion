@@ -32,6 +32,7 @@ import 'property_add_request_screen.dart';
 import 'resident_tickets_screen.dart';
 import 'household_members_screen.dart';
 import 'notices_screen.dart';
+import '../widgets/gi_scroll_blur.dart';
 
 class ResidentHomeScreen extends StatefulWidget {
   const ResidentHomeScreen({super.key});
@@ -320,13 +321,22 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       minimizeController: _navMinimize,
       onTap: (i) => setState(() => _tab = i),
       items: [
-        GiNavItem(asset: 'assets/figma/icons/nav_home.svg', label: t.navHome),
         GiNavItem(
-            asset: 'assets/figma/icons/nav_notice.svg', label: t.navNotice),
+            asset: 'assets/figma/icons/nav_home.svg',
+            activeAsset: 'assets/figma/icons/nav_home_fill.svg',
+            label: t.navHome),
         GiNavItem(
-            asset: 'assets/figma/icons/nav_report.svg', label: t.navReport),
+            asset: 'assets/figma/icons/nav_notice.svg',
+            activeAsset: 'assets/figma/icons/nav_notice_fill.svg',
+            label: t.navNotice),
         GiNavItem(
-            asset: 'assets/figma/icons/nav_payment.svg', label: t.navPayment),
+            asset: 'assets/figma/icons/nav_report.svg',
+            activeAsset: 'assets/figma/icons/nav_report_fill.svg',
+            label: t.navReport),
+        GiNavItem(
+            asset: 'assets/figma/icons/nav_payment.svg',
+            activeAsset: 'assets/figma/icons/nav_payment_fill.svg',
+            label: t.navPayment),
         GiNavItem(
             asset: 'assets/figma/icons/nav_more.svg',
             label: t.navMore,
@@ -354,9 +364,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
       return s == 'EN_COURS';
     }).length;
 
-    return SafeArea(
-      bottom: false,
+    return GiScrollBlur(
       child: CustomScrollView(
+        clipBehavior: Clip.none,
         physics: giRefreshPhysics,
         slivers: [
           GiRefreshControl(onRefresh: () async {
@@ -1001,9 +1011,9 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final lot = (property['lotNumber'] ?? '').toString();
     final block = (property['block'] ?? '').toString();
 
-    return SafeArea(
-      bottom: false,
+    return GiScrollBlur(
       child: ListView(
+        clipBehavior: Clip.none,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
             FigSpace.pagePadding,

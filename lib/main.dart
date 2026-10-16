@@ -28,6 +28,10 @@ Future<void> main() async {
     statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
   ));
+  // L'app se tient en portrait : aucun ecran n'est pense pour l'italienne.
+  // Info.plist et le manifeste Android le disent aussi, pour que l'ecran
+  // de lancement ne pivote pas avant que Flutter ne prenne la main.
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   final themeProvider = ThemeProvider();
   final localeProvider = LocaleProvider();
   await Future.wait([
