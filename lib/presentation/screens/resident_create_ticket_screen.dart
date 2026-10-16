@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../services/gi_haptics.dart';
 import '../widgets/gi_alert_dialog.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
+import '../theme/ticket_categories.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
@@ -168,6 +170,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
   }
 
   void _warn(String message) {
+    GiHaptics.error();
     final t = AppL10n.of(context);
     showGiAlert<void>(
       context: context,
@@ -221,12 +224,14 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
       }
 
       if (!mounted) return;
+      GiHaptics.success();
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signalement envoyé.')));
     } catch (e) {
       if (mounted) {
         final raw = e.toString();
         final msg = raw.replaceFirst(RegExp(r'^Exception:\s*'), '');
+        GiHaptics.error();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.isNotEmpty ? msg : 'Erreur')));
       }
     } finally {
@@ -297,6 +302,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                   _selectedCategory = v;
                   _selectedSubCategory = null;
                 }),
+                iconFor: ticketCategoryIcon,
               ),
               if (_subCategoriesForSelected.isNotEmpty) ...[
                 const SizedBox(height: 17),
@@ -334,8 +340,9 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
       _selectedSubCategory != null &&
       _descController.text.trim().isNotEmpty;
 
-  Widget _label(GiColors c, String text) =>
-      Text(text, style: FigText.fieldLabel.copyWith(color: c.textBody));
+  Widget _label(GiColors c, String text) => Text(text,
+      style: FigText.fieldLabel.copyWith(
+          color: c.textBody, fontSize: 15, fontWeight: FontWeight.w600));
 
   /// Rappel du bien concerne. Absent du Figma, mais un resident peut posseder
   /// plusieurs biens : sans ce rappel il ne sait pas lequel il signale.
@@ -363,40 +370,57 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     );
   }
 
-  /// Puces de selection — composant "Fillter" du Figma en version 6 de rayon :
-  /// selectionnee en bleu a 5 % sur trait a 10 %, les autres en gris.
+  /// Puces de selection en pilule : une icone devant le libelle quand
+  /// [iconFor] est fourni, et la puce choisie pleine aux couleurs du bouton
+  /// principal, pour qu'on voie d'un coup d'oeil ce qui est retenu.
   Widget _chips(GiColors c, List<String> values, String? selected,
-      ValueChanged<String> onPick) {
+      ValueChanged<String> onPick,
+      {IconData Function(String)? iconFor}) {
     return Wrap(
       spacing: FigSpace.md,
-      runSpacing: FigSpace.md,
+      runSpacing: FigSpace.md + 2,
       children: [
         for (final v in values)
-          GiPressable(
-            pressedScale: 0.94,
-            onTap: () => onPick(v),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: v == selected
-                    ? FigAccent.chipFill(_chipBlue)
-                    : c.card,
-                border: Border.all(
-                    color: v == selected
-                        ? FigAccent.chipBorder(_chipBlue)
-                        : c.cardBorder),
-                borderRadius: BorderRadius.circular(FigRadius.pill),
+          Builder(builder: (context) {
+            final on = v == selected;
+            final fg = on ? c.ctaText : c.textBody;
+            return GiPressable(
+              pressedScale: 0.94,
+              haptic: false,
+              onTap: () {
+              if (v != selected) GiHaptics.select();
+              onPick(v);
+            },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                padding:
+                    EdgeInsets.fromLTRB(iconFor != null ? 14 : 16, 10, 16, 10),
+                decoration: BoxDecoration(
+                  color: on ? c.ctaBg : c.fieldBg,
+                  border: Border.all(color: on ? c.ctaBg : c.fieldBorder),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (iconFor != null) ...[
+                      Icon(iconFor(v), size: 18, color: fg),
+                      const SizedBox(width: FigSpace.md),
+                    ],
+                    Flexible(
+                      child: Text(
+                        v,
+                        style: FigText.fieldLabel.copyWith(
+                            color: fg,
+                            fontWeight: on ? FontWeight.w600 : FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Text(
-                v,
-                style: FigText.fieldLabel.copyWith(
-                    color: v == selected ? _chipBlue : c.fieldHint),
-              ),
-            ),
-          ),
+            );
+          }),
       ],
     );
   }
@@ -491,6 +515,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                   padding: const EdgeInsets.only(bottom: FigSpace.md),
                   child: GiCard(
                     onTap: () {
+                      if (value != _priority) GiHaptics.select();
                       setState(() => _priority = value);
                       Navigator.pop(sheetContext);
                     },
@@ -582,11 +607,7 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SvgPicture.asset('assets/figma/icons/camera_24.svg',
-                          width: 18,
-                          height: 18,
-                          colorFilter: const ColorFilter.mode(
-                              FigBrand.amber, BlendMode.srcIn)),
+                      const Icon(Icons.photo_camera_outlined, size: 18, color: FigBrand.amber),
                       const SizedBox(width: FigSpace.lg),
                       Flexible(
                         child: Text(t.attachPhoto,
@@ -615,6 +636,3 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
   }
 }
-
-/// Bleu des puces selectionnees, propre a cet ecran dans le Figma.
-const _chipBlue = Color(0xFF0088FF);

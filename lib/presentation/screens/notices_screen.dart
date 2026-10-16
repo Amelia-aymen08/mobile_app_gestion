@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../services/system_notification_service.dart';
 // `intl` exporte aussi un type TextDirection, qui masque celui de Flutter et
@@ -129,8 +130,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList()
                   : CustomScrollView(
                       physics: giRefreshPhysics,
                       slivers: [

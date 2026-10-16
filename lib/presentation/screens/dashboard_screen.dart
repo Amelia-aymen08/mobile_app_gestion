@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -79,7 +80,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         bottom: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: brandAmber))
+            ? const GiSkeletonList()
             : RefreshIndicator(
                 onRefresh: _load,
                 child: ListView(

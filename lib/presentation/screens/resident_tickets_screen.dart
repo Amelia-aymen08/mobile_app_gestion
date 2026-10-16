@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../services/gi_haptics.dart';
+import '../widgets/gi_skeleton.dart';
 import '../widgets/gi_alert_dialog.dart';
 import '../services/file_opener.dart';
 import 'package:file_picker/file_picker.dart';
@@ -9,6 +11,7 @@ import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/gi_appear.dart';
 import '../theme/gi_colors.dart';
+import '../theme/ticket_categories.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
@@ -300,8 +303,7 @@ class _ResidentTicketsScreenState extends State<ResidentTicketsScreen>
             const SizedBox(height: FigSpace.xl),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList()
                   : TabBarView(
                       controller: _tabController,
                       children: [
@@ -624,6 +626,7 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
                 maxScale: 5,
                 child: Center(
                   child: Image.network(url,
+                      loadingBuilder: giImageLoading,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) => const Icon(
                           Icons.broken_image_outlined,
@@ -703,6 +706,7 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
       final added =
           await _api.uploadTicketAttachments(ticketId: _id, files: files);
       if (!mounted) return;
+      GiHaptics.success();
       setState(() {
         _ticket = {
           ..._ticket,
@@ -730,6 +734,7 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
       };
 
   void _warn(String message) {
+    GiHaptics.error();
     final t = AppL10n.of(context);
     showGiAlert<void>(
       context: context,
@@ -763,7 +768,7 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
         final from = (item['fromStatus'] ?? '').toString();
         final to = (item['toStatus'] ?? '').toString();
         if (from.isEmpty) return t.historyStatus(_statusText(t, to));
-        return t.historyStatusFromTo(_statusText(t, to), _statusText(t, from));
+        return t.historyStatusFromTo(_statusText(t, from), _statusText(t, to));
       case 'ASSIGNED':
         return t.historyAssigned;
       case 'INFO_MESSAGE':
@@ -826,11 +831,11 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(
                       FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
                   children: [
-                    _contentCard(c, t, status, description),
+                    _contentCard(c, t, status, category, priority, description),
                     const SizedBox(height: FigSpace.lg),
                     _pipelineCard(c, t, status),
                     const SizedBox(height: FigSpace.lg),
-                    _factsCard(c, t, category, priority),
+                    _factsCard(c, t),
                     if (_infos.isNotEmpty) ...[
                       const SizedBox(height: FigSpace.lg),
                       _infoCard(c, t),
@@ -857,6 +862,7 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
                       ticketId: _id,
                       title: widget.title,
                       subtitle: widget.ref,
+                      status: (_ticket['status'] ?? '').toString(),
                     ),
                   ),
                 ),
@@ -912,120 +918,82 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
     );
   }
 
-  Widget _contentCard(
-      GiColors c, AppL10n t, String status, String description) {
+  /// En-tete du signalement : pastille d'icone de la categorie, titre, puis
+  /// statut et priorite en pilules — ce qu'on cherche d'abord en ouvrant.
+  Widget _contentCard(GiColors c, AppL10n t, String status, String category,
+      String priority, String description) {
+    final prio = _priorityColor(priority);
     return GiCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: FigAccent.chipFill(widget.statusColor),
+                  color: FigBrand.amber.withValues(alpha: 0.12),
                   border:
-                      Border.all(color: FigAccent.chipBorder(widget.statusColor)),
-                  borderRadius: BorderRadius.circular(FigRadius.pill),
+                      Border.all(color: FigBrand.amber.withValues(alpha: 0.25)),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Text(_statusText(t, status),
-                    style:
-                        FigText.caption.copyWith(color: widget.statusColor)),
+                child: Icon(ticketCategoryIcon(category),
+                    size: 26, color: FigBrand.amber),
               ),
-              const Spacer(),
-              Text(widget.ref,
-                  style: FigText.label.copyWith(color: c.textFaint)),
+              const SizedBox(width: FigSpace.lg + 2),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(category,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  FigText.label.copyWith(color: c.textMuted)),
+                        ),
+                        const SizedBox(width: FigSpace.md),
+                        Text(widget.ref,
+                            style: FigText.label.copyWith(color: c.textFaint)),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(widget.title,
+                        style: FigText.titleMd.copyWith(
+                            fontSize: 18, height: 1.25, color: c.textBody)),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: FigSpace.xl),
-          Text(widget.title,
-              style:
-                  FigText.statValue.copyWith(height: 1.2, color: c.textBody)),
+          const SizedBox(height: FigSpace.lg),
+          Wrap(
+            spacing: FigSpace.md,
+            runSpacing: FigSpace.md,
+            children: [
+              _pill(_statusText(t, status), _statusAccent(status),
+                  icon: Icons.circle, iconSize: 8),
+              if (priority.isNotEmpty)
+                _pill(_priorityText(t, priority), prio,
+                    icon: Icons.flag_rounded),
+            ],
+          ),
           if (description.isNotEmpty) ...[
-            const SizedBox(height: FigSpace.md),
-            Text(description,
-                style: FigText.body.copyWith(height: 1.4, color: c.textMuted)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Fil de traitement : trois jalons du serveur — depot, prise en charge,
-  /// cloture. Le point est plein quand l'etape a eu lieu, et porte son
-  /// horodatage ; les etapes a venir restent grises.
-  Widget _pipelineCard(GiColors c, AppL10n t, String status) {
-    final opened = _fmtDateTime(_ticket['createdAt']);
-    final started = _fmtDateTime(_historyPayload?['startedAt']);
-    final closed = _fmtDateTime(_historyPayload?['closedAt']);
-
-    final steps = <({String label, String date, bool done})>[
-      (label: t.pipelineOpened, date: opened, done: opened.isNotEmpty),
-      (
-        label: t.pipelineStarted,
-        date: started.isEmpty ? t.pipelinePending : started,
-        done: started.isNotEmpty
-      ),
-      (
-        label: t.pipelineClosed,
-        date: closed.isEmpty ? t.pipelinePending : closed,
-        done: closed.isNotEmpty
-      ),
-    ];
-
-    return GiCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var i = 0; i < steps.length; i++) ...[
-            if (i > 0)
-              // Trait de liaison, a hauteur des pastilles.
-              Container(
-                width: 18,
-                height: 2,
-                margin: const EdgeInsets.only(top: 7),
-                color: steps[i].done ? FigBrand.amber : c.innerBorder,
+            const SizedBox(height: FigSpace.lg),
+            Container(
+              padding: const EdgeInsets.all(FigSpace.lg),
+              decoration: BoxDecoration(
+                color: c.fieldBg,
+                borderRadius: BorderRadius.circular(FigRadius.field + 2),
               ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: steps[i].done
-                          ? FigBrand.amber
-                          : Colors.transparent,
-                      border: Border.all(
-                          color: steps[i].done
-                              ? FigBrand.amber
-                              : c.innerBorder,
-                          width: 2),
-                    ),
-                    child: steps[i].done
-                        ? SvgPicture.asset(
-                            'assets/figma/icons/check_14.svg',
-                            width: 8,
-                            height: 8,
-                            colorFilter: const ColorFilter.mode(
-                                Colors.white, BlendMode.srcIn),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: FigSpace.md),
-                  Text(steps[i].label,
-                      style: FigText.caption.copyWith(
-                          color: steps[i].done ? c.textBody : c.textFaint)),
-                  const SizedBox(height: 2),
-                  Text(steps[i].date,
-                      style: FigText.caption.copyWith(
-                          fontSize: 9, height: 1.3, color: c.textFaint)),
-                ],
-              ),
+              child: Text(description,
+                  style: FigText.fieldLabel
+                      .copyWith(height: 1.45, color: c.textBody)),
             ),
           ],
         ],
@@ -1033,62 +1001,260 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
     );
   }
 
-  Widget _factsCard(GiColors c, AppL10n t, String category, String priority) {
-    Widget row(String label, Widget value, {bool last = false}) => Container(
-          padding: EdgeInsets.only(bottom: last ? 0 : FigSpace.lg),
-          margin: EdgeInsets.only(bottom: last ? 0 : FigSpace.lg),
-          decoration: last
-              ? null
-              : BoxDecoration(
-                  border: Border(bottom: BorderSide(color: c.innerBorder)),
-                ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(label,
-                    style: FigText.body.copyWith(color: c.textMuted)),
-              ),
-              const SizedBox(width: FigSpace.lg),
-              value,
+  /// Couleur du statut, quelle que soit son ecriture (« En cours »,
+  /// « EN_COURS »...) : la table de la liste ne connait que la premiere.
+  Color _statusAccent(String status) {
+    final s = status.toUpperCase();
+    if (s.startsWith('TERMIN') || s == 'RESOLU') return FigAlert.success;
+    if (s == 'EN_COURS' || s == 'EN COURS') return FigAccent.blue;
+    if (s.startsWith('REJET')) return FigAlert.error;
+    return FigBrand.amber;
+  }
+
+  Widget _pill(String label, Color accent,
+      {required IconData icon, double iconSize = 14}) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 5, 12, 5),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(100),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: iconSize, color: accent),
+          const SizedBox(width: 6),
+          Text(label,
+              style: FigText.label
+                  .copyWith(color: accent, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  /// Le formulaire envoie « Haute », d'anciens tickets portent « HAUTE ».
+  String _priorityText(AppL10n t, String value) =>
+      switch (value.toUpperCase()) {
+        'BASSE' => t.priorityLow,
+        'MOYENNE' => t.priorityMedium,
+        'HAUTE' => t.priorityHigh,
+        'URGENTE' => t.priorityUrgent,
+        _ => value,
+      };
+
+  Color _priorityColor(String value) => switch (value.toUpperCase()) {
+        'BASSE' => FigNeutral.n40,
+        'HAUTE' => FigBrand.amber,
+        'URGENTE' => FigAlert.error,
+        _ => FigAccent.blue,
+      };
+
+  /// Suivi en colonne : depot, prise en charge, cloture. Les etapes passees
+  /// portent une coche et leur horodatage, l'etape en cours un halo et la
+  /// mention « Étape actuelle », les suivantes disent ce qui va se passer.
+  ///
+  /// Le statut du ticket complete l'historique : un ticket « En cours » dont
+  /// le serveur n'a pas renvoye la date de prise en charge reste pris en
+  /// charge.
+  Widget _pipelineCard(GiColors c, AppL10n t, String status) {
+    final s = status.toUpperCase();
+    final finished = s.startsWith('TERMIN') || s == 'RESOLU';
+    final inProgress = finished || s == 'EN COURS' || s == 'EN_COURS';
+
+    final opened = _fmtDateTime(_ticket['createdAt']);
+    final started = _fmtDateTime(_historyPayload?['startedAt']);
+    final closed = _fmtDateTime(_historyPayload?['closedAt']);
+
+    final steps = <({String label, String detail, bool done})>[
+      (label: t.pipelineOpened, detail: opened, done: true),
+      (
+        label: t.pipelineStarted,
+        detail: started.isNotEmpty ? started : t.pipelineStartedHint,
+        done: started.isNotEmpty || inProgress,
+      ),
+      (
+        label: t.pipelineClosed,
+        detail: closed.isNotEmpty ? closed : t.pipelineClosedHint,
+        done: closed.isNotEmpty || finished,
+      ),
+    ];
+    // L'etape actuelle est la derniere atteinte : un ticket pris en charge
+    // est « en prise en charge », pas « en cloture ». Termine, plus aucune.
+    final current = finished ? -1 : steps.lastIndexWhere((e) => e.done);
+
+    return GiCard(
+      child: Column(
+        children: [
+          for (var i = 0; i < steps.length; i++)
+            _stepRow(
+              c,
+              t,
+              label: steps[i].label,
+              detail: steps[i].detail,
+              state: i == current
+                  ? _Step.current
+                  : (steps[i].done ? _Step.done : _Step.pending),
+              lineActive: i + 1 < steps.length && steps[i + 1].done,
+              last: i == steps.length - 1,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepRow(GiColors c, AppL10n t,
+      {required String label,
+      required String detail,
+      required _Step state,
+      required bool lineActive,
+      required bool last}) {
+    final faint = c.textFaint.withValues(alpha: 0.35);
+    const amber = FigBrand.amber;
+
+    final Widget node = switch (state) {
+      _Step.done => Container(
+          width: 28,
+          height: 28,
+          decoration: const BoxDecoration(color: amber, shape: BoxShape.circle),
+          child: Icon(Icons.check_rounded, size: 18, color: c.ctaText),
+        ),
+      _Step.current => Container(
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: amber,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                  color: amber.withValues(alpha: 0.25),
+                  blurRadius: 0,
+                  spreadRadius: 5),
             ],
           ),
-        );
+          child: Icon(Icons.check_rounded, size: 18, color: c.ctaText),
+        ),
+      _Step.pending => Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: faint, width: 2),
+          ),
+        ),
+    };
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 28,
+            child: Column(
+              children: [
+                node,
+                if (!last)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: lineActive ? amber : faint,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: FigSpace.lg + 2),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(top: 3, bottom: last ? 0 : 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(label,
+                            style: FigText.field.copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: state == _Step.pending
+                                    ? c.textMuted
+                                    : c.textBody)),
+                      ),
+                      if (state == _Step.current) ...[
+                        const SizedBox(width: FigSpace.md),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Text(t.pipelineCurrent,
+                              style: FigText.caption.copyWith(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: amber)),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(detail,
+                      style: FigText.label.copyWith(
+                          color:
+                              state == _Step.done ? c.textMuted : c.textFaint)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _factsCard(GiColors c, AppL10n t) {
+    final location = (_ticket['location'] ?? '').toString().trim();
+    final rows = <(String, String)>[
+      if (location.isNotEmpty) (t.ticketLocation, location),
+      (t.reportedOn, widget.dateTimeLabel),
+    ];
 
     return GiCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          row(
-            t.reportedOn,
-            Text(widget.dateTimeLabel,
-                style: FigText.field.copyWith(color: c.textBody)),
-          ),
-          if (category.isNotEmpty)
-            row(
-              t.category,
-              Flexible(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: FigAccent.chipFill(_reportBlue),
-                    border:
-                        Border.all(color: FigAccent.chipBorder(_reportBlue)),
-                    borderRadius: BorderRadius.circular(FigRadius.pill),
+          for (var i = 0; i < rows.length; i++)
+            Container(
+              padding: EdgeInsets.only(
+                  bottom: i == rows.length - 1 ? 0 : FigSpace.lg),
+              margin: EdgeInsets.only(
+                  bottom: i == rows.length - 1 ? 0 : FigSpace.lg),
+              decoration: i == rows.length - 1
+                  ? null
+                  : BoxDecoration(
+                      border: Border(bottom: BorderSide(color: c.innerBorder)),
+                    ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(rows[i].$1,
+                      style: FigText.body.copyWith(color: c.textMuted)),
+                  const SizedBox(width: FigSpace.xl),
+                  Expanded(
+                    child: Text(rows[i].$2,
+                        textAlign: TextAlign.end,
+                        style: FigText.fieldLabel.copyWith(
+                            fontWeight: FontWeight.w500, color: c.textBody)),
                   ),
-                  child: Text(category,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: FigText.caption.copyWith(color: _reportBlue)),
-                ),
+                ],
               ),
             ),
-          row(
-            t.priorityLabel,
-            Text(priority.isEmpty ? '—' : priority,
-                style: FigText.field.copyWith(color: c.textBody)),
-            last: true,
-          ),
         ],
       ),
     );
@@ -1199,6 +1365,7 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
           height: 102,
           child: _isImage(a) && url != null
               ? Image.network(url,
+                  loadingBuilder: giImageLoading,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => ColoredBox(color: c.innerBorder))
               : Container(
@@ -1208,12 +1375,8 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (busy)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: FigBrand.amber),
-                        )
+                        const GiShimmer(
+                            child: GiBone(width: 16, height: 16, radius: 8))
                       else
                         SvgPicture.asset(
                           'assets/figma/icons/documents_20.svg',
@@ -1240,26 +1403,68 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
     );
   }
 
-  /// Historique : une ligne par evenement, reliee par un trait vertical.
-  /// C'est la chronologie demandee au back-end, telle qu'il la renvoie.
-  Widget _historyCard(GiColors c, AppL10n t, List<Map<dynamic, dynamic>> items) {
+  /// Historique, en bas de page : chaque evenement a sa pastille d'icone et
+  /// sa couleur selon sa nature, sa note dans un encart, puis la date et son
+  /// auteur. C'est la chronologie renvoyee par le back-end, dans son ordre.
+  Widget _historyCard(
+      GiColors c, AppL10n t, List<Map<dynamic, dynamic>> items) {
     return GiCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(t.ticketHistory,
-              style: FigText.titleMd.copyWith(color: c.textBody)),
-          const SizedBox(height: FigSpace.xl),
-          if (_loading && items.isEmpty)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: FigSpace.lg),
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: FigBrand.amber),
+          Row(
+            children: [
+              Icon(Icons.history_rounded, size: 20, color: c.textBody),
+              const SizedBox(width: FigSpace.md),
+              Expanded(
+                child: Text(t.ticketHistory,
+                    style: FigText.titleMd.copyWith(color: c.textBody)),
+              ),
+              if (items.isNotEmpty)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: c.fieldBg,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Text('${items.length}',
+                      style: FigText.label.copyWith(
+                          fontWeight: FontWeight.w600, color: c.textMuted)),
                 ),
+            ],
+          ),
+          const SizedBox(height: FigSpace.xl + 2),
+          if (_loading && items.isEmpty)
+            // Trois evenements fantomes le temps que l'historique arrive.
+            GiShimmer(
+              child: Column(
+                children: [
+                  for (var i = 0; i < 3; i++)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: i == 2 ? 0 : 18),
+                      child: const Row(
+                        children: [
+                          GiBone.circle(size: 32),
+                          SizedBox(width: FigSpace.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FractionallySizedBox(
+                                    widthFactor: 0.6,
+                                    child: GiBone(height: 12)),
+                                SizedBox(height: 8),
+                                FractionallySizedBox(
+                                    widthFactor: 0.4,
+                                    child: GiBone(height: 10)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             )
           else
@@ -1270,74 +1475,101 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
     );
   }
 
+  (IconData, Color) _historyVisual(Map item) =>
+      switch ((item['action'] ?? '').toString()) {
+        'CREATED' => (Icons.add_rounded, FigBrand.amber),
+        'STATUS_CHANGED' => (Icons.sync_rounded, FigAccent.blue),
+        'ASSIGNED' => (Icons.engineering_rounded, FigAccent.violet),
+        'INFO_MESSAGE' => (Icons.campaign_rounded, FigBrand.amber),
+        'ATTACHMENT_ADDED' => (Icons.attach_file_rounded, FigAccent.purple),
+        _ => (Icons.circle, FigNeutral.n40),
+      };
+
   Widget _historyRow(GiColors c, AppL10n t, Map item, {required bool last}) {
     final actor = _actorLabel(t, item);
     final note = (item['note'] ?? '').toString();
+    final (icon, accent) = _historyVisual(item);
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            children: [
-              Container(
-                width: 9,
-                height: 9,
-                margin: const EdgeInsets.only(top: 5),
-                decoration: const BoxDecoration(
-                    color: FigBrand.amber, shape: BoxShape.circle),
-              ),
-              if (!last)
-                Expanded(
-                  child: Container(
-                    width: 1,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    color: c.innerBorder,
+          SizedBox(
+            width: 32,
+            child: Column(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: accent.withValues(alpha: 0.3)),
                   ),
+                  child: Icon(icon,
+                      size: icon == Icons.circle ? 8 : 16, color: accent),
                 ),
-            ],
+                if (!last)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: c.textFaint.withValues(alpha: 0.25),
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(width: FigSpace.lg),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: last ? 0 : FigSpace.xl),
+              padding: EdgeInsets.only(top: 6, bottom: last ? 0 : 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(_historyLabel(t, item),
-                      style: FigText.fieldLabel
-                          .copyWith(height: 1.3, color: c.textBody)),
-                  if (note.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(note,
-                        style: FigText.body
-                            .copyWith(height: 1.4, color: c.textMuted)),
-                  ],
-                  const SizedBox(height: FigSpace.xs),
-                  Row(
+                      style: FigText.fieldLabel.copyWith(
+                          height: 1.3,
+                          fontWeight: FontWeight.w600,
+                          color: c.textBody)),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
                       Text(_fmtDateTime(item['createdAt']),
-                          style:
-                              FigText.caption.copyWith(color: c.textFaint)),
-                      if (actor.isNotEmpty) ...[
-                        const SizedBox(width: FigSpace.xs),
+                          style: FigText.label.copyWith(color: c.textFaint)),
+                      if (actor.isNotEmpty)
                         Container(
-                          width: 3,
-                          height: 3,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 1),
                           decoration: BoxDecoration(
-                              color: c.textFaint, shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: FigSpace.xs),
-                        Flexible(
+                            color: c.fieldBg,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
                           child: Text(actor,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: FigText.caption
-                                  .copyWith(color: c.textFaint)),
+                              style: FigText.label
+                                  .copyWith(fontSize: 11, color: c.textMuted)),
                         ),
-                      ],
                     ],
                   ),
+                  if (note.isNotEmpty) ...[
+                    const SizedBox(height: FigSpace.md),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(FigSpace.lg - 2),
+                      decoration: BoxDecoration(
+                        color: c.fieldBg,
+                        borderRadius: BorderRadius.circular(FigRadius.field),
+                      ),
+                      child: Text(note,
+                          style: FigText.body
+                              .copyWith(height: 1.4, color: c.textBody)),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1347,6 +1579,8 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
     );
   }
 }
+
+enum _Step { done, current, pending }
 
 /// Tuile d'ajout de photo : cadre en trait discontinu, icone puis libelle.
 class _AddPhotoTile extends StatelessWidget {
@@ -1376,10 +1610,7 @@ class _AddPhotoTile extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset('assets/figma/icons/camera_24.svg',
-                  width: 16,
-                  height: 16,
-                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn)),
+              Icon(Icons.photo_camera_outlined, size: 16, color: color),
               const SizedBox(height: FigSpace.sm),
               Text(label,
                   style: FigText.fieldLabel.copyWith(color: color)),

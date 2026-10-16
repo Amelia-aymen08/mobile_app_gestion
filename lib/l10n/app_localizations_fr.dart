@@ -805,6 +805,18 @@ class AppL10nFr extends AppL10n {
   String get pipelinePending => 'En attente';
 
   @override
+  String get ticketLocation => 'Logement';
+
+  @override
+  String get pipelineCurrent => 'Étape actuelle';
+
+  @override
+  String get pipelineStartedHint => 'L\'équipe va examiner votre demande';
+
+  @override
+  String get pipelineClosedHint => 'Vous serez notifié à la clôture';
+
+  @override
   String get historyCreated => 'Signalement créé';
 
   @override

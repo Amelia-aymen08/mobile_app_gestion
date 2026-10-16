@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import '../../data/api_service.dart';
 
 class ResidentsListScreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _ResidentsListScreenState extends State<ResidentsListScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GiSkeletonList()
           : _error.isNotEmpty
               ? Center(child: Text(_error))
               : ListView.separated(

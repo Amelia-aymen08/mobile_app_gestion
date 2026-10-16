@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -524,7 +525,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
         const Divider(height: 1, color: Color(0xFFE6DFD2)),
         Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const GiSkeletonList()
                 : visibleTickets.isEmpty
                     ? Center(
                         child: Column(

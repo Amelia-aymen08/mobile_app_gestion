@@ -1557,6 +1557,30 @@ abstract class AppL10n {
   /// **'En attente'**
   String get pipelinePending;
 
+  /// No description provided for @ticketLocation.
+  ///
+  /// In fr, this message translates to:
+  /// **'Logement'**
+  String get ticketLocation;
+
+  /// No description provided for @pipelineCurrent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Étape actuelle'**
+  String get pipelineCurrent;
+
+  /// No description provided for @pipelineStartedHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'équipe va examiner votre demande'**
+  String get pipelineStartedHint;
+
+  /// No description provided for @pipelineClosedHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous serez notifié à la clôture'**
+  String get pipelineClosedHint;
+
   /// No description provided for @historyCreated.
   ///
   /// In fr, this message translates to:

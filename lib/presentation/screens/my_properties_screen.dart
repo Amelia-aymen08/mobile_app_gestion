@@ -1,10 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../services/gi_haptics.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/gi_appear.dart';
+import '../widgets/gi_bottom_nav.dart' show glassFallback;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import '../theme/gi_colors.dart';
 import '../theme/residence_images.dart';
 import '../widgets/gi_empty_state.dart';
@@ -115,9 +119,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     final t = AppL10n.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = _firstName;
-    // En paysage, ou sur un tres petit ecran, l'en-tete du Figma — logo de
-    // 98 puis titre et sous-titre — ne laisse plus de place aux cartes. On
-    // le resserre plutot que de faire defiler un ecran de selection.
+    // En paysage, ou sur un tres petit ecran, le logo de 90 prend trop de
+    // place avant les cartes : on le resserre.
     final compact = MediaQuery.sizeOf(context).height < 620;
 
     return Scaffold(
@@ -131,7 +134,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
             // l'air d'en faire partie.
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  FigSpace.pagePadding, 22, FigSpace.pagePadding, 0),
+                  FigSpace.pagePadding, 14, FigSpace.pagePadding, 0),
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: GiPressable(
@@ -158,60 +161,31 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                 ),
               ),
             ),
-            // Logo vertical du Figma, centre sous la pastille.
-            Padding(
-              padding: EdgeInsets.only(top: compact ? FigSpace.md : FigSpace.lg),
-              child: Image.asset(
-                isDark
-                    ? 'assets/brand/gis_logo_vertical_dark.png'
-                    : 'assets/brand/gis_logo_vertical_light.png',
-                height: compact ? 48 : 90,
-                fit: BoxFit.contain,
-              ),
-            ),
-            SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
-            // Titre centre du Figma, sur 295 de large.
-            SizedBox(
-              width: 295,
-              child: Column(
-                children: [
-                  if (name.isNotEmpty) ...[
-                    Text(t.greeting(name),
-                        textAlign: TextAlign.center,
-                        style: FigText.button
-                            .copyWith(height: 1.2, color: FigBrand.amber)),
-                    const SizedBox(height: FigSpace.sm),
-                  ],
-                  Text(t.selectResidenceTitle,
-                      textAlign: TextAlign.center,
-                      style: FigText.greeting
-                          .copyWith(height: 1.2, color: c.textBody)),
-                  // Le sous-titre explique le titre ; sur un ecran court il
-                  // coute plus de place qu'il n'apporte.
-                  if (!compact) ...[
-                    const SizedBox(height: 9),
-                    SizedBox(
-                      width: 248,
-                      child: Text(t.selectResidenceSubtitle,
-                          textAlign: TextAlign.center,
-                          style: FigText.field
-                              .copyWith(height: 1.2, color: c.textMuted)),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList(count: 3, itemHeight: FigSize.heroH)
                   : Stack(
                       children: [
                         CustomScrollView(
                           physics: giRefreshPhysics,
                           slivers: [
                             GiRefreshControl(onRefresh: _fetchAll),
+                            // Le logo et le bonjour defilent avec la page ;
+                            // le titre, lui, s'arrete en haut et y reste,
+                            // en se resserrant sur une ligne.
+                            SliverToBoxAdapter(
+                              child: _intro(t, isDark, name, compact),
+                            ),
+                            SliverPersistentHeader(
+                              pinned: true,
+                              delegate: _PinnedTitle(
+                                title: t.selectResidenceTitle,
+                                color: c.textBody,
+                                background: c.scaffold,
+                              ),
+                            ),
+                            const SliverToBoxAdapter(
+                                child: SizedBox(height: FigSpace.lg)),
                             SliverPadding(
                             padding: const EdgeInsets.fromLTRB(
                                 FigSpace.pagePadding,
@@ -293,6 +267,31 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     );
   }
 
+  /// Logo et salutation, au-dessus du titre. Le sous-titre a disparu : il
+  /// redisait le titre avec d'autres mots.
+  Widget _intro(AppL10n t, bool isDark, String name, bool compact) {
+    return Column(
+      children: [
+        SizedBox(height: compact ? FigSpace.md : FigSpace.lg),
+        Image.asset(
+          isDark
+              ? 'assets/brand/gis_logo_vertical_dark.png'
+              : 'assets/brand/gis_logo_vertical_light.png',
+          height: compact ? 48 : 90,
+          fit: BoxFit.contain,
+        ),
+        SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
+        if (name.isNotEmpty) ...[
+          Text(t.greeting(name),
+              textAlign: TextAlign.center,
+              style:
+                  FigText.button.copyWith(height: 1.2, color: FigBrand.amber)),
+          const SizedBox(height: FigSpace.xs),
+        ],
+      ],
+    );
+  }
+
   /// Carte de residence, reprise de l'accueil et rendue selectionnable.
   /// Selectionnee : fond ambre a 20 %, trait ambre plein et coche ambre.
   /// Sinon : surface de carte, trait ambre a 20 % et case grise.
@@ -312,7 +311,11 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
 
     return GiPressable(
       pressedScale: 0.985,
-      onTap: () => setState(() => _selected = index),
+      haptic: false,
+      onTap: () {
+        if (index != _selected) GiHaptics.select();
+        setState(() => _selected = index);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
@@ -355,6 +358,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                             .resolve(Directionality.of(context)))
                     : (url != null
                         ? Image.network(url,
+                            loadingBuilder: giImageLoading,
                             fit: BoxFit.cover,
                             alignment: AlignmentDirectional.centerEnd
                                 .resolve(Directionality.of(context)),
@@ -448,60 +452,241 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
     );
   }
 
-  /// Bandeau du Figma : etage, surface et numero de lot, separes par un trait.
-  /// La troisieme colonne porte le lot et non le statut, contrairement a la
-  /// carte de l'accueil.
+  /// Bandeau etage, appartement, statut : une plaque de verre liquide posee
+  /// sur la photo. Le verre refracte sans flouter — la photo reste nette a
+  /// travers — et les valeurs, en clair et en gras, se lisent d'un coup
+  /// d'oeil. Sans shader (web, simulateur), un verre peint prend le relais.
   Widget _stats(GiColors c, AppL10n t, String floor, String surface, String lot,
       bool isSelected) {
-    Widget cell(String label, String value) => Expanded(
+    const radius = 14.0;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final valueColor = dark ? Colors.white : FigBrand.navy;
+    final labelColor = dark
+        ? Colors.white.withValues(alpha: 0.62)
+        : FigBrand.navy.withValues(alpha: 0.6);
+
+    Widget cell(String label, String value, {bool accent = false}) => Expanded(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: FigText.label.copyWith(color: c.textFaint)),
-              Text(value.isEmpty ? '—' : value,
+              Text(label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: FigText.statValue.copyWith(color: c.textMuted)),
+                  style: FigText.label.copyWith(
+                      fontSize: 11, letterSpacing: 0.2, color: labelColor)),
+              const SizedBox(height: 3),
+              Row(
+                children: [
+                  if (accent) ...[
+                    Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                          color: FigAlert.success, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
+                  Flexible(
+                    child: Text(value.isEmpty ? '—' : value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FigText.statValue.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: valueColor)),
+                  ),
+                ],
+              ),
             ],
           ),
         );
 
-    final divider = Container(width: 1, height: 37, color: c.innerBorder);
-    // Le fond du bandeau se fond dans la carte a gauche et se ferme a droite,
-    // pour que les valeurs restent lisibles par-dessus la photo.
-    final fill = isSelected
-        ? Color.alphaBlend(FigBrand.amber.withValues(alpha: 0.20), c.card)
-        : c.card;
+    final divider = Container(
+      width: 1,
+      height: 30,
+      margin: const EdgeInsetsDirectional.only(end: 14),
+      color: valueColor.withValues(alpha: 0.18),
+    );
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(FigRadius.card),
-        border: Border.all(
-            color: isSelected
-                ? FigBrand.amber.withValues(alpha: 0.20)
-                : c.innerBorder),
-        gradient: LinearGradient(
-          begin: AlignmentDirectional.centerStart,
-          end: AlignmentDirectional.centerEnd,
-          colors: [fill.withValues(alpha: 0), fill],
-        ),
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          cell(t.floor, floor),
+          divider,
+          cell(t.apartmentShortLabel, lot),
+          divider,
+          cell(t.status, t.statusActive, accent: true),
+        ],
       ),
-      child: SizedBox(
-        height: 40,
-        child: Row(
-          children: [
-            cell(t.floor, floor),
-            divider,
-            const SizedBox(width: FigSpace.lg),
-            cell(t.apartmentShortLabel, lot),
-            divider,
-            const SizedBox(width: FigSpace.lg),
-            cell(t.status, t.statusActive),
-          ],
-        ),
+    );
+
+    final Widget glass = glassFallback
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(radius),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: dark
+                    ? [
+                        const Color(0xFF1C2732).withValues(alpha: 0.88),
+                        FigBrand.navy.withValues(alpha: 0.82),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.88),
+                        Colors.white.withValues(alpha: 0.74),
+                      ],
+              ),
+            ),
+          )
+        : GlassContainer(
+            useOwnLayer: true,
+            quality: GlassQuality.premium,
+            shape: const LiquidRoundedSuperellipse(borderRadius: radius),
+            settings: LiquidGlassSettings(
+              glassColor: dark
+                  ? FigBrand.navy.withValues(alpha: 0.55)
+                  : Colors.white.withValues(alpha: 0.6),
+              thickness: 24,
+              blur: 0,
+              refractiveIndex: 1.45,
+              lightIntensity: 0.7,
+              ambientStrength: 0.5,
+              saturation: 1.15,
+              chromaticAberration: 0.1,
+            ),
+            child: const SizedBox.expand(),
+          );
+
+    return SizedBox(
+      height: 60,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned.fill(child: glass),
+          // Arete de lumiere : plus vive en haut, comme un verre eclaire
+          // par-dessus ; ambre quand la carte est choisie.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(radius),
+                  border: Border.all(
+                    color: isSelected
+                        ? FigBrand.amber.withValues(alpha: 0.55)
+                        : Colors.white.withValues(alpha: dark ? 0.22 : 0.7),
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.center,
+                    colors: [
+                      Colors.white.withValues(alpha: dark ? 0.10 : 0.25),
+                      Colors.white.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(child: content),
+        ],
       ),
     );
   }
+}
+
+/// Titre qui se fige en haut de la liste. Deplie, il tient sur deux lignes
+/// en 24 ; une fois colle en haut il passe sur une ligne en 18, sur le fond
+/// de l'ecran, avec un fondu en dessous pour que les cartes y glissent.
+class _PinnedTitle extends SliverPersistentHeaderDelegate {
+  final String title;
+  final Color color;
+  final Color background;
+
+  const _PinnedTitle({
+    required this.title,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  // 16 de fondu compris en bas : dessine hors de l'en-tete, il etait rogne
+  // et laissait voir le contenu qui passe dessous.
+  double get maxExtent => 92;
+
+  @override
+  double get minExtent => 68;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final p = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    return Stack(
+      fit: StackFit.expand,
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+            left: 0, right: 0, top: 0, bottom: 16,
+            child: ColoredBox(color: background)),
+        Positioned.fill(
+          bottom: 16,
+          child: Center(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: FigSpace.pagePadding),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: p > 0.5 ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: FigText.greeting.copyWith(
+                height: 1.2,
+                fontSize: 24 - 6 * p,
+                color: color,
+              ),
+            ),
+          ),
+        )),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 16,
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.4 + 0.6 * p,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [background, background.withValues(alpha: 0)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  bool shouldRebuild(_PinnedTitle old) =>
+      old.title != title || old.color != color || old.background != background;
 }

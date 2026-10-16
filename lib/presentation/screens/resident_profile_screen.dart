@@ -119,11 +119,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                 onTap: () => Navigator.pop(sheetContext, 'change'),
                 child: Row(
                   children: [
-                    SvgPicture.asset('assets/figma/icons/camera_24.svg',
-                        width: 16,
-                        height: 16,
-                        colorFilter:
-                            ColorFilter.mode(c.textBody, BlendMode.srcIn)),
+                    Icon(Icons.photo_camera_outlined, size: 16, color: c.textBody),
                     const SizedBox(width: FigSpace.lg),
                     Text(t.changePhoto,
                         style: FigText.field.copyWith(color: c.textBody)),
@@ -337,13 +333,7 @@ class _ResidentProfileScreenState extends State<ResidentProfileScreen> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 1.5, color: Colors.black),
                           )
-                        : SvgPicture.asset(
-                            'assets/figma/icons/camera_24.svg',
-                            width: 11,
-                            height: 11,
-                            colorFilter: const ColorFilter.mode(
-                                Colors.black, BlendMode.srcIn),
-                          ),
+                        : const Icon(Icons.photo_camera_outlined, size: 11, color: Colors.black),
                   ),
                 ),
               ],

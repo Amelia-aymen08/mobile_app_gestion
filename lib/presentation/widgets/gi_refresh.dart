@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 
+import '../services/gi_haptics.dart';
+
 /// Tirer pour actualiser, sans rien afficher.
 ///
 /// Aucun indicateur : ni le disque de Material, qui se dessine par-dessus la
@@ -18,7 +20,12 @@ class GiRefreshControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CupertinoSliverRefreshControl(
-        onRefresh: onRefresh,
+        // Le geste a atteint son seuil : un toucher le confirme, puisque
+        // rien ne s'affiche.
+        onRefresh: () {
+          GiHaptics.threshold();
+          return onRefresh();
+        },
         refreshIndicatorExtent: 0,
         builder: (context, mode, pulled, trigger, extent) =>
             const SizedBox.shrink(),

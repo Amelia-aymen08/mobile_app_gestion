@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
 import 'package:intl/intl.dart' hide TextDirection;
@@ -259,8 +260,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList()
                   : CustomScrollView(
                       physics: giRefreshPhysics,
                       slivers: [

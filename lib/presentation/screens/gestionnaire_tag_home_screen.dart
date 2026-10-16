@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
@@ -265,7 +266,7 @@ class _GestionnaireTagHomeScreenState extends State<GestionnaireTagHomeScreen> {
             ],
           ),
           if (_loadingCharges)
-            const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+            const SliverFillRemaining(child: GiSkeletonList())
           else if (_chargesError.isNotEmpty)
             SliverFillRemaining(
               child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -397,7 +398,7 @@ class _GestionnaireTagHomeScreenState extends State<GestionnaireTagHomeScreen> {
             ],
           ),
           if (_loadingTags)
-            const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+            const SliverFillRemaining(child: GiSkeletonList())
           else if (_tags.isEmpty)
             const SliverFillRemaining(
               child: Center(child: Text('Aucun TAG créé.',

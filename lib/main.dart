@@ -3,7 +3,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:provider/provider.dart';
+import 'presentation/widgets/gi_bottom_nav.dart' show glassFallback;
 import 'l10n/app_localizations.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/locale_provider.dart';
@@ -28,10 +30,24 @@ Future<void> main() async {
   ));
   final themeProvider = ThemeProvider();
   final localeProvider = LocaleProvider();
-  await Future.wait([themeProvider.restore(), localeProvider.restore()]);
-  runApp(GeranceImmoServiceApp(
-    themeProvider: themeProvider,
-    localeProvider: localeProvider,
+  await Future.wait([
+    themeProvider.restore(),
+    localeProvider.restore(),
+    // Le verre liquide de la barre du bas : ses shaders sont charges avant
+    // la premiere image pour qu'il n'apparaisse pas en retard. Inutile la
+    // ou il n'est pas rendu (simulateur iOS, web).
+    LiquidGlassWidgets.initialize(
+      enablePerformanceMonitor: false,
+      warmUpMode: glassFallback ? GlassWarmUpMode.never : GlassWarmUpMode.auto,
+    ),
+  ]);
+  runApp(LiquidGlassWidgets.wrap(
+    // Le verre suit le theme choisi dans l'app, pas celui du telephone.
+    brightnessResolver: Theme.maybeBrightnessOf,
+    child: GeranceImmoServiceApp(
+      themeProvider: themeProvider,
+      localeProvider: localeProvider,
+    ),
   ));
 
   // Fire-and-forget: the OS permission prompt must never block the first

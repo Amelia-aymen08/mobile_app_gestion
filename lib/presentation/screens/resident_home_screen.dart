@@ -1,6 +1,9 @@
 // ignore_for_file: use_build_context_synchronously
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/gi_haptics.dart';
+import '../widgets/gi_skeleton.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'residence_details_screen.dart';
 import 'documents_screen.dart';
 import '../widgets/gi_avatar.dart';
@@ -40,6 +43,10 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   final ApiService _api = ApiService();
   int _tab = 0;
 
+  final GlassTabBarMinimizeController _navMinimize =
+      GlassTabBarMinimizeController(
+          behavior: GlassBarMinimizeBehavior.onScrollDown);
+
   List<dynamic> _properties = [];
   Map<String, dynamic> _chargesSummary = {};
 
@@ -75,6 +82,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
   @override
   void dispose() {
     _notifTimer?.cancel();
+    _navMinimize.dispose();
     super.dispose();
   }
 
@@ -263,6 +271,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
             ? (velocity < -140 || distance < -70)
             : (velocity > 140 || distance > 70);
         if (!back) return;
+        GiHaptics.threshold();
         setState(() {
           _chargesFromHome = false;
           _tab = 0;
@@ -282,15 +291,23 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     return Scaffold(
       backgroundColor: GiColors.of(context).scaffold,
       extendBody: true,
-      body: IndexedStack(
-        index: _tab,
-        children: [
-          _homeTab(user, dark),
-          const NoticesScreen(),
-          const ResidentTicketsScreen(),
-          _swipeBackToHome(const MyChargesScreen()),
-          _moreTab(user, dark),
-        ],
+      // La barre de verre se replie quand on descend dans un onglet et se
+      // rouvre quand on remonte : c'est le defilement qui la pilote.
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (n) {
+          _navMinimize.handleNotification(n);
+          return false;
+        },
+        child: IndexedStack(
+          index: _tab,
+          children: [
+            _homeTab(user, dark),
+            const NoticesScreen(),
+            const ResidentTicketsScreen(),
+            _swipeBackToHome(const MyChargesScreen()),
+            _moreTab(user, dark),
+          ],
+        ),
       ),
       bottomNavigationBar: _buildNavBar(),
     );
@@ -300,6 +317,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
     final t = AppL10n.of(context);
     return GiBottomNav(
       currentIndex: _tab,
+      minimizeController: _navMinimize,
       onTap: (i) => setState(() => _tab = i),
       items: [
         GiNavItem(asset: 'assets/figma/icons/nav_home.svg', label: t.navHome),
@@ -573,6 +591,7 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                             .resolve(Directionality.of(context)))
                     : (url != null
                         ? Image.network(url,
+                            loadingBuilder: giImageLoading,
                             fit: BoxFit.cover,
                             alignment: AlignmentDirectional.centerEnd
                                 .resolve(Directionality.of(context)),

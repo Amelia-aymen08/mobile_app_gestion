@@ -803,6 +803,18 @@ class AppL10nEn extends AppL10n {
   String get pipelinePending => 'Pending';
 
   @override
+  String get ticketLocation => 'Home';
+
+  @override
+  String get pipelineCurrent => 'Current step';
+
+  @override
+  String get pipelineStartedHint => 'The team will review your request';
+
+  @override
+  String get pipelineClosedHint => 'You\'ll be notified once it\'s closed';
+
+  @override
   String get historyCreated => 'Report created';
 
   @override

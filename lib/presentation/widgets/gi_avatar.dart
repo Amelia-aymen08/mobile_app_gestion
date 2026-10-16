@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'gi_skeleton.dart';
 
 import '../theme/design_tokens.dart';
 
@@ -65,6 +66,7 @@ class GiAvatar extends StatelessWidget {
       child: url == null || url.isEmpty
           ? _fallback()
           : Image.network(url,
+              loadingBuilder: giImageLoading,
               width: size,
               height: size,
               fit: BoxFit.cover,

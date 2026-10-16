@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import '../../data/api_service.dart';
 
 class UserManagementScreen extends StatefulWidget {
@@ -140,7 +141,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GiSkeletonList()
           : ListView.builder(
               itemCount: _users.length,
               itemBuilder: (context, index) {

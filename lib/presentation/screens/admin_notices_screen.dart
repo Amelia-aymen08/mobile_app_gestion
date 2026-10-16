@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:intl/intl.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
@@ -211,7 +212,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                                 .toList()),
                         const SizedBox(height: 22),
                         if (_loading)
-                          const Center(child: CircularProgressIndicator())
+                          const GiSkeletonList()
                         else if (_filtered.isEmpty)
                           const Padding(
                               padding: EdgeInsets.all(40),

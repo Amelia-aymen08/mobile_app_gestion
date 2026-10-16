@@ -1,11 +1,13 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/ticket_progress_strip.dart';
 // `intl` exporte aussi un type TextDirection qui masque celui de Flutter.
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
@@ -18,7 +20,16 @@ class ChatScreen extends StatefulWidget {
   final String title;
   final String? subtitle;
 
-  const ChatScreen({super.key, required this.ticketId, required this.title, this.subtitle});
+  /// Statut du ticket, pour la bande d'avancement en tete d'ecran. Absent,
+  /// la bande n'est pas affichee.
+  final String? status;
+
+  const ChatScreen(
+      {super.key,
+      required this.ticketId,
+      required this.title,
+      this.subtitle,
+      this.status});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -130,35 +141,36 @@ class _ChatScreenState extends State<ChatScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          widget.subtitle?.isNotEmpty == true
-                              ? widget.subtitle!
-                              : widget.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: FigText.statValue.copyWith(color: c.textBody),
-                        ),
-                        const SizedBox(height: 2),
                         Text(widget.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                FigText.label.copyWith(color: c.textMuted)),
+                            style: FigText.titleMd
+                                .copyWith(fontSize: 18, color: c.textBody)),
+                        if (widget.subtitle?.isNotEmpty == true) ...[
+                          const SizedBox(height: 2),
+                          Text(widget.subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  FigText.label.copyWith(color: c.textMuted)),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
             ),
+            if ((widget.status ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    FigSpace.pagePadding, 0, FigSpace.pagePadding, FigSpace.lg),
+                child: TicketProgressStrip(status: widget.status!),
+              ),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList(count: 3, itemHeight: 72)
                   : _messages.isEmpty
-                      ? Center(
-                          child: Text(t.chatEmptyReadOnly,
-                              style:
-                                  FigText.body.copyWith(color: c.textMuted)))
+                      ? _emptyState(c, t)
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
                           controller: _scrollCtrl,
@@ -258,6 +270,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(FigRadius.chip),
                   child: Image.network(attachment,
+                      loadingBuilder: giImageLoading,
                       height: 140,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -288,32 +301,58 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  /// Fil vide : une pastille d'icone et le texte centre, avec des marges —
+  /// sans elles le texte touchait les bords de l'ecran.
+  Widget _emptyState(GiColors c, AppL10n t) {
+    // Defilant : en paysage ou clavier ouvert, la hauteur ne suffit pas.
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: FigBrand.amber.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.forum_rounded,
+                  size: 28, color: FigBrand.amber),
+            ),
+            const SizedBox(height: FigSpace.xl),
+            Text(t.chatEmptyReadOnly,
+                textAlign: TextAlign.center,
+                style: FigText.fieldLabel
+                    .copyWith(height: 1.5, color: c.textMuted)),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Le resident ne repond pas ici : le signalement porte deja sa
   /// description, et l'administration s'en sert pour transmettre une
   /// information. Une barre de saisie laisserait croire a un echange.
   Widget _readOnlyNote(GiColors c, AppL10n t) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          FigSpace.pagePadding, 0, FigSpace.pagePadding, FigSpace.xxl),
+          FigSpace.pagePadding, 0, FigSpace.pagePadding, FigSpace.xl),
       child: Container(
-        padding: const EdgeInsets.all(FigSpace.lg),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: c.card,
-          border: Border.all(color: c.cardBorder),
-          borderRadius: BorderRadius.circular(FigRadius.field),
+          color: c.fieldBg,
+          borderRadius: BorderRadius.circular(FigRadius.card),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SvgPicture.asset(
-              'assets/figma/icons/info_16.svg',
-              colorFilter: ColorFilter.mode(c.textMuted, BlendMode.srcIn),
-            ),
-            const SizedBox(width: FigSpace.md),
+            Icon(Icons.lock_outline_rounded, size: 18, color: c.textMuted),
+            const SizedBox(width: FigSpace.lg),
             Expanded(
               child: Text(t.chatReadOnly,
-                  style:
-                      FigText.body.copyWith(height: 1.4, color: c.textMuted)),
+                  style: FigText.label
+                      .copyWith(fontSize: 13, height: 1.4, color: c.textMuted)),
             ),
           ],
         ),

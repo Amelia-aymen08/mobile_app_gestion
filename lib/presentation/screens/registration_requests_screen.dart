@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import '../../data/api_service.dart';
 
 class RegistrationRequestsScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _RegistrationRequestsScreenState extends State<RegistrationRequestsScreen>
         foregroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GiSkeletonList()
           : _requests.isEmpty
               ? const Center(child: Text('Aucune demande en attente.'))
               : ListView.builder(

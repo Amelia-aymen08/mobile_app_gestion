@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/api_service.dart';
@@ -140,8 +141,7 @@ class _ResidenceDetailsScreenState extends State<ResidenceDetailsScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList(hero: true, count: 3)
                   : CustomScrollView(
                       physics: giRefreshPhysics,
                       slivers: [
@@ -223,6 +223,7 @@ class _ResidenceDetailsScreenState extends State<ResidenceDetailsScreen> {
                 fit: BoxFit.cover, filterQuality: FilterQuality.medium)
           else if (url != null)
             Image.network(url,
+            loadingBuilder: giImageLoading,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => ColoredBox(color: c.card)),
           // Voile sombre en bas : le nom reste lisible quelle que soit la

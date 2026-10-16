@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../data/api_service.dart';
@@ -105,8 +106,7 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
       body: SafeArea(
         bottom: false,
         child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(color: FigBrand.amber))
+            ? const GiSkeletonList(hero: true)
             : CustomScrollView(
                 physics: giRefreshPhysics,
                 slivers: [

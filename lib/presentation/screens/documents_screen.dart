@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
@@ -264,8 +265,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ],
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList()
                   : CustomScrollView(
                       physics: giRefreshPhysics,
                       slivers: [
@@ -349,12 +349,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           ),
           const SizedBox(width: FigSpace.lg),
           if (busy)
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: FigBrand.amber),
-            )
+            const GiShimmer(child: GiBone(width: 16, height: 16, radius: 8))
           else
             const GiChevron(),
         ],

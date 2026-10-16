@@ -769,6 +769,13 @@ class ApiService {
     }
 
     final decoded = jsonDecode(response.body);
+    // Une liste vide rendrait le formulaire inutilisable : sans categorie,
+    // on ne peut pas signaler. On retombe alors sur les categories locales.
+    if ((decoded is Map && decoded['data'] is List && (decoded['data'] as List).isEmpty) ||
+        (decoded is List && decoded.isEmpty)) {
+      return _normalizeMaintenanceCategories(
+          List<Map<String, dynamic>>.from(_defaultMaintenanceCategories));
+    }
     if (decoded is Map && decoded['data'] is List) {
       final list = decoded['data'] as List;
       return _normalizeMaintenanceCategories(

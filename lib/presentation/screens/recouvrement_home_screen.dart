@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../data/api_service.dart';
@@ -311,7 +312,7 @@ class _RecouvrementHomeScreenState extends State<RecouvrementHomeScreen> {
     return Scaffold(
       backgroundColor: brandBackground,
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GiSkeletonList()
           : _error.isNotEmpty
               ? _buildError()
               : IndexedStack(

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -170,8 +171,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
             const SizedBox(height: 20),
             Expanded(
               child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: FigBrand.amber))
+                  ? const GiSkeletonList()
                   : CustomScrollView(
                       physics: giRefreshPhysics,
                       slivers: [
@@ -374,6 +374,7 @@ class _HouseholdMembersScreenState extends State<HouseholdMembersScreen> {
       clipBehavior: Clip.antiAlias,
       child: photo != null && photo.startsWith('http')
           ? Image.network(photo,
+            loadingBuilder: giImageLoading,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => _initials(initials))
           : _initials(initials),
@@ -756,11 +757,7 @@ class _MemberFormScreenState extends State<_MemberFormScreen> {
               ),
               child: photo != null
                   ? null
-                  : SvgPicture.asset(
-                      'assets/figma/icons/camera_24.svg',
-                      colorFilter: const ColorFilter.mode(
-                          FigBrand.amber, BlendMode.srcIn),
-                    ),
+                  : const Icon(Icons.photo_camera_outlined, size: 20, color: FigBrand.amber),
             ),
             const SizedBox(height: FigSpace.md),
             Text(photo == null ? t.addPhoto : t.changePhoto,

@@ -808,6 +808,18 @@ class AppL10nAr extends AppL10n {
   String get pipelinePending => 'في الانتظار';
 
   @override
+  String get ticketLocation => 'المسكن';
+
+  @override
+  String get pipelineCurrent => 'المرحلة الحالية';
+
+  @override
+  String get pipelineStartedHint => 'سيقوم الفريق بدراسة طلبك';
+
+  @override
+  String get pipelineClosedHint => 'سيتم إعلامك عند الإغلاق';
+
+  @override
   String get historyCreated => 'تم إنشاء البلاغ';
 
   @override

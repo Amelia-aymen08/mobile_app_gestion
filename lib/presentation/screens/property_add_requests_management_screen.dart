@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:intl/intl.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
@@ -191,7 +192,7 @@ class _PropertyAddRequestsManagementScreenState
           const SizedBox(height: 8),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const GiSkeletonList()
                 : _error != null
                     ? Center(child: Text(_error!, style: const TextStyle(color: Color(0xFFB91C1C))))
                     : RefreshIndicator(

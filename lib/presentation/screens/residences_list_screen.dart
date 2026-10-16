@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/gi_skeleton.dart';
 import '../../data/api_service.dart';
 import '../theme/app_theme.dart';
 
@@ -55,7 +56,7 @@ class _ResidencesListScreenState extends State<ResidencesListScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GiSkeletonList()
           : _error.isNotEmpty
               ? Center(child: Text(_error))
               : RefreshIndicator(
@@ -129,6 +130,7 @@ class _ResidenceCard extends StatelessWidget {
                       blendMode: BlendMode.dstIn,
                       child: Image.network(
                         image,
+            loadingBuilder: giImageLoading,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),

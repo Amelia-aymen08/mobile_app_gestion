@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import '../services/gi_haptics.dart';
 import '../widgets/gi_alert_dialog.dart';
 import 'package:provider/provider.dart';
 
@@ -106,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _go(const ResidentHomeScreen());
     } catch (error) {
       if (mounted) {
+        GiHaptics.error();
         setState(() => _error = error.toString().replaceAll('Exception: ', ''));
       }
     }
