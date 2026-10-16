@@ -13,6 +13,7 @@ import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_header.dart';
 import '../widgets/gi_refresh.dart';
 import '../widgets/gi_pressable.dart';
+import '../widgets/gi_scroll_blur.dart';
 
 class MyChargesScreen extends StatefulWidget {
   const MyChargesScreen({super.key});
@@ -103,11 +104,11 @@ class _MyChargesScreenState extends State<MyChargesScreen> {
 
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
+      body: GiScrollBlur(
         child: _loading
             ? const GiSkeletonList(hero: true)
             : CustomScrollView(
+                clipBehavior: Clip.none,
                 physics: giRefreshPhysics,
                 slivers: [
                   GiRefreshControl(onRefresh: _load),

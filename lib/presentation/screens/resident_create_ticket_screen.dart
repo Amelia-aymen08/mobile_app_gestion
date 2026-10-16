@@ -10,6 +10,7 @@ import '../theme/ticket_categories.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
+import '../widgets/gi_skeleton.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../data/api_service.dart';
 
@@ -90,7 +91,9 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
       if (!mounted) return;
       setState(() {
         _categories = categories;
-        _selectedCategory = _categories.isNotEmpty ? (_categories.first['category']?.toString()) : null;
+        // Rien n'est choisi d'avance : preselectionner la premiere categorie
+        // poussait a envoyer un signalement de peinture par megarde.
+        _selectedCategory = null;
         _selectedSubCategory = null;
         _loading = false;
       });
@@ -126,7 +129,12 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
       if (residenceName.isNotEmpty) residenceName,
       if (apt.isNotEmpty) 'Appartement n° $apt',
       if (block.isNotEmpty) 'Bloc $block',
-      if (floor.isNotEmpty) 'Étage $floor',
+      // Le serveur renvoie parfois l'etage deja libelle (« ÉTAGE 1 ») :
+      // on ne le prefixe pas une seconde fois.
+      if (floor.isNotEmpty)
+        RegExp(r'^[ée]tage', caseSensitive: false).hasMatch(floor)
+            ? floor
+            : 'Étage $floor',
     ];
     return parts.join(' • ');
   }
@@ -294,23 +302,23 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
               const SizedBox(height: 17),
               _label(c, t.category),
               const SizedBox(height: FigSpace.xs),
-              _chips(
-                c,
-                _categories.map((e) => e['category'].toString()).toList(),
-                _selectedCategory,
-                (v) => setState(() {
-                  _selectedCategory = v;
-                  _selectedSubCategory = null;
-                }),
-                iconFor: ticketCategoryIcon,
+              _categoryPicker(c, t),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: _subCategoriesForSelected.isEmpty
+                    ? const SizedBox(width: double.infinity)
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 17),
+                          _label(c, t.issueType),
+                          const SizedBox(height: FigSpace.xs),
+                          _subTypeList(c),
+                        ],
+                      ),
               ),
-              if (_subCategoriesForSelected.isNotEmpty) ...[
-                const SizedBox(height: 17),
-                _label(c, t.issueType),
-                const SizedBox(height: FigSpace.xs),
-                _chips(c, _subCategoriesForSelected, _selectedSubCategory,
-                    (v) => setState(() => _selectedSubCategory = v)),
-              ],
               const SizedBox(height: 17),
               _label(c, t.descriptionLabel),
               const SizedBox(height: FigSpace.xs),
@@ -370,58 +378,267 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     );
   }
 
-  /// Puces de selection en pilule : une icone devant le libelle quand
-  /// [iconFor] est fourni, et la puce choisie pleine aux couleurs du bouton
-  /// principal, pour qu'on voie d'un coup d'oeil ce qui est retenu.
-  Widget _chips(GiColors c, List<String> values, String? selected,
-      ValueChanged<String> onPick,
-      {IconData Function(String)? iconFor}) {
-    return Wrap(
-      spacing: FigSpace.md,
-      runSpacing: FigSpace.md + 2,
-      children: [
-        for (final v in values)
-          Builder(builder: (context) {
-            final on = v == selected;
-            final fg = on ? c.ctaText : c.textBody;
-            return GiPressable(
-              pressedScale: 0.94,
-              haptic: false,
-              onTap: () {
-              if (v != selected) GiHaptics.select();
-              onPick(v);
-            },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                padding:
-                    EdgeInsets.fromLTRB(iconFor != null ? 14 : 16, 10, 16, 10),
-                decoration: BoxDecoration(
-                  color: on ? c.ctaBg : c.fieldBg,
-                  border: Border.all(color: on ? c.ctaBg : c.fieldBorder),
-                  borderRadius: BorderRadius.circular(100),
-                ),
+  // ─── Categorie ──────────────────────────────────────────
+
+  /// Les categories en grille de tuiles, deux par ligne (trois sur une
+  /// tablette) : la liste tient en un coup d'oeil au lieu d'une colonne de
+  /// pilules qu'il fallait faire defiler. Une fois la categorie choisie, la
+  /// grille se replie sur une seule tuile, avec « Modifier » pour la rouvrir.
+  Widget _categoryPicker(GiColors c, AppL10n t) {
+    final names = _categories.map((e) => e['category'].toString()).toList();
+    final selected = _selectedCategory;
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topCenter,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        layoutBuilder: (current, previous) => Stack(
+          alignment: Alignment.topCenter,
+          children: [...previous, if (current != null) current],
+        ),
+        child: _loading
+            ? _categoryGrid(c, List.filled(6, ''), null, key: 'loading')
+            : selected != null
+                ? KeyedSubtree(
+                    key: const ValueKey('picked'),
+                    child: _categoryTile(c, selected,
+                        selected: true,
+                        trailing: Text(t.edit,
+                            style: FigText.label.copyWith(
+                                color: FigBrand.amber,
+                                fontWeight: FontWeight.w600)),
+                        onTap: () => setState(() {
+                              _selectedCategory = null;
+                              _selectedSubCategory = null;
+                            })),
+                  )
+                : _categoryGrid(c, names, selected, key: 'grid'),
+      ),
+    );
+  }
+
+  Widget _categoryGrid(GiColors c, List<String> names, String? selected,
+      {required String key}) {
+    return LayoutBuilder(
+      key: ValueKey(key),
+      builder: (context, constraints) {
+        const gap = FigSpace.md;
+        final columns = constraints.maxWidth >= 520 ? 3 : 2;
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        Widget cell(String name) => name.isEmpty
+            ? const _TileBone()
+            : _categoryTile(c, name,
+                selected: name == selected,
+                onTap: () {
+                  GiHaptics.select();
+                  setState(() {
+                    _selectedCategory = name;
+                    _selectedSubCategory = null;
+                  });
+                });
+        // Une ligne prend la hauteur de sa tuile la plus haute : un libelle
+        // long passe sur trois lignes sans etre coupe, et les deux tuiles
+        // voisines restent alignees.
+        return Column(
+          children: [
+            for (var r = 0; r < names.length; r += columns) ...[
+              if (r > 0) const SizedBox(height: gap),
+              IntrinsicHeight(
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (iconFor != null) ...[
-                      Icon(iconFor(v), size: 18, color: fg),
-                      const SizedBox(width: FigSpace.md),
-                    ],
-                    Flexible(
-                      child: Text(
-                        v,
-                        style: FigText.fieldLabel.copyWith(
-                            color: fg,
-                            fontWeight: on ? FontWeight.w600 : FontWeight.w500),
+                    for (var k = 0; k < columns; k++) ...[
+                      if (k > 0) const SizedBox(width: gap),
+                      SizedBox(
+                        width: width,
+                        child: r + k < names.length
+                            ? cell(names[r + k])
+                            : const SizedBox.shrink(),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
-            );
-          }),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  /// Une tuile : pastille d'icone a gauche, libelle sur deux lignes. Choisie,
+  /// la pastille se remplit d'ambre et le contour passe a l'ambre.
+  Widget _categoryTile(GiColors c, String name,
+      {required bool selected, required VoidCallback onTap, Widget? trailing}) {
+    return GiPressable(
+      pressedScale: 0.96,
+      haptic: false,
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        constraints: const BoxConstraints(minHeight: _tileHeight),
+        padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 10, 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? FigBrand.amber.withValues(alpha: 0.10)
+              : c.fieldBg,
+          border: Border.all(
+              color: selected ? FigBrand.amber : c.fieldBorder,
+              width: selected ? 1.5 : 1),
+          borderRadius: BorderRadius.circular(FigRadius.field),
+        ),
+        child: Row(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? FigBrand.amber
+                    : FigBrand.amber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(ticketCategoryIcon(name),
+                  size: 20,
+                  color: selected ? Colors.black : FigBrand.amber),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: _categoryLabel(c, name, selected)),
+            if (trailing != null) ...[
+              const SizedBox(width: FigSpace.md),
+              trailing,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  static const double _tileHeight = 62;
+
+  /// Libelle d'une categorie, tel que le serveur le donne mais allege :
+  /// « Problème » en tete ne dit rien (tout signalement en est un), et la
+  /// precision entre parentheses passe en petit sur une seconde ligne.
+  /// « Plomberie (Partie Commune) » devient « Plomberie » / « Partie
+  /// commune ».
+  Widget _categoryLabel(GiColors c, String name, bool selected) {
+    var main = name.trim();
+    String? detail;
+    final paren = RegExp(r'^(.*?)\s*\(([^)]+)\)\s*$').firstMatch(main);
+    if (paren != null) {
+      main = paren.group(1)!;
+      final d = paren.group(2)!.trim();
+      detail = d.isEmpty ? null : d[0] + d.substring(1).toLowerCase();
+    }
+    main = main.replaceFirst(RegExp(r'^probl[eè]me\s+', caseSensitive: false), '');
+    if (main.isNotEmpty) main = main[0].toUpperCase() + main.substring(1);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          main,
+          style: FigText.label.copyWith(
+            height: 1.25,
+            fontSize: 12.5,
+            color: c.textBody,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+        if (detail != null) ...[
+          const SizedBox(height: 2),
+          Text(detail,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: FigText.caption
+                  .copyWith(height: 1.2, fontSize: 11, color: c.textMuted)),
+        ],
       ],
+    );
+  }
+
+  // ─── Type de probleme ───────────────────────────────────
+
+  /// Les types de la categorie, en liste groupee dans une seule carte, une
+  /// ligne par choix et un rond a cocher au bout : on lit les libelles
+  /// longs en entier, sans pilules empilees.
+  Widget _subTypeList(GiColors c) {
+    final items = _subCategoriesForSelected;
+    return Container(
+      decoration: BoxDecoration(
+        color: c.fieldBg,
+        border: Border.all(color: c.fieldBorder),
+        borderRadius: BorderRadius.circular(FigRadius.field),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0)
+              Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: FigSpace.xl,
+                  endIndent: FigSpace.xl,
+                  color: c.fieldBorder),
+            _subTypeRow(c, items[i]),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _subTypeRow(GiColors c, String value) {
+    final on = value == _selectedSubCategory;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () {
+          if (!on) GiHaptics.select();
+          setState(() => _selectedSubCategory = value);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          color: on ? FigBrand.amber.withValues(alpha: 0.08) : null,
+          padding: const EdgeInsets.symmetric(
+              horizontal: FigSpace.xl, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(value,
+                    style: FigText.fieldLabel.copyWith(
+                        height: 1.3,
+                        color: c.textBody,
+                        fontWeight: on ? FontWeight.w600 : FontWeight.w500)),
+              ),
+              const SizedBox(width: FigSpace.lg),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: on ? FigBrand.amber : Colors.transparent,
+                  border: Border.all(
+                      color: on ? FigBrand.amber : c.textFaint, width: 1.5),
+                ),
+                child: on
+                    ? const Icon(Icons.check_rounded,
+                        size: 15, color: Colors.black)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -634,5 +851,33 @@ class _ResidentCreateTicketScreenState extends State<ResidentCreateTicketScreen>
     if (bytes < 1024) return '${bytes.toInt()} o';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} Ko';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} Mo';
+  }
+}
+
+/// Tuile de categorie en chargement, a la forme des vraies.
+class _TileBone extends StatelessWidget {
+  const _TileBone();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = GiColors.of(context);
+    return GiShimmer(
+      child: Container(
+        height: _ResidentCreateTicketScreenState._tileHeight,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: c.fieldBg,
+          border: Border.all(color: c.fieldBorder),
+          borderRadius: BorderRadius.circular(FigRadius.field),
+        ),
+        child: const Row(
+          children: [
+            GiBone(width: 36, height: 36, radius: 11),
+            SizedBox(width: FigSpace.md),
+            Expanded(child: GiBone(height: 11)),
+          ],
+        ),
+      ),
+    );
   }
 }

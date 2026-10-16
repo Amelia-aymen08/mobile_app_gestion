@@ -13,6 +13,11 @@ import '../theme/gi_colors.dart';
 /// Un onglet de la barre de navigation.
 class GiNavItem {
   final String asset;
+
+  /// Variante pleine de l'icone, montree sur l'onglet actif : l'icone se
+  /// remplit d'ambre au lieu de seulement changer de couleur. Sans
+  /// variante (« Plus », deja plein), on garde [asset].
+  final String? activeAsset;
   final String label;
 
   /// Compteur affiche en pastille sur l'icone. Absent du Figma, mais les
@@ -22,6 +27,7 @@ class GiNavItem {
 
   const GiNavItem({
     required this.asset,
+    this.activeAsset,
     required this.label,
     this.badge = 0,
   });
@@ -190,16 +196,16 @@ class _GiBottomNavState extends State<GiBottomNav> {
         width: size.width,
         height: size.height,
         child: Stack(clipBehavior: Clip.none, children: [
-          // L'ombre portee, sous le verre : a peine, le verre doit paraitre
-          // pose sur la page, pas en sortir.
+          // L'ombre portee, sous le verre : elle detache la barre de la
+          // page, en clair surtout ou le blanc se fond dans le fond.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: dark ? 0.35 : 0.10),
-                    blurRadius: 24,
+                    color: Colors.black.withValues(alpha: dark ? 0.45 : 0.14),
+                    blurRadius: 28,
                     offset: const Offset(0, 8),
                   ),
                 ],
@@ -214,15 +220,16 @@ class _GiBottomNavState extends State<GiBottomNav> {
                     quality: GlassQuality.premium,
                     shape: LiquidRoundedSuperellipse(borderRadius: radius),
                     settings: LiquidGlassSettings(
-                      // Du vrai verre : presque pas de voile ni de flou,
-                      // c'est la refraction des bords qui dessine la
-                      // capsule. Sur le fond nuit, un voile bleu nuit garde
-                      // les icones lisibles quand une photo passe dessous.
+                      // Un verre epais et presque opaque, facon WhatsApp :
+                      // la barre se detache nettement, le contenu qui passe
+                      // dessous n'est plus qu'une lueur et ne gene jamais la
+                      // lecture des icones. En sombre, un gris plus clair
+                      // que le fond, pour qu'elle ressorte de la nuit.
                       glassColor: dark
-                          ? FigBrand.navy.withValues(alpha: 0.45)
-                          : Colors.white.withValues(alpha: 0.35),
+                          ? FigDark.navbarBg.withValues(alpha: 0.92)
+                          : Colors.white.withValues(alpha: 0.92),
                       thickness: 30,
-                      blur: 2,
+                      blur: 18,
                       refractiveIndex: 1.5,
                       lightIntensity: dark ? 0.5 : 0.6,
                       ambientStrength: 0.6,
@@ -239,7 +246,9 @@ class _GiBottomNavState extends State<GiBottomNav> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(radius),
                   border: Border.all(
-                    color: FigBrand.amber.withValues(alpha: 0.35),
+                    color: dark
+                        ? FigBrand.amber.withValues(alpha: 0.35)
+                        : FigBrand.navy.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -261,11 +270,11 @@ class _GiBottomNavState extends State<GiBottomNav> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
         child: ColoredBox(
           color: dark
-              ? FigDark.navbarBg.withValues(alpha: 0.72)
-              : Colors.white.withValues(alpha: 0.55),
+              ? FigDark.navbarBg.withValues(alpha: 0.94)
+              : Colors.white.withValues(alpha: 0.94),
         ),
       ),
     );
@@ -445,13 +454,19 @@ class _GiBottomNavState extends State<GiBottomNav> {
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
-                  TweenAnimationBuilder<Color?>(
-                    tween: ColorTween(end: color),
+                  // L'onglet actif passe a l'icone pleine, remplie d'ambre ;
+                  // les deux versions se croisent en fondu.
+                  AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
-                    builder: (context, col, _) => Transform.scale(
+                    child: Transform.scale(
+                      key: ValueKey(highlighted),
                       scale: 1.12,
-                      child: SvgPicture.asset(item.asset,
-                          colorFilter: ColorFilter.mode(col!, BlendMode.srcIn)),
+                      child: SvgPicture.asset(
+                          highlighted
+                              ? (item.activeAsset ?? item.asset)
+                              : item.asset,
+                          colorFilter:
+                              ColorFilter.mode(color, BlendMode.srcIn)),
                     ),
                   ),
                   if (item.badge > 0)

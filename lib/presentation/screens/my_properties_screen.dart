@@ -162,10 +162,10 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                 ),
               ),
             ),
+            // Le logo, le bonjour et le titre s'affichent tout de suite ;
+            // seule la carte attend le serveur, sous un reflet a sa forme.
             Expanded(
-              child: _loading
-                  ? const GiSkeletonList(count: 3, itemHeight: FigSize.heroH)
-                  : Stack(
+              child: Stack(
                       children: [
                         CustomScrollView(
                           physics: giRefreshPhysics,
@@ -197,11 +197,24 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                 // carte reste atteignable.
                                 104),
                             sliver: SliverList.list(children: [
-                              Text(t.yourProperties(_properties.length),
-                                  style: FigText.field.copyWith(
-                                      height: 1.2, color: c.textMuted)),
+                              if (_loading)
+                                const GiShimmer(
+                                  child: Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: GiBone(width: 120, height: 16),
+                                  ),
+                                )
+                              else
+                                Text(t.yourProperties(_properties.length),
+                                    style: FigText.field.copyWith(
+                                        height: 1.2, color: c.textMuted)),
                               const SizedBox(height: FigSpace.lg),
-                              if (_properties.isEmpty)
+                              if (_loading)
+                                const GiSkeletonList(
+                                    count: 0,
+                                    hero: true,
+                                    padding: EdgeInsets.zero)
+                              else if (_properties.isEmpty)
                                 GiEmptyState(
                                   illustration:
                                       'assets/figma/empty/payments.svg',
@@ -254,7 +267,7 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                           bottom: FigSpace.xxl,
                           child: GiPrimaryButton(
                             label: t.continueAction,
-                            onPressed: _properties.isEmpty
+                            onPressed: _loading || _properties.isEmpty
                                 ? null
                                 : () => Navigator.pop(context, _selected),
                           ),

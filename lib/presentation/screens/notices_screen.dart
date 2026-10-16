@@ -18,6 +18,7 @@ import '../widgets/gi_header.dart';
 import '../widgets/gi_empty_state.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_refresh.dart';
+import '../widgets/gi_scroll_blur.dart';
 
 class NoticesScreen extends StatefulWidget {
   const NoticesScreen({super.key});
@@ -129,7 +130,8 @@ class _NoticesScreenState extends State<NoticesScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: _loading
+              child: GiScrollBlur.edge(
+                child: _loading
                   ? const GiSkeletonList()
                   : CustomScrollView(
                       physics: giRefreshPhysics,
@@ -164,6 +166,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
                           ),
                       ],
                     ),
+              ),
             ),
           ],
         ),
