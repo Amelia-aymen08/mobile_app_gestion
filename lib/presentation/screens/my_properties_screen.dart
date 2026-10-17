@@ -126,68 +126,63 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
 
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
+      body: Builder(builder: (context) {
+        final top = MediaQuery.paddingOf(context).top;
+        // Ligne de la pastille : 14 de marge + sa hauteur.
+        const header = 14.0 + FigSize.chipMd;
+        return Stack(
           children: [
-            // La pastille de retour occupe sa propre ligne, en haut a
-            // gauche, la ou on la cherche. Posee sur le logo, elle avait
-            // l'air d'en faire partie.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  FigSpace.pagePadding, 14, FigSpace.pagePadding, 0),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: GiPressable(
-                  onTap: () => Navigator.pop(context),
-                  pressedScale: 0.88,
-                  child: Container(
-                    width: FigSize.chipMd,
-                    height: FigSize.chipMd,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: c.headerChipBg,
-                      border: Border.all(color: c.headerChipBorder),
-                      borderRadius: BorderRadius.circular(FigRadius.chip),
-                    ),
-                    child: Transform.flip(
-                      flipX: Directionality.of(context) == TextDirection.rtl,
-                      child: SvgPicture.asset(
-                        'assets/figma/icons/back_14.svg',
-                        colorFilter:
-                            ColorFilter.mode(c.textBody, BlendMode.srcIn),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            // Le logo, le bonjour et le titre s'affichent tout de suite ;
-            // seule la carte attend le serveur, sous un reflet a sa forme.
-            Expanded(
-              child: Stack(
-                      children: [
-                        CustomScrollView(
-                          physics: giRefreshPhysics,
-                          slivers: [
-                            GiRefreshControl(onRefresh: _fetchAll),
-                            // Le logo et le bonjour defilent avec la page ;
-                            // le titre, lui, s'arrete en haut et y reste,
-                            // en se resserrant sur une ligne.
-                            SliverToBoxAdapter(
-                              child: _intro(t, isDark, name, compact),
+            // La page defile jusqu'en haut de l'ecran au lieu d'etre coupee
+            // sous la pastille : ce qui passe au-dessus du titre s'estompe
+            // en montant et disparait sous l'heure et la batterie.
+            Positioned.fill(
+              child: ShaderMask(
+                blendMode: BlendMode.dstIn,
+                shaderCallback: (bounds) => LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: const [
+                    Color(0x00000000),
+                    Color(0x26000000),
+                    Color(0xFF000000),
+                  ],
+                  stops: [
+                    0,
+                    top / bounds.height,
+                    (top + header + 4) / bounds.height,
+                  ],
+                ).createShader(bounds),
+                child: Padding(
+                  padding: EdgeInsets.only(top: top + header),
+                  // Le logo, le bonjour et le titre s'affichent tout de
+                  // suite ; seule la carte attend le serveur, sous un reflet
+                  // a sa forme.
+                  child: Stack(
+                    children: [
+                      CustomScrollView(
+                        physics: giRefreshPhysics,
+                        // Rien ne se coupe net sous la pastille : ce qui
+                        // remonte continue jusqu'en haut et s'y efface.
+                        clipBehavior: Clip.none,
+                        slivers: [
+                          GiRefreshControl(onRefresh: _fetchAll),
+                          // Le logo et le bonjour defilent avec la page ;
+                          // le titre, lui, s'arrete en haut et y reste,
+                          // en se resserrant sur une ligne.
+                          SliverToBoxAdapter(
+                            child: _intro(t, isDark, name, compact),
+                          ),
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _PinnedTitle(
+                              title: t.selectResidenceTitle,
+                              color: c.textBody,
+                              background: c.scaffold,
                             ),
-                            SliverPersistentHeader(
-                              pinned: true,
-                              delegate: _PinnedTitle(
-                                title: t.selectResidenceTitle,
-                                color: c.textBody,
-                                background: c.scaffold,
-                              ),
-                            ),
-                            const SliverToBoxAdapter(
-                                child: SizedBox(height: FigSpace.lg)),
-                            SliverPadding(
+                          ),
+                          const SliverToBoxAdapter(
+                              child: SizedBox(height: FigSpace.lg)),
+                          SliverPadding(
                             padding: const EdgeInsets.fromLTRB(
                                 FigSpace.pagePadding,
                                 0,
@@ -234,50 +229,93 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
                                   ),
                                 ],
                             ]),
-                            ),
-                          ],
-                        ),
-                        // Voile sous le bouton : la carte passe dessous sans
-                        // venir buter sur le libelle.
-                        PositionedDirectional(
-                          start: 0,
-                          end: 0,
-                          bottom: 0,
-                          child: IgnorePointer(
-                            child: Container(
-                              height: 104,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    c.scaffold.withValues(alpha: 0),
-                                    c.scaffold.withValues(alpha: 0.85),
-                                    c.scaffold,
-                                  ],
-                                  stops: const [0, 0.45, 1],
-                                ),
+                          ),
+                        ],
+                      ),
+                      // Voile sous le bouton : la carte passe dessous sans
+                      // venir buter sur le libelle.
+                      PositionedDirectional(
+                        start: 0,
+                        end: 0,
+                        bottom: 0,
+                        child: IgnorePointer(
+                          child: Container(
+                            height: 104,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  c.scaffold.withValues(alpha: 0),
+                                  c.scaffold.withValues(alpha: 0.85),
+                                  c.scaffold,
+                                ],
+                                stops: const [0, 0.45, 1],
                               ),
                             ),
                           ),
                         ),
-                        PositionedDirectional(
-                          start: FigSpace.pagePadding,
-                          end: FigSpace.pagePadding,
-                          bottom: FigSpace.xxl,
-                          child: GiPrimaryButton(
-                            label: t.continueAction,
-                            onPressed: _loading || _properties.isEmpty
-                                ? null
-                                : () => Navigator.pop(context, _selected),
+                      ),
+                      PositionedDirectional(
+                        start: FigSpace.pagePadding,
+                        end: FigSpace.pagePadding,
+                        bottom: FigSpace.xxl,
+                        child: GiPrimaryButton(
+                          label: t.continueAction,
+                          onPressed: _loading || _properties.isEmpty
+                              ? null
+                              : () => Navigator.pop(context, _selected),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // La pastille de retour occupe sa propre ligne, en haut a
+            // gauche, la ou on la cherche. Posee sur le logo, elle avait
+            // l'air d'en faire partie. Elle reste nette par-dessus la page.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      FigSpace.pagePadding, 14, FigSpace.pagePadding, 0),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: GiPressable(
+                      onTap: () => Navigator.pop(context),
+                      pressedScale: 0.88,
+                      child: Container(
+                        width: FigSize.chipMd,
+                        height: FigSize.chipMd,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: c.headerChipBg,
+                          border: Border.all(color: c.headerChipBorder),
+                          borderRadius: BorderRadius.circular(FigRadius.chip),
+                        ),
+                        child: Transform.flip(
+                          flipX:
+                              Directionality.of(context) == TextDirection.rtl,
+                          child: SvgPicture.asset(
+                            'assets/figma/icons/back_14.svg',
+                            colorFilter:
+                                ColorFilter.mode(c.textBody, BlendMode.srcIn),
                           ),
                         ),
-                      ],
+                      ),
                     ),
+                  ),
+                ),
+              ),
             ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 
@@ -289,8 +327,8 @@ class _MyPropertiesScreenState extends State<MyPropertiesScreen> {
         SizedBox(height: compact ? FigSpace.md : FigSpace.lg),
         GiBrandLogo(
           height: compact ? 48 : 90,
-          color: GiBrandLogo.colorFor(
-              isDark ? Brightness.dark : Brightness.light),
+          color:
+              GiBrandLogo.colorFor(isDark ? Brightness.dark : Brightness.light),
         ),
         SizedBox(height: compact ? FigSpace.lg : FigSpace.xxl),
         if (name.isNotEmpty) ...[
@@ -653,27 +691,30 @@ class _PinnedTitle extends SliverPersistentHeaderDelegate {
       clipBehavior: Clip.none,
       children: [
         Positioned(
-            left: 0, right: 0, top: 0, bottom: 16,
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 16,
             child: ColoredBox(color: background)),
         Positioned.fill(
-          bottom: 16,
-          child: Center(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: FigSpace.pagePadding),
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: p > 0.5 ? 1 : 2,
-              overflow: TextOverflow.ellipsis,
-              style: FigText.greeting.copyWith(
-                height: 1.2,
-                fontSize: 24 - 6 * p,
-                color: color,
+            bottom: 16,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: FigSpace.pagePadding),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: p > 0.5 ? 1 : 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: FigText.greeting.copyWith(
+                    height: 1.2,
+                    fontSize: 24 - 6 * p,
+                    color: color,
+                  ),
+                ),
               ),
-            ),
-          ),
-        )),
+            )),
         Positioned(
           left: 0,
           right: 0,

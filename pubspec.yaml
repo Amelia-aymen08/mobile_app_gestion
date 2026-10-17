@@ -43,6 +43,7 @@ flutter:
     - assets/residences/
     - assets/figma/
     - assets/figma/icons/
+    - assets/figma/amenities/
     - assets/brand/
     - assets/figma/onboarding/
     - assets/figma/empty/
