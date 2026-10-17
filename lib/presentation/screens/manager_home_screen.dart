@@ -31,9 +31,9 @@ import 'user_management_screen.dart';
 /// Espace d'administration : administrateurs, managers, responsables de
 /// zone et HSE.
 ///
-/// Quatre onglets, dans l'ordre du travail : l'accueil dit ce qui attend,
-/// les tickets le traitent, les residences le situent, « Plus » rassemble
-/// le reste. Sur telephone, la barre de verre de l'espace resident ; sur
+/// Cinq onglets, dans l'ordre du travail : l'accueil dit ce qui attend,
+/// les tickets le traitent, les annonces parlent a tous les residents, les
+/// residences situent le travail, « Plus » rassemble le reste. Sur telephone, la barre de verre de l'espace resident ; sur
 /// ordinateur, une barre laterale qui montre aussi les raccourcis.
 class ManagerHomeScreen extends StatefulWidget {
   const ManagerHomeScreen({super.key});
@@ -52,9 +52,14 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
   int _tab = 0;
   int _unread = 0;
+  int _pendingRegistrations = 0;
+  int _pendingProperties = 0;
   Timer? _poll;
 
-  static const _tabTickets = 1, _tabResidences = 2, _tabMore = 3;
+  static const _tabTickets = 1,
+      _tabNotices = 2,
+      _tabResidences = 3,
+      _tabMore = 4;
 
   @override
   void initState() {
@@ -68,6 +73,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
       _store.load();
       _fetchUnread();
     });
+    _fetchPending();
   }
 
   @override
@@ -86,6 +92,23 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
     } catch (_) {}
   }
 
+  // Demandes qui attendent l'administrateur : elles s'affichent en
+  // pastille sur leur entree du menu.
+  Future<void> _fetchPending() async {
+    if (!_store.isAdmin) return;
+    try {
+      final r = await _api.getRegistrationRequests();
+      final p = await _api.getPropertyAddRequests(status: 'PENDING');
+      if (!mounted) return;
+      setState(() {
+        _pendingRegistrations =
+            r.whereType<Map>().where((e) => e['status'] == 'PENDING').length;
+        _pendingProperties =
+            p.whereType<Map>().where((e) => e['status'] == 'PENDING').length;
+      });
+    } catch (_) {}
+  }
+
   void _go(int tab) {
     if (tab == _tab) return;
     setState(() => _tab = tab);
@@ -98,7 +121,9 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
   Future<void> _push(Widget screen) async {
     await adminPush(context, screen);
-    if (mounted) _fetchUnread();
+    if (!mounted) return;
+    _fetchUnread();
+    _fetchPending();
   }
 
   void _logout() {
@@ -109,26 +134,53 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   }
 
   // ─── Menus ────────────────────────────────────────────────
+  //
+  // Toutes les entrees du menu d'origine sont la. Tickets, Annonces,
+  // Residences et Statistiques (l'accueil) ont leur onglet ; « Plus » les reprend pour
+  // qu'on retrouve le menu complet au meme endroit. La barre laterale de
+  // l'ordinateur montre deja les onglets : elle ne les repete pas.
 
-  List<AdminMenuEntry> get _management => [
+  List<AdminMenuEntry> _management({bool withTabs = true}) => [
+        if (withTabs) ...[
+          AdminMenuEntry('Tickets', Icons.confirmation_number_outlined,
+              () => _go(_tabTickets),
+              hint: 'Signalements à assigner et à suivre',
+              badge: _store.loading
+                  ? 0
+                  : _store.count(AdminTicketFilter.toAssign.test)),
+          AdminMenuEntry('Résidences', Icons.apartment_outlined,
+              () => _go(_tabResidences),
+              hint: 'Bâtiments, logements et tickets par site'),
+        ],
         AdminMenuEntry('Résidents', Icons.people_outline_rounded,
             () => _push(AdminResidentsScreen(store: _store)),
             hint: 'Annuaire et tickets de chaque résident'),
-        AdminMenuEntry('Avis', Icons.campaign_outlined,
-            () => _push(const AdminNoticesScreen()),
-            hint: 'Annonces publiées aux résidents'),
+        if (withTabs)
+          AdminMenuEntry('Annonces', Icons.campaign_outlined,
+              () => _go(_tabNotices),
+              hint: 'Annonces publiées aux résidents'),
+        if (withTabs)
+          AdminMenuEntry('Statistiques', Icons.bar_chart_rounded,
+              () => _go(0),
+              hint: 'Tableau de bord et chiffres clés'),
       ];
 
   List<AdminMenuEntry> get _administration => _store.isAdmin
       ? [
-          AdminMenuEntry('Finances', Icons.account_balance_wallet_outlined,
-              () => _push(const RecouvrementFinancialScreen())),
+          AdminMenuEntry('Paiements', Icons.account_balance_wallet_outlined,
+              () => _push(const RecouvrementFinancialScreen()),
+              hint: 'Charges payées et impayées, par résidence'),
           AdminMenuEntry('Employés', Icons.badge_outlined,
-              () => _push(const UserManagementScreen())),
+              () => _push(const UserManagementScreen()),
+              hint: 'Comptes, mots de passe et appareils'),
           AdminMenuEntry('Inscriptions', Icons.person_add_alt_outlined,
-              () => _push(const RegistrationRequestsScreen())),
+              () => _push(const RegistrationRequestsScreen()),
+              hint: 'Nouveaux résidents à valider',
+              badge: _pendingRegistrations),
           AdminMenuEntry('Ajouts de biens', Icons.add_home_work_outlined,
-              () => _push(const PropertyAddRequestsManagementScreen())),
+              () => _push(const PropertyAddRequestsManagementScreen()),
+              hint: 'Biens déclarés par les résidents',
+              badge: _pendingProperties),
         ]
       : const [];
 
@@ -161,11 +213,12 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         onNotificationsClosed: _fetchUnread,
       ),
       AdminTicketsScreen(store: _store, controller: _tickets),
+      const AdminNoticesScreen(asTab: true),
       AdminResidencesScreen(store: _store),
       AdminMoreScreen(
         user: user,
         role: role,
-        management: _management,
+        management: _management(),
         administration: _administration,
         account: _account,
         onLogout: _logout,
@@ -174,23 +227,24 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
     // Changement d'onglet en fondu glisse, plutot qu'un remplacement sec.
     // Les onglets restent montes : chacun garde sa position de defilement.
+    //
+    // Le fondu reste hors du TickerMode : coupe des qu'on quitte l'onglet,
+    // il figeait la page quittee a pleine opacite, par-dessus l'onglet
+    // choisi. Seule la page elle-meme se met en sommeil.
     final body = Stack(
       children: [
         for (var i = 0; i < pages.length; i++)
           IgnorePointer(
             ignoring: i != _tab,
-            child: TickerMode(
-              enabled: i == _tab,
-              child: AnimatedOpacity(
-                opacity: i == _tab ? 1 : 0,
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                child: AnimatedSlide(
-                  offset: i == _tab ? Offset.zero : const Offset(0, 0.015),
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  child: pages[i],
-                ),
+            child: AnimatedOpacity(
+              opacity: i == _tab ? 1 : 0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              child: AnimatedSlide(
+                offset: i == _tab ? Offset.zero : const Offset(0, 0.015),
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                child: TickerMode(enabled: i == _tab, child: pages[i]),
               ),
             ),
           ),
@@ -210,7 +264,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
               ticketsBadge: _store.loading
                   ? 0
                   : _store.count(AdminTicketFilter.toAssign.test),
-              management: _management,
+              management: _management(withTabs: false),
               administration: _administration,
               account: _account,
               onLogout: _logout,
@@ -248,13 +302,17 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
                   ? 0
                   : _store.count(AdminTicketFilter.toAssign.test)),
           const GiNavItem(
+              asset: 'assets/figma/icons/nav_notice.svg',
+              activeAsset: 'assets/figma/icons/nav_notice_fill.svg',
+              label: 'Annonces'),
+          const GiNavItem(
               asset: 'assets/figma/icons/nav_residence.svg',
               activeAsset: 'assets/figma/icons/nav_residence_fill.svg',
               label: 'Résidences'),
           GiNavItem(
               asset: 'assets/figma/icons/nav_more.svg',
               label: 'Plus',
-              badge: _unread),
+              badge: _unread + _pendingRegistrations + _pendingProperties),
         ],
       ),
     );
@@ -302,6 +360,7 @@ class _Sidebar extends StatelessWidget {
         'Tickets',
         ticketsBadge
       ),
+      (Icons.campaign_outlined, Icons.campaign_rounded, 'Annonces', 0),
       (Icons.apartment_outlined, Icons.apartment_rounded, 'Résidences', 0),
     ];
 
@@ -346,11 +405,11 @@ class _Sidebar extends StatelessWidget {
                     ),
                   heading('Gestion'),
                   for (final e in management)
-                    _SideItem(icon: e.icon, label: e.label, onTap: e.onTap),
+                    _SideItem(icon: e.icon, label: e.label, badge: e.badge, onTap: e.onTap),
                   if (administration.isNotEmpty) ...[
                     heading('Administration'),
                     for (final e in administration)
-                      _SideItem(icon: e.icon, label: e.label, onTap: e.onTap),
+                      _SideItem(icon: e.icon, label: e.label, badge: e.badge, onTap: e.onTap),
                   ],
                   heading('Compte'),
                   for (final e in account)
@@ -360,12 +419,12 @@ class _Sidebar extends StatelessWidget {
                         badge: e.badge,
                         onTap: e.onTap),
                   _SideItem(
-                    icon: current == 3
+                    icon: current == 4
                         ? Icons.settings_rounded
                         : Icons.settings_outlined,
                     label: 'Profil et réglages',
-                    selected: current == 3,
-                    onTap: () => onTab(3),
+                    selected: current == 4,
+                    onTap: () => onTab(4),
                   ),
                 ],
               ),

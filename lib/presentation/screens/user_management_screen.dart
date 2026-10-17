@@ -1,7 +1,40 @@
 import 'package:flutter/material.dart';
-import '../widgets/gi_skeleton.dart';
-import '../../data/api_service.dart';
 
+import '../../data/api_service.dart';
+import '../theme/design_tokens.dart';
+import '../theme/gi_colors.dart';
+import '../widgets/gi_appear.dart';
+import '../widgets/gi_card.dart';
+import '../widgets/gi_pressable.dart';
+import '../widgets/gi_primary_button.dart';
+import '../widgets/gi_refresh.dart';
+import '../widgets/gi_scroll_blur.dart';
+import '../widgets/gi_skeleton.dart';
+import 'admin/admin_sheet.dart';
+import 'admin/admin_ui.dart';
+
+/// Libelle et couleur de chaque role.
+const _roles = {
+  'ADMIN': ('Administrateur', FigAlert.error),
+  'MANAGER': ('Manager', FigBrand.amber),
+  'RESPONSABLE_ZONE': ('Responsable de zone', FigAccent.violet),
+  'HSE': ('HSE', Color(0xFF26A69A)),
+  'INTERVENANT': ('Intervenant', FigAlert.success),
+  'GESTIONNAIRE_TAG': ('Gestionnaire TAG', FigAccent.purple),
+  'RECOUVREMENT': ('Recouvrement', Color(0xFFEF8A3C)),
+  'RESIDENT': ('Résident', FigAccent.blue),
+};
+
+(String, Color) _roleOf(dynamic role) =>
+    _roles[(role ?? '').toString()] ??
+    ((role ?? '—').toString(), const Color(0xFF8E8E93));
+
+/// Comptes de l'application : employes et residents.
+///
+/// Une recherche, une rangee de puces par role avec leur nombre, puis les
+/// comptes dans une seule carte. Toucher un compte ouvre ses actions —
+/// mot de passe, appareils, suppression — dans une feuille du bas, au lieu
+/// d'un menu a trois points et de boites de dialogue blanches.
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
 
@@ -10,182 +43,383 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
-  final ApiService _apiService = ApiService();
-  List<dynamic> _users = [];
-  bool _isLoading = true;
+  final ApiService _api = ApiService();
+  final _search = TextEditingController();
+  List<Map<String, dynamic>> _users = [];
+  bool _loading = true;
+  String _error = '';
+  String _role = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchUsers();
+    _search.addListener(() => setState(() {}));
+    _load();
   }
 
-  Future<void> _fetchUsers() async {
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
     try {
-      final users = await _apiService.getUsers();
+      final users = await _api.getUsers();
+      if (!mounted) return;
       setState(() {
-        _users = users;
-        _isLoading = false;
+        _users = users
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList()
+          ..sort((a, b) => _name(a).toLowerCase().compareTo(_name(b).toLowerCase()));
+        _error = '';
+        _loading = false;
       });
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-      }
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString().replaceAll('Exception: ', '');
+        _loading = false;
+      });
     }
   }
 
-  Future<void> _deleteUser(String id) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmer la suppression'),
-        content: const Text('Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Supprimer', style: TextStyle(color: Colors.red))),
-        ],
-      ),
+  static String _name(Map u) {
+    final n = (u['name'] ?? u['fullName'] ?? '').toString().trim();
+    if (n.isNotEmpty) return n;
+    final full = '${u['firstName'] ?? ''} ${u['lastName'] ?? ''}'.trim();
+    return full.isEmpty ? (u['email'] ?? 'Utilisateur').toString() : full;
+  }
+
+  static String _initials(String name) => name
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .take(2)
+      .map((w) => w[0].toUpperCase())
+      .join();
+
+  String _err(Object e) => e.toString().replaceAll('Exception: ', '');
+
+  Future<void> _delete(Map u) async {
+    final ok = await adminConfirm(
+      context,
+      title: 'Supprimer ${_name(u)} ?',
+      message: 'Le compte et son accès à l\'application seront supprimés. '
+          'Cette action est irréversible.',
+      confirmLabel: 'Supprimer le compte',
+      destructive: true,
     );
-
-    if (confirm == true) {
-      try {
-        await _apiService.deleteUser(id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Utilisateur supprimé')));
-          _fetchUsers();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-        }
-      }
+    if (ok == null || !mounted) return;
+    try {
+      await _api.deleteUser(u['id'].toString());
+      if (!mounted) return;
+      showAdminToast(context, 'Compte supprimé');
+      _load();
+    } catch (e) {
+      if (mounted) showAdminToast(context, _err(e), error: true);
     }
   }
 
-  Future<void> _resetDevices(String id, String name) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Réinitialiser les appareils'),
-        content: Text('Supprimer tous les appareils enregistrés de $name ?\nLe résident pourra se reconnecter sur un nouvel appareil.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Réinitialiser'),
-          ),
-        ],
-      ),
+  Future<void> _resetDevices(Map u) async {
+    final ok = await adminConfirm(
+      context,
+      title: 'Réinitialiser les appareils ?',
+      message: 'Les appareils enregistrés de ${_name(u)} seront oubliés : '
+          'il pourra se reconnecter depuis un nouveau téléphone.',
+      confirmLabel: 'Réinitialiser',
     );
-    if (confirm == true) {
-      try {
-        await _apiService.resetUserDevices(id);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Appareils réinitialisés. Le résident peut se reconnecter.')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-        }
-      }
+    if (ok == null || !mounted) return;
+    try {
+      await _api.resetUserDevices(u['id'].toString());
+      if (mounted) showAdminToast(context, 'Appareils réinitialisés');
+    } catch (e) {
+      if (mounted) showAdminToast(context, _err(e), error: true);
     }
   }
 
-  Future<void> _changePassword(String id) async {
-    final controller = TextEditingController();
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Changer le mot de passe'),
-        content: TextField(
-          textInputAction: TextInputAction.next,
-          onSubmitted: (_) => FocusScope.of(context).nextFocus(),
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
-          obscureText: true,
+  Future<void> _changePassword(Map u) async {
+    final field = TextEditingController();
+    final saved = await showAdminSheet<bool>(
+      context,
+      title: 'Nouveau mot de passe',
+      subtitle: 'Pour ${_name(u)}. Communiquez-le lui de vive voix.',
+      builder: (sheet) => StatefulBuilder(
+        builder: (sheet, setSheet) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AdminField(
+              controller: field,
+              label: 'Mot de passe',
+              hint: '8 caractères minimum',
+              obscure: true,
+              onChanged: (_) => setSheet(() {}),
+            ),
+            const SizedBox(height: FigSpace.xl),
+            GiPrimaryButton(
+              label: 'Enregistrer',
+              onPressed: field.text.length < 6
+                  ? null
+                  : () async {
+                      try {
+                        await _api.updateUserPassword(
+                            u['id'].toString(), field.text);
+                        if (sheet.mounted) Navigator.pop(sheet, true);
+                      } catch (e) {
+                        if (sheet.mounted) {
+                          showAdminToast(sheet, _err(e), error: true);
+                        }
+                      }
+                    },
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Enregistrer'),
-          ),
-        ],
       ),
     );
-
-    if (confirm == true && controller.text.isNotEmpty) {
-      try {
-        await _apiService.updateUserPassword(id, controller.text);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mot de passe mis à jour')));
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
-        }
-      }
+    if (saved == true && mounted) {
+      showAdminToast(context, 'Mot de passe mis à jour');
     }
+  }
+
+  void _actions(Map u) {
+    final c = GiColors.of(context);
+    final role = _roleOf(u['role']);
+    Widget action(IconData icon, String label, VoidCallback onTap,
+            {Color? color}) =>
+        GiPressable(
+          pressedScale: 0.98,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: color ?? c.textBody),
+                const SizedBox(width: FigSpace.lg),
+                Expanded(
+                  child: Text(label,
+                      style: FigText.fieldLabel
+                          .copyWith(color: color ?? c.textBody)),
+                ),
+                GiChevron(color: color ?? c.textFaint),
+              ],
+            ),
+          ),
+        );
+
+    showAdminSheet<void>(
+      context,
+      title: _name(u),
+      subtitle: (u['email'] ?? '').toString(),
+      builder: (sheet) {
+        void run(Future<void> Function(Map) f) {
+          Navigator.pop(sheet);
+          f(u);
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AdminPill(role.$1, role.$2,
+                icon: Icons.verified_user_outlined, dense: true),
+            const SizedBox(height: FigSpace.lg),
+            GiCard(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+              child: Column(
+                children: [
+                  action(Icons.key_rounded, 'Changer le mot de passe',
+                      () => run(_changePassword)),
+                  if (u['role'] == 'RESIDENT') ...[
+                    Divider(height: 1, color: c.innerBorder),
+                    action(Icons.phonelink_erase_rounded,
+                        'Réinitialiser les appareils',
+                        () => run(_resetDevices)),
+                  ],
+                  Divider(height: 1, color: c.innerBorder),
+                  action(Icons.delete_outline_rounded, 'Supprimer le compte',
+                      () => run(_delete),
+                      color: FigAlert.error),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = GiColors.of(context);
+    final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
+    final q = _search.text.trim().toLowerCase();
+    final searched = _users
+        .where((u) =>
+            q.isEmpty ||
+            '${_name(u)} ${u['email']} ${_roleOf(u['role']).$1}'
+                .toLowerCase()
+                .contains(q))
+        .toList();
+    final list = searched
+        .where((u) => _role.isEmpty || (u['role'] ?? '').toString() == _role)
+        .toList();
+    // Les roles presents, dans l'ordre du tableau.
+    final present = {for (final u in _users) (u['role'] ?? '').toString()};
+    final roles = [
+      ..._roles.keys.where(present.contains),
+      ...present.where((r) => r.isNotEmpty && !_roles.containsKey(r)),
+    ];
+    final staff = _users.where((u) => u['role'] != 'RESIDENT').length;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestion des Utilisateurs'),
-        backgroundColor: const Color(0xFF1E3A8A),
-        foregroundColor: Colors.white,
-      ),
-      body: _isLoading
-          ? const GiSkeletonList()
-          : ListView.builder(
-              itemCount: _users.length,
-              itemBuilder: (context, index) {
-                final user = _users[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: _getRoleColor(user['role']),
-                      child: Text(user['name'][0].toUpperCase(), style: const TextStyle(color: Colors.white)),
-                    ),
-                    title: Text(user['name']),
-                    subtitle: Text('${user['email']} • ${user['role']}'),
-                    trailing: PopupMenuButton(
-                      itemBuilder: (ctx) => [
-                        const PopupMenuItem(value: 'password', child: Text('Changer mot de passe')),
-                        if (user['role'] == 'RESIDENT')
-                          const PopupMenuItem(
-                            value: 'devices',
-                            child: Text('Réinitialiser les appareils',
-                                style: TextStyle(color: Colors.orange)),
+      backgroundColor: c.scaffold,
+      body: GiScrollBlur(
+        child: CustomScrollView(
+          clipBehavior: Clip.none,
+          physics: giRefreshPhysics,
+          slivers: [
+            GiRefreshControl(onRefresh: _load),
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(FigSpace.pagePadding, top,
+                  FigSpace.pagePadding, MediaQuery.paddingOf(context).bottom + 40),
+              sliver: SliverToBoxAdapter(
+                child: AdminContent(
+                  maxWidth: 820,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AdminPageHeader(
+                        back: true,
+                        title: 'Employés',
+                        subtitle: _loading
+                            ? 'Chargement…'
+                            : '$staff employé${staff > 1 ? 's' : ''} · ${_users.length - staff} résident${_users.length - staff > 1 ? 's' : ''}',
+                      ),
+                      const SizedBox(height: FigSpace.xl),
+                      AdminSearchField(
+                          controller: _search, hint: 'Nom, e-mail, rôle…'),
+                      if (roles.length > 1) ...[
+                        const SizedBox(height: FigSpace.lg),
+                        SizedBox(
+                          height: 34,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            clipBehavior: Clip.none,
+                            physics: const BouncingScrollPhysics(),
+                            children: [
+                              AdminFilterChip(
+                                  label: 'Tous',
+                                  count: searched.length,
+                                  selected: _role.isEmpty,
+                                  onTap: () => setState(() => _role = '')),
+                              for (final r in roles) ...[
+                                const SizedBox(width: 8),
+                                AdminFilterChip(
+                                  label: _roleOf(r).$1,
+                                  dot: _roleOf(r).$2,
+                                  count: searched
+                                      .where((u) => u['role'] == r)
+                                      .length,
+                                  selected: _role == r,
+                                  onTap: () => setState(() => _role = r),
+                                ),
+                              ],
+                            ],
                           ),
-                        const PopupMenuItem(value: 'delete', child: Text('Supprimer', style: TextStyle(color: Colors.red))),
+                        ),
                       ],
-                      onSelected: (value) {
-                        if (value == 'delete') _deleteUser(user['id'].toString());
-                        if (value == 'password') _changePassword(user['id'].toString());
-                        if (value == 'devices') _resetDevices(user['id'].toString(), (user['name'] ?? '').toString());
-                      },
-                    ),
+                      const SizedBox(height: FigSpace.xl),
+                      if (_loading)
+                        const GiSkeletonList(padding: EdgeInsets.zero)
+                      else if (_error.isNotEmpty)
+                        GiCard(
+                          child: AdminEmpty(
+                              icon: Icons.cloud_off_rounded,
+                              title: 'Chargement impossible',
+                              message: _error),
+                        )
+                      else if (list.isEmpty)
+                        const GiCard(
+                          child: AdminEmpty(
+                              icon: Icons.person_search_rounded,
+                              title: 'Aucun compte',
+                              message: 'Aucun compte ne correspond à ces filtres.'),
+                        )
+                      else
+                        GiAppear(
+                          child: GiCard(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Column(
+                              children: [
+                                for (var i = 0; i < list.length; i++) ...[
+                                  if (i > 0)
+                                    Divider(
+                                        height: 1,
+                                        indent: 66,
+                                        color: c.innerBorder),
+                                  _row(list[i]),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             ),
+          ],
+        ),
+      ),
     );
   }
 
-  Color _getRoleColor(String? role) {
-    switch (role) {
-      case 'ADMIN': return Colors.red;
-      case 'MANAGER': return Colors.orange;
-      case 'RESIDENT': return Colors.blue;
-      case 'INTERVENANT': return Colors.green;
-      default: return Colors.grey;
-    }
+  Widget _row(Map<String, dynamic> u) {
+    final c = GiColors.of(context);
+    final role = _roleOf(u['role']);
+    final name = _name(u);
+    return GiPressable(
+      pressedScale: 0.98,
+      onTap: () => _actions(u),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: role.$2.withValues(alpha: 0.13),
+                shape: BoxShape.circle,
+              ),
+              child: Text(_initials(name),
+                  style: FigText.label.copyWith(
+                      fontWeight: FontWeight.w700, color: role.$2)),
+            ),
+            const SizedBox(width: FigSpace.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.fieldLabel.copyWith(
+                          fontWeight: FontWeight.w600, color: c.textBody)),
+                  const SizedBox(height: 2),
+                  Text((u['email'] ?? '').toString(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: FigText.label.copyWith(color: c.textMuted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: FigSpace.md),
+            AdminPill(role.$1, role.$2, dense: true),
+          ],
+        ),
+      ),
+    );
   }
 }

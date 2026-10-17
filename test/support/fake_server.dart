@@ -915,10 +915,49 @@ class DemoAdminClient extends http.BaseClient {
             {'name': 'Rachid Mansouri', 'profession': 'Électricien'},
             {'name': 'Équipe entretien', 'profession': 'Entretien'},
           ]),
+        null => (200, [
+            {'id': 'u1', 'name': 'Samia Rahmani', 'email': 'samia@demo.dz', 'role': 'ADMIN'},
+            {'id': 'u2', 'name': 'Rachid Mansouri', 'email': 'rachid@demo.dz', 'role': 'INTERVENANT'},
+            {'id': 'u3', 'name': 'Karim Haddad', 'email': 'karim@demo.dz', 'role': 'RESIDENT'},
+          ]),
         _ => (200, const []),
       };
     }
     if (path == '/financial/client-status') return (200, {'status': 'Impayé'});
+    if (path == '/financial' && method == 'GET') {
+      return (200, [
+        for (var i = 0; i < 9; i++)
+          {
+            'id': 'f$i',
+            'type': 'Charge',
+            'amount': 4500 + i * 250,
+            'status': i % 3 == 0 ? 'Payé' : 'Impayé',
+            'description': 'Charges de copropriété',
+            'clientName': ['Karim Haddad', 'Nadia Ferhat', 'Yacine Belkacem'][i % 3],
+            'periodStart': DateTime(2026, 1 + i % 9).toIso8601String(),
+            'periodEnd': DateTime(2026, 2 + i % 9).toIso8601String(),
+            'residenceId': 'r${i % 2 + 1}',
+            'Residence': {'id': 'r${i % 2 + 1}', 'name': i.isEven ? 'Jais' : 'Péridot'},
+          },
+      ]);
+    }
+    if (path.startsWith('/financial/')) return (200, {'ok': true});
+    if (path == '/announcements/manage') {
+      return (200, [
+        {'id': 'a1', 'title': 'Coupure d\'eau mardi', 'body': 'Travaux sur la colonne principale de 9 h à 12 h.', 'category': 'URGENT', 'status': 'PUBLISHED', 'residenceName': 'Jais', 'createdAt': '2026-10-12T09:00:00Z'},
+        {'id': 'a2', 'title': 'Fête des voisins', 'body': 'Rendez-vous dans le jardin samedi.', 'category': 'EVENT', 'status': 'DRAFT', 'createdAt': '2026-10-10T09:00:00Z'},
+      ]);
+    }
+    if (path == '/registrations') {
+      return (200, [
+        {'id': 'g1', 'firstName': 'Lina', 'lastName': 'Saidi', 'email': 'lina@demo.dz', 'phone': '0550 12 34 56', 'residenceId': 'r1', 'block': 'B', 'floor': '3', 'door': '12', 'status': 'PENDING', 'createdAt': '2026-10-15T10:00:00Z'},
+      ]);
+    }
+    if (path == '/property-add-requests') {
+      return (200, [
+        {'id': 'p1', 'email': 'karim@demo.dz', 'residenceId': 'r2', 'door': '4', 'notes': 'Second appartement', 'status': 'PENDING', 'createdAt': '2026-10-14T10:00:00Z'},
+      ]);
+    }
     if (path == '/dashboard') {
       return (200, {
         'stats': {'ticketsCount': _tickets.length, 'totalResidences': 4, 'occupancyRate': '87%', 'monthlyRevenue': '4,2 M DZD'},
