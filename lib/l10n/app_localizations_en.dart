@@ -12,7 +12,7 @@ class AppL10nEn extends AppL10n {
   String get navHome => 'Home';
 
   @override
-  String get navNotice => 'Notice';
+  String get navNotice => 'Announcements';
 
   @override
   String get navReport => 'Report';
@@ -86,7 +86,7 @@ class AppL10nEn extends AppL10n {
   String get quickActions => 'Quick Actions';
 
   @override
-  String get notices => 'Notices';
+  String get notices => 'Announcements';
 
   @override
   String get payments => 'Payments';
@@ -245,11 +245,11 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get emptyNoticesTitle => 'No Notices Yet';
+  String get emptyNoticesTitle => 'No Announcements Yet';
 
   @override
   String get emptyNoticesBody =>
-      'You are all caught up. There are no notices to display at this moment.';
+      'You are all caught up. There are no announcements to display at this moment.';
 
   @override
   String get logoutTitle => 'Log Out?';
@@ -434,7 +434,7 @@ class AppL10nEn extends AppL10n {
   String get whatToDo => 'What should you do?';
 
   @override
-  String get shareNotice => 'Share notice';
+  String get shareNotice => 'Share announcement';
 
   @override
   String get markAsRead => 'Mark as read';
@@ -683,7 +683,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get accessResidentDesc =>
-      'Can view notices, create reports and manage visitors.';
+      'Can view announcements, create reports and manage visitors.';
 
   @override
   String get accessVisitor => 'Visitor access';
@@ -1010,7 +1010,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get reminderSetBody =>
-      'A notification will remind you of this notice in 24 hours.';
+      'A notification will remind you of this announcement in 24 hours.';
 
   @override
   String get reminderUnavailable =>

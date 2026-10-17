@@ -12,7 +12,7 @@ class AppL10nFr extends AppL10n {
   String get navHome => 'Accueil';
 
   @override
-  String get navNotice => 'Avis';
+  String get navNotice => 'Annonces';
 
   @override
   String get navReport => 'Signaler';
@@ -86,7 +86,7 @@ class AppL10nFr extends AppL10n {
   String get quickActions => 'Actions rapides';
 
   @override
-  String get notices => 'Avis';
+  String get notices => 'Annonces';
 
   @override
   String get payments => 'Paiements';
@@ -246,11 +246,11 @@ class AppL10nFr extends AppL10n {
   }
 
   @override
-  String get emptyNoticesTitle => 'Aucun avis';
+  String get emptyNoticesTitle => 'Aucune annonce';
 
   @override
   String get emptyNoticesBody =>
-      'Vous êtes à jour. Il n\'y a aucun avis à afficher pour le moment.';
+      'Vous êtes à jour. Il n\'y a aucune annonce à afficher pour le moment.';
 
   @override
   String get logoutTitle => 'Se déconnecter ?';
@@ -435,7 +435,7 @@ class AppL10nFr extends AppL10n {
   String get whatToDo => 'Que devez-vous faire ?';
 
   @override
-  String get shareNotice => 'Partager l\'avis';
+  String get shareNotice => 'Partager l\'annonce';
 
   @override
   String get markAsRead => 'Marquer comme lu';
@@ -684,7 +684,7 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get accessResidentDesc =>
-      'Peut consulter les avis, créer des signalements et gérer les visiteurs.';
+      'Peut consulter les annonces, créer des signalements et gérer les visiteurs.';
 
   @override
   String get accessVisitor => 'Accès visiteur';
@@ -1012,7 +1012,7 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get reminderSetBody =>
-      'Une notification vous rappellera cet avis dans 24 heures.';
+      'Une notification vous rappellera cette annonce dans 24 heures.';
 
   @override
   String get reminderUnavailable =>

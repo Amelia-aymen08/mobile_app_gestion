@@ -1108,7 +1108,7 @@ class ApiService {
       return decoded is List ? decoded : [];
     }
     throw Exception(
-        _tryDecode(response.body)['error'] ?? 'Erreur chargement des avis');
+        _tryDecode(response.body)['error'] ?? 'Erreur chargement des annonces');
   }
 
   Future<void> markAnnouncementRead(String id) async {
@@ -1129,7 +1129,7 @@ class ApiService {
       return decoded is List ? decoded : [];
     }
     throw Exception(
-        _tryDecode(response.body)['error'] ?? 'Erreur chargement des avis');
+        _tryDecode(response.body)['error'] ?? 'Erreur chargement des annonces');
   }
 
   Future<Map<String, dynamic>> createAnnouncement(
@@ -1142,7 +1142,7 @@ class ApiService {
       return Map<String, dynamic>.from(jsonDecode(response.body));
     }
     throw Exception(
-        _tryDecode(response.body)['error'] ?? 'Erreur création de l’avis');
+        _tryDecode(response.body)['error'] ?? 'Erreur création de l’annonce');
   }
 
   // --- Messages (Report Chat + Message Admin) ---

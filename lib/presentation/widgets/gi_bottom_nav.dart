@@ -44,8 +44,8 @@ final bool glassFallback = kIsWeb ||
 
 /// Barre de navigation en verre liquide, facon iOS 26.
 ///
-/// Une capsule de verre flotte au-dessus du contenu, cerclee d'un filet
-/// ambre. Elle se resserre sur les icones quand on descend dans une page et
+/// Une capsule de verre flotte au-dessus du contenu, sans contour, detachee
+/// par son ombre seule. Elle se resserre sur les icones quand on descend dans une page et
 /// reprend sa taille quand on remonte ou qu'on la touche ; l'etat est tenu
 /// par [minimizeController], nourri par les defilements de l'ecran.
 ///
@@ -166,20 +166,75 @@ class _GiBottomNavState extends State<GiBottomNav> {
             ? GiBottomNav.minimizedHeight
             : GiBottomNav.expandedHeight;
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: FigSpace.navbarBottom),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            heightFactor: 1,
-            child: TweenAnimationBuilder<Size?>(
-              tween: SizeTween(end: Size(width, height)),
-              duration: _duration,
-              curve: _curve,
-              builder: (context, size, _) => _bar(size!, minimized),
+        return Stack(clipBehavior: Clip.none, children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(child: _bottomVeil()),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: FigSpace.navbarBottom),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              heightFactor: 1,
+              child: TweenAnimationBuilder<Size?>(
+                tween: SizeTween(end: Size(width, height)),
+                duration: _duration,
+                curve: _curve,
+                builder: (context, size, _) => _bar(size!, minimized),
+              ),
             ),
           ),
-        );
+        ]);
       },
+    );
+  }
+
+  // Sous la capsule, jusqu'au bord de l'ecran : le contenu qui passe est
+  // fondu dans un flou fort et un voile de la couleur du fond, illisible.
+  // Le flou monte par paliers pour qu'aucune ligne ne marque la limite, et
+  // s'arrete au bas de la capsule : le verre, lui, laisse voir la page.
+  Widget _bottomVeil() {
+    final bg = GiColors.of(context).scaffold;
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      _veilBand(
+        height: 22,
+        sigma: 3,
+        colors: [bg.withValues(alpha: 0), bg.withValues(alpha: 0.45)],
+      ),
+      _veilBand(
+        height: 10,
+        sigma: 9,
+        colors: [bg.withValues(alpha: 0.45), bg.withValues(alpha: 0.85)],
+      ),
+      _veilBand(
+        height: FigSpace.navbarBottom - 6,
+        sigma: 20,
+        colors: [bg.withValues(alpha: 0.85), bg.withValues(alpha: 0.92)],
+      ),
+    ]);
+  }
+
+  Widget _veilBand({
+    required double height,
+    required double sigma,
+    required List<Color> colors,
+  }) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: colors,
+            ),
+          ),
+          child: SizedBox(height: height, width: double.infinity),
+        ),
+      ),
     );
   }
 
@@ -204,9 +259,16 @@ class _GiBottomNavState extends State<GiBottomNav> {
                 borderRadius: BorderRadius.circular(radius),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: dark ? 0.45 : 0.14),
-                    blurRadius: 28,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withValues(alpha: dark ? 0.55 : 0.07),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                  // Une ombre courte et nette sous la capsule : elle en
+                  // dessine le contour sans filet de couleur.
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: dark ? 0.35 : 0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -220,39 +282,27 @@ class _GiBottomNavState extends State<GiBottomNav> {
                     quality: GlassQuality.premium,
                     shape: LiquidRoundedSuperellipse(borderRadius: radius),
                     settings: LiquidGlassSettings(
-                      // Un verre epais et presque opaque, facon WhatsApp :
-                      // la barre se detache nettement, le contenu qui passe
-                      // dessous n'est plus qu'une lueur et ne gene jamais la
-                      // lecture des icones. En sombre, un gris plus clair
-                      // que le fond, pour qu'elle ressorte de la nuit.
+                      // Un vrai verre : teinte legere et flou modere, le
+                      // contenu qui passe dessous reste visible. Ni reflet
+                      // de bord ni irisation : la capsule n'a pas de
+                      // contour, seule son ombre la detache.
+                      // En clair, une vitre : blanche, lumineuse et peu
+                      // floutee. L'ombre y est tres legere : vue a travers
+                      // le verre, elle le grisait.
                       glassColor: dark
-                          ? FigDark.navbarBg.withValues(alpha: 0.92)
-                          : Colors.white.withValues(alpha: 0.92),
-                      thickness: 30,
-                      blur: 18,
-                      refractiveIndex: 1.5,
-                      lightIntensity: dark ? 0.5 : 0.6,
-                      ambientStrength: 0.6,
-                      saturation: 1.2,
-                      chromaticAberration: 0.15,
+                          ? FigDark.navbarBg.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.42),
+                      thickness: dark ? 14 : 22,
+                      blur: dark ? 10 : 6,
+                      refractiveIndex: dark ? 1.2 : 1.3,
+                      lightIntensity: 0,
+                      fresnelStrength: 0,
+                      ambientStrength: dark ? 0.3 : 0.6,
+                      saturation: dark ? 1.3 : 1.1,
+                      chromaticAberration: 0,
                     ),
                     child: const SizedBox.expand(),
                   ),
-          ),
-          // Le filet ambre, par-dessus le verre.
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(
-                    color: dark
-                        ? FigBrand.amber.withValues(alpha: 0.35)
-                        : FigBrand.navy.withValues(alpha: 0.08),
-                  ),
-                ),
-              ),
-            ),
           ),
           Positioned.fill(
             child: Padding(
@@ -270,11 +320,12 @@ class _GiBottomNavState extends State<GiBottomNav> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        filter: ui.ImageFilter.blur(
+            sigmaX: dark ? 10 : 6, sigmaY: dark ? 10 : 6),
         child: ColoredBox(
           color: dark
-              ? FigDark.navbarBg.withValues(alpha: 0.94)
-              : Colors.white.withValues(alpha: 0.94),
+              ? FigDark.navbarBg.withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.42),
         ),
       ),
     );

@@ -108,7 +108,7 @@ abstract class AppL10n {
   /// No description provided for @navNotice.
   ///
   /// In fr, this message translates to:
-  /// **'Avis'**
+  /// **'Annonces'**
   String get navNotice;
 
   /// No description provided for @navReport.
@@ -210,7 +210,7 @@ abstract class AppL10n {
   /// No description provided for @notices.
   ///
   /// In fr, this message translates to:
-  /// **'Avis'**
+  /// **'Annonces'**
   String get notices;
 
   /// No description provided for @payments.
@@ -492,13 +492,13 @@ abstract class AppL10n {
   /// No description provided for @emptyNoticesTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Aucun avis'**
+  /// **'Aucune annonce'**
   String get emptyNoticesTitle;
 
   /// No description provided for @emptyNoticesBody.
   ///
   /// In fr, this message translates to:
-  /// **'Vous êtes à jour. Il n\'y a aucun avis à afficher pour le moment.'**
+  /// **'Vous êtes à jour. Il n\'y a aucune annonce à afficher pour le moment.'**
   String get emptyNoticesBody;
 
   /// No description provided for @logoutTitle.
@@ -852,7 +852,7 @@ abstract class AppL10n {
   /// No description provided for @shareNotice.
   ///
   /// In fr, this message translates to:
-  /// **'Partager l\'avis'**
+  /// **'Partager l\'annonce'**
   String get shareNotice;
 
   /// No description provided for @markAsRead.
@@ -1326,7 +1326,7 @@ abstract class AppL10n {
   /// No description provided for @accessResidentDesc.
   ///
   /// In fr, this message translates to:
-  /// **'Peut consulter les avis, créer des signalements et gérer les visiteurs.'**
+  /// **'Peut consulter les annonces, créer des signalements et gérer les visiteurs.'**
   String get accessResidentDesc;
 
   /// No description provided for @accessVisitor.
@@ -1944,7 +1944,7 @@ abstract class AppL10n {
   /// No description provided for @reminderSetBody.
   ///
   /// In fr, this message translates to:
-  /// **'Une notification vous rappellera cet avis dans 24 heures.'**
+  /// **'Une notification vous rappellera cette annonce dans 24 heures.'**
   String get reminderSetBody;
 
   /// No description provided for @reminderUnavailable.

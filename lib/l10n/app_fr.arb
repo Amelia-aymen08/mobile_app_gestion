@@ -1,7 +1,7 @@
 {
   "@@locale": "fr",
   "navHome": "Accueil",
-  "navNotice": "Avis",
+  "navNotice": "Annonces",
   "navReport": "Signaler",
   "navPayment": "Paiements",
   "navMore": "Plus",
@@ -57,7 +57,7 @@
     }
   },
   "quickActions": "Actions rapides",
-  "notices": "Avis",
+  "notices": "Annonces",
   "payments": "Paiements",
   "documents": "Documents",
   "profile": "Profil",
@@ -118,8 +118,8 @@
   "filterEvent": "Événement",
   "readMore": "Lire la suite",
   "newCount": "{count, plural, =1{1 nouveau} other{{count} nouveaux}}",
-  "emptyNoticesTitle": "Aucun avis",
-  "emptyNoticesBody": "Vous êtes à jour. Il n'y a aucun avis à afficher pour le moment.",
+  "emptyNoticesTitle": "Aucune annonce",
+  "emptyNoticesBody": "Vous êtes à jour. Il n'y a aucune annonce à afficher pour le moment.",
   "@newCount": {
     "placeholders": {
       "count": {
@@ -206,7 +206,7 @@
   "dateLabel": "Date",
   "timeLabel": "Horaire",
   "whatToDo": "Que devez-vous faire ?",
-  "shareNotice": "Partager l'avis",
+  "shareNotice": "Partager l'annonce",
   "markAsRead": "Marquer comme lu",
   "estimated": "estimé",
   "category": "Catégorie",
@@ -306,7 +306,7 @@
   "accessFull": "Accès complet",
   "accessFullDesc": "Accès à toutes les fonctionnalités.",
   "accessResident": "Accès résident",
-  "accessResidentDesc": "Peut consulter les avis, créer des signalements et gérer les visiteurs.",
+  "accessResidentDesc": "Peut consulter les annonces, créer des signalements et gérer les visiteurs.",
   "accessVisitor": "Accès visiteur",
   "accessVisitorDesc": "Peut uniquement gérer les visiteurs.",
   "accessCustom": "Accès personnalisé",
@@ -464,7 +464,7 @@
   "unsupportedFileType": "Type de fichier non pris en charge.",
   "remindIn24h": "Me le rappeler dans 24 h",
   "reminderSetTitle": "Rappel programmé",
-  "reminderSetBody": "Une notification vous rappellera cet avis dans 24 heures.",
+  "reminderSetBody": "Une notification vous rappellera cette annonce dans 24 heures.",
   "reminderUnavailable": "Le rappel n'est disponible que sur l'application mobile.",
   "docCatSecurity": "Sécurité",
   "docCatSav": "SAV",
