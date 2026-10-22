@@ -1,5 +1,5 @@
-// Fiche residence : les commodites tiennent sur deux lignes qui defilent
-// ensemble de cote, et aucune n'est perdue.
+// Fiche residence : les commodites tiennent sur une seule ligne qui defile
+// de cote, et aucune n'est perdue.
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,16 +22,15 @@ void main() {
     ApiService().useClient(DemoClient(demoMulti));
   });
 
-  testWidgets('commodites sur deux lignes, defilement commun',
-      (tester) async {
+  testWidgets('commodites sur une ligne, a faire defiler', (tester) async {
     const size = Size(393, 852);
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    final residenceId = ((demoMulti.properties.first as Map)['Residence']
-            as Map)['id']
-        .toString();
+    final residenceId =
+        ((demoMulti.properties.first as Map)['Residence'] as Map)['id']
+            .toString();
     await tester.pumpWidget(MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -59,15 +58,16 @@ void main() {
     final second = tester.getRect(find.text('Parking de stationnement'));
     final last = find.text('Bâche à eau');
 
-    // Deux lignes : la deuxieme commodite passe sous la premiere.
-    expect(second.top, greaterThan(first.bottom));
+    // Une seule ligne : la deuxieme commodite est a droite de la premiere.
+    expect(second.left, greaterThan(first.right));
+    expect((second.center.dy - first.center.dy).abs(), lessThan(12));
     // La derniere est hors de l'ecran avant de faire defiler.
     expect(tester.getRect(last).left, greaterThan(size.width));
 
-    await tester.drag(find.text('Ascenseur'), const Offset(-400, 0));
+    await tester.drag(find.text('Ascenseur'), const Offset(-2000, 0));
     await tester.pumpAndSettle();
 
-    // Elle est revenue dans l'ecran, et les deux lignes ont bouge ensemble.
+    // Elle est revenue dans l'ecran, et toute la ligne a bouge.
     expect(tester.getRect(last).right, lessThanOrEqualTo(size.width));
     expect(tester.getRect(find.text('Parking de stationnement')).left,
         lessThan(second.left));

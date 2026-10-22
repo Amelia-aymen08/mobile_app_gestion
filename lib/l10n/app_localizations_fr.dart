@@ -893,6 +893,9 @@ class AppL10nFr extends AppL10n {
   String get amenitiesTitle => 'Commodités';
 
   @override
+  String get locationTitle => 'Emplacement';
+
+  @override
   String get aboutTitle => 'À propos';
 
   @override

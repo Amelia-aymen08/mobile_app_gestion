@@ -1719,6 +1719,12 @@ abstract class AppL10n {
   /// **'Commodités'**
   String get amenitiesTitle;
 
+  /// No description provided for @locationTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Emplacement'**
+  String get locationTitle;
+
   /// No description provided for @aboutTitle.
   ///
   /// In fr, this message translates to:

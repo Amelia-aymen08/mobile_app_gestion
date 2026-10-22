@@ -379,6 +379,7 @@
   "openLabel": "Ouvrir",
   "residenceDetails": "Ma résidence",
   "amenitiesTitle": "Commodités",
+  "locationTitle": "Emplacement",
   "aboutTitle": "À propos",
   "memberCount": "{count} sur {max} membres",
   "householdHint": "Chaque membre reçoit ses accès de connexion par e-mail. Vous pouvez ajouter jusqu'à {max} personnes.",

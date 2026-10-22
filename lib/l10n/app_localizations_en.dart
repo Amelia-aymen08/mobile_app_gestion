@@ -891,6 +891,9 @@ class AppL10nEn extends AppL10n {
   String get amenitiesTitle => 'Amenities';
 
   @override
+  String get locationTitle => 'Location';
+
+  @override
   String get aboutTitle => 'About';
 
   @override

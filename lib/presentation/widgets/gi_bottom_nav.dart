@@ -167,11 +167,14 @@ class _GiBottomNavState extends State<GiBottomNav> {
             : GiBottomNav.expandedHeight;
 
         return Stack(clipBehavior: Clip.none, children: [
-          Positioned(
+          // Sous la capsule, jusqu'au bord de l'ecran ; le voile s'arrete
+          // au bas de la capsule : le verre, lui, laisse voir la page.
+          const Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: IgnorePointer(child: _bottomVeil()),
+            child: IgnorePointer(
+                child: GiBottomVeil(height: 26 + FigSpace.navbarBottom)),
           ),
           Padding(
             padding: const EdgeInsets.only(bottom: FigSpace.navbarBottom),
@@ -188,53 +191,6 @@ class _GiBottomNavState extends State<GiBottomNav> {
           ),
         ]);
       },
-    );
-  }
-
-  // Sous la capsule, jusqu'au bord de l'ecran : le contenu qui passe est
-  // fondu dans un flou fort et un voile de la couleur du fond, illisible.
-  // Le flou monte par paliers pour qu'aucune ligne ne marque la limite, et
-  // s'arrete au bas de la capsule : le verre, lui, laisse voir la page.
-  Widget _bottomVeil() {
-    final bg = GiColors.of(context).scaffold;
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      _veilBand(
-        height: 22,
-        sigma: 3,
-        colors: [bg.withValues(alpha: 0), bg.withValues(alpha: 0.45)],
-      ),
-      _veilBand(
-        height: 10,
-        sigma: 9,
-        colors: [bg.withValues(alpha: 0.45), bg.withValues(alpha: 0.85)],
-      ),
-      _veilBand(
-        height: FigSpace.navbarBottom - 6,
-        sigma: 20,
-        colors: [bg.withValues(alpha: 0.85), bg.withValues(alpha: 0.92)],
-      ),
-    ]);
-  }
-
-  Widget _veilBand({
-    required double height,
-    required double sigma,
-    required List<Color> colors,
-  }) {
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: colors,
-            ),
-          ),
-          child: SizedBox(height: height, width: double.infinity),
-        ),
-      ),
     );
   }
 
@@ -569,6 +525,61 @@ class _GiBottomNavState extends State<GiBottomNav> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Voile du bas de l'ecran, sous la barre de navigation ou un bouton
+/// flottant : le contenu qui passe dessous est fondu dans un flou fort et
+/// un voile de la couleur du fond, illisible. Le flou monte par paliers
+/// pour qu'aucune ligne ne marque la limite.
+class GiBottomVeil extends StatelessWidget {
+  /// Hauteur totale, depuis le bas de l'ecran.
+  final double height;
+
+  const GiBottomVeil({super.key, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = GiColors.of(context).scaffold;
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      _band(
+        height: 22,
+        sigma: 3,
+        colors: [bg.withValues(alpha: 0), bg.withValues(alpha: 0.45)],
+      ),
+      _band(
+        height: 10,
+        sigma: 9,
+        colors: [bg.withValues(alpha: 0.45), bg.withValues(alpha: 0.85)],
+      ),
+      _band(
+        height: height - 32,
+        sigma: 20,
+        colors: [bg.withValues(alpha: 0.85), bg.withValues(alpha: 0.92)],
+      ),
+    ]);
+  }
+
+  Widget _band({
+    required double height,
+    required double sigma,
+    required List<Color> colors,
+  }) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: colors,
+            ),
+          ),
+          child: SizedBox(height: height, width: double.infinity),
+        ),
       ),
     );
   }

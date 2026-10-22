@@ -270,6 +270,7 @@
   "openLabel": "فتح",
   "residenceDetails": "إقامتي",
   "amenitiesTitle": "المرافق",
+  "locationTitle": "الموقع",
   "aboutTitle": "نبذة",
   "memberCount": "{count} من {max} أعضاء",
   "householdHint": "يتلقى كل عضو بيانات الدخول عبر بريده الإلكتروني. يمكنك إضافة {max} أشخاص كحد أقصى.",
