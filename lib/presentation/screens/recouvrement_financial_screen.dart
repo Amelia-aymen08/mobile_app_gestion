@@ -106,11 +106,16 @@ class _RecouvrementFinancialScreenState
   _Show _show = _Show.unpaid;
   final Set<String> _selected = {};
   bool _busy = false;
+  String _query = '';
+  final _appear = GiAppearWindow();
 
   @override
   void initState() {
     super.initState();
-    _search.addListener(() => setState(() {}));
+    _search.addListener(() {
+      final q = _search.text.trim().toLowerCase();
+      if (q != _query) setState(() => _query = q);
+    });
     _load();
   }
 
@@ -132,7 +137,7 @@ class _RecouvrementFinancialScreenState
             .where((t) => (t['type'] ?? '').toString() == 'Charge')
             .map((t) => Map<String, dynamic>.from(t))
             .toList()
-          // Les plus anciennes impayees d'abord : ce sont elles qu'on relance.
+          // Les plus recentes d'abord ; la vue « Impayees » inverse l'ordre.
           ..sort((a, b) => (b['periodStart'] ?? '')
               .toString()
               .compareTo((a['periodStart'] ?? '').toString()));
@@ -172,7 +177,7 @@ class _RecouvrementFinancialScreenState
       : _charges.where((t) => _resKey(t) == _residence);
 
   bool _matchesSearch(Map t) {
-    final q = _search.text.trim().toLowerCase();
+    final q = _query;
     return q.isEmpty ||
         '${_Tx.payer(t)} ${t['description']} ${_Tx.residenceName(t)} ${_Tx.period(t)}'
             .toLowerCase()
@@ -210,7 +215,15 @@ class _RecouvrementFinancialScreenState
       setState(_selected.clear);
     } catch (e) {
       if (mounted) {
-        showAdminToast(context, e.toString().replaceAll('Exception: ', ''),
+        // Une serie interrompue : on dit combien sont passees, et seules
+        // celles qui restent a traiter demeurent selectionnees.
+        setState(() => _selected.removeAll(ids.take(done)));
+        final reason = e.toString().replaceAll('Exception: ', '');
+        showAdminToast(
+            context,
+            done > 0
+                ? '$done sur ${ids.length} mises à jour — $reason'
+                : reason,
             error: true);
       }
     } finally {
@@ -319,6 +332,14 @@ class _RecouvrementFinancialScreenState
 
     final scope = _inResidence.where(_matchesSearch).toList();
     final list = scope.where(_matchesShow).toList();
+    // Impayees : les plus anciennes d'abord, ce sont elles qu'on relance.
+    if (_show == _Show.unpaid) {
+      final reversed = list.reversed.toList();
+      list
+        ..clear()
+        ..addAll(reversed);
+    }
+    _appear.reset('$_residence$_show');
 
     // Sur « Toutes », la liste se range par residence.
     final rows = <Object>[];
@@ -337,7 +358,13 @@ class _RecouvrementFinancialScreenState
       rows.addAll(list);
     }
 
-    return Scaffold(
+    // Retour avec une selection : on la quitte d'abord, comme sur iOS.
+    return PopScope(
+      canPop: !selecting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && selecting) setState(_selected.clear);
+      },
+      child: Scaffold(
       backgroundColor: c.scaffold,
       body: Stack(
         children: [
@@ -374,10 +401,12 @@ class _RecouvrementFinancialScreenState
                           child: Padding(
                             padding: const EdgeInsets.all(FigSpace.pagePadding),
                             child: GiCard(
-                              child: AdminEmpty(
-                                icon: Icons.cloud_off_rounded,
-                                title: 'Chargement impossible',
+                              child: AdminLoadError(
                                 message: _error,
+                                onRetry: () {
+                                  setState(() => _loading = true);
+                                  _load();
+                                },
                               ),
                             ),
                           ),
@@ -423,11 +452,10 @@ class _RecouvrementFinancialScreenState
                                         : Padding(
                                             padding: const EdgeInsets.only(
                                                 bottom: FigSpace.md),
-                                            child: GiAppear(
-                                              index: i.clamp(0, 8),
-                                              child: _chargeRow(
-                                                  row as Map<String, dynamic>),
-                                            ),
+                                            child: _appear.wrap(
+                                                i,
+                                                _chargeRow(row
+                                                    as Map<String, dynamic>)),
                                           ),
                               );
                             },
@@ -447,6 +475,7 @@ class _RecouvrementFinancialScreenState
             child: _selectionBar(),
           ),
         ],
+      ),
       ),
     );
   }
@@ -554,7 +583,10 @@ class _RecouvrementFinancialScreenState
                 AdminFilterChip(
                     label: 'Toutes',
                     selected: _residence.isEmpty,
-                    onTap: () => setState(() => _residence = '')),
+                    onTap: () => setState(() {
+                          _residence = '';
+                          _selected.clear();
+                        })),
                 for (final r in residences) ...[
                   const SizedBox(width: 8),
                   AdminFilterChip(
@@ -564,7 +596,10 @@ class _RecouvrementFinancialScreenState
                         ? FigBrand.amber
                         : FigAlert.success,
                     selected: _residence == r.$1,
-                    onTap: () => setState(() => _residence = r.$1),
+                    onTap: () => setState(() {
+                      _residence = r.$1;
+                      _selected.clear();
+                    }),
                   ),
                 ],
               ],
@@ -608,7 +643,12 @@ class _RecouvrementFinancialScreenState
                 pressedScale: 0.96,
                 onTap: () {
                   if (_show != s) GiHaptics.select();
-                  setState(() => _show = s);
+                  // Une selection cachee par le filtre serait soldee sans
+                  // qu'on la voie : on la quitte en changeant de vue.
+                  setState(() {
+                    if (_show != s) _selected.clear();
+                    _show = s;
+                  });
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),

@@ -142,7 +142,7 @@ class AdminDashboardScreen extends StatelessWidget {
     final left = <Widget>[
       _focusCard(context, c),
       const SizedBox(height: FigSpace.xl + 4),
-      AdminSectionTitle('Action requise',
+      AdminSectionTitle('En attente',
           count: store.loading ? null : '${store.needsAction.length}',
           action: 'Tout voir',
           onAction: () => openTickets(AdminTicketFilter.toAssign)),
@@ -273,6 +273,11 @@ class AdminDashboardScreen extends StatelessWidget {
       return const GiSkeletonList(
           count: 1, itemHeight: 110, padding: EdgeInsets.zero);
     }
+    // Sans reponse du serveur, « Tout est sous controle » serait faux.
+    if (store.error != null && store.tickets.isEmpty) {
+      return GiCard(
+          child: AdminLoadError(message: store.error, onRetry: store.load));
+    }
     final pending = store.needsAction;
     if (pending.isEmpty) {
       return GiCard(
@@ -356,10 +361,8 @@ class AdminDashboardScreen extends StatelessWidget {
                     .copyWith(fontSize: 19, height: 1.25, color: c.textBody)),
             const SizedBox(height: 4),
             Text(
-                [
-                  store.residenceNameOf(next),
-                  (next['location'] ?? '').toString(),
-                ].where((s) => s.trim().isNotEmpty).join(' · '),
+                adminPlaceLabel(store.residenceNameOf(next),
+                    (next['location'] ?? '').toString()),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: FigText.body.copyWith(color: c.textMuted)),
@@ -658,8 +661,14 @@ class AdminDashboardScreen extends StatelessWidget {
               child: SizedBox(
                 width: 40,
                 height: 40,
+                // Photo de 1000 px affichee en 40 : decodee a la taille
+                // utile, elle ne pese plus sur la memoire ni sur le defilement.
                 child: asset != null
-                    ? Image.asset(asset, fit: BoxFit.cover)
+                    ? Image.asset(asset,
+                        fit: BoxFit.cover,
+                        cacheWidth:
+                            (40 * MediaQuery.devicePixelRatioOf(context))
+                                .round())
                     : ColoredBox(
                         color: FigBrand.amber.withValues(alpha: 0.12),
                         child: const Icon(Icons.apartment_rounded,

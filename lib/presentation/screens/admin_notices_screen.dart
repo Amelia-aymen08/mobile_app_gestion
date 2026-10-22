@@ -59,14 +59,19 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
   final _search = TextEditingController();
   List<Map<String, dynamic>> _items = [];
   bool _loading = true;
+  String _error = '';
   String _category = 'ALL';
   String _status = 'ALL';
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
     _load();
-    _search.addListener(() => setState(() {}));
+    _search.addListener(() {
+      final q = _search.text.trim().toLowerCase();
+      if (q != _query) setState(() => _query = q);
+    });
   }
 
   @override
@@ -85,10 +90,18 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
             .map((e) => Map<String, dynamic>.from(e))
             .toList()
           ..sort((a, b) => _dateOf(b).compareTo(_dateOf(a)));
+        _error = '';
         _loading = false;
       });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      // Sans ce message, une coupure reseau s'affichait « Aucune annonce —
+      // publiez une premiere annonce ».
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceAll('Exception: ', '');
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -97,7 +110,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
       DateTime(2000);
 
   bool _matches(Map item, {bool ignoreStatus = false}) {
-    final query = _search.text.trim().toLowerCase();
+    final query = _query;
     if (_category != 'ALL' && item['category'] != _category) return false;
     if (!ignoreStatus && _status != 'ALL' && item['status'] != _status) {
       return false;
@@ -118,7 +131,7 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
     final created = await showAdminSheet<bool>(
       context,
       title: 'Nouvelle annonce',
-      subtitle: 'Il apparaîtra dans l\'onglet Annonces des résidents.',
+      subtitle: 'Elle apparaîtra dans l\'onglet Annonces des résidents.',
       builder: (sheet) => StatefulBuilder(
         builder: (sheet, setSheet) {
           final ready =
@@ -312,6 +325,15 @@ class _AdminNoticesScreenState extends State<AdminNoticesScreen> {
                       const SizedBox(height: FigSpace.xl),
                       if (_loading)
                         const GiSkeletonList(padding: EdgeInsets.zero)
+                      else if (_error.isNotEmpty && _items.isEmpty)
+                        GiCard(
+                          child: AdminLoadError(
+                              message: _error,
+                              onRetry: () {
+                                setState(() => _loading = true);
+                                _load();
+                              }),
+                        )
                       else if (list.isEmpty)
                         GiCard(
                           child: AdminEmpty(

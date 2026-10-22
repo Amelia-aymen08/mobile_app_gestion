@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../services/gi_haptics.dart';
 import '../../theme/design_tokens.dart';
 import '../../theme/gi_colors.dart';
-import '../../widgets/gi_appear.dart';
 import '../../widgets/gi_card.dart';
 import '../../widgets/gi_skeleton.dart';
 import 'admin_store.dart';
@@ -29,11 +28,23 @@ class _AdminAssigneePickerState extends State<AdminAssigneePicker> {
   final _search = TextEditingController();
   List<AssigneeOption>? _options;
   String? _error;
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
-    _search.addListener(() => setState(() {}));
+    _search.addListener(() {
+      final q = _search.text.trim().toLowerCase();
+      if (q != _query) setState(() => _query = q);
+    });
+    _fetch();
+  }
+
+  void _fetch() {
+    setState(() {
+      _options = null;
+      _error = null;
+    });
     widget.store.assignees().then((v) {
       if (mounted) setState(() => _options = v);
     }).catchError((Object e) {
@@ -50,7 +61,7 @@ class _AdminAssigneePickerState extends State<AdminAssigneePicker> {
   @override
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
-    final q = _search.text.trim().toLowerCase();
+    final q = _query;
     final all = _options ?? const <AssigneeOption>[];
     final filtered = all
         .where((o) =>
@@ -60,9 +71,8 @@ class _AdminAssigneePickerState extends State<AdminAssigneePicker> {
     final staff = filtered.where((o) => !o.subcontractor).toList();
     final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
 
-    var index = 0;
-    Widget row(AssigneeOption o) =>
-        GiAppear(index: (index++).clamp(0, 8), child: _row(c, o));
+    // Pas de fondu differe : la liste arrive avec la page, prete au choix.
+    Widget row(AssigneeOption o) => _row(c, o);
 
     return Scaffold(
       backgroundColor: c.scaffold,
@@ -129,15 +139,25 @@ class _AdminAssigneePickerState extends State<AdminAssigneePicker> {
                               const SizedBox(height: FigSpace.md),
                             ],
                           ],
-                          if (filtered.isEmpty)
+                          // Liste vide sans recherche : le chargement a echoue
+                          // (les appels rendent une liste vide en cas
+                          // d'erreur). « Aucun nom ne correspond a «  » »
+                          // ne voulait rien dire.
+                          if (filtered.isEmpty && (all.isEmpty || _error != null))
+                            AdminEmpty(
+                              icon: Icons.cloud_off_rounded,
+                              title: 'Liste indisponible',
+                              message:
+                                  'La liste des intervenants n\'a pas pu être chargée.',
+                              action: 'Réessayer',
+                              onAction: _fetch,
+                            )
+                          else if (filtered.isEmpty)
                             AdminEmpty(
                               icon: Icons.person_search_rounded,
-                              title: _error != null
-                                  ? 'Liste indisponible'
-                                  : 'Aucun intervenant',
-                              message: _error != null
-                                  ? 'La liste des intervenants n\'a pas pu être chargée.'
-                                  : 'Aucun nom ne correspond à « ${_search.text} ».',
+                              title: 'Aucun intervenant',
+                              message:
+                                  'Aucun nom ne correspond à « ${_search.text.trim()} ».',
                             ),
                         ],
                       ),

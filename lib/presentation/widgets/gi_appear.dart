@@ -107,3 +107,34 @@ class _GiAppearState extends State<GiAppear>
     );
   }
 }
+
+/// Apparition pour une liste paresseuse (`SliverList`, `ListView.builder`).
+///
+/// Une telle liste construit ses elements au fil du defilement, et les
+/// reconstruit quand ils reviennent a l'ecran. Enveloppes chacun dans un
+/// [GiAppear], ils s'effacaient puis reapparaissaient en retard sous le
+/// doigt. Ici, seuls les premiers elements construits juste apres
+/// l'affichage de la liste s'animent ; les suivants sont poses tels quels.
+class GiAppearWindow {
+  /// Duree pendant laquelle un element construit s'anime encore.
+  static const window = Duration(milliseconds: 900);
+
+  /// Nombre d'elements, en tete de liste, qui peuvent s'animer.
+  static const maxIndex = 8;
+
+  Object? _key;
+  DateTime _bornAt = DateTime.now();
+
+  /// A appeler a chaque construction : une nouvelle [key] (autre filtre,
+  /// autre tri) rouvre la fenetre, et la liste se repose.
+  void reset(Object? key) {
+    if (key == _key) return;
+    _key = key;
+    _bornAt = DateTime.now();
+  }
+
+  Widget wrap(int index, Widget child) =>
+      index < maxIndex && DateTime.now().difference(_bornAt) < window
+          ? GiAppear(index: index, child: child)
+          : child;
+}

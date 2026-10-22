@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../data/api_service.dart';
@@ -54,33 +56,86 @@ class AdminStore extends ChangeNotifier {
   static List<Map<String, dynamic>> _maps(List<dynamic> raw) =>
       raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
 
-  Future<void> load() async {
-    error = null;
+  Future<void>? _inFlight;
+  String _signature = '';
+  bool _disposed = false;
+
+  /// Recharge tickets, residences et tableau de bord.
+  ///
+  /// Deux appels rapproches (le minuteur et un tirer pour actualiser)
+  /// partagent la meme requete. Si rien n'a change depuis la derniere fois,
+  /// les ecrans ne sont pas reconstruits : le rafraichissement automatique
+  /// ne fait plus sauter les listes toutes les 45 secondes.
+  Future<void> load() =>
+      _inFlight ??= _load().whenComplete(() => _inFlight = null);
+
+  Future<void> _load() async {
     final results = await Future.wait<Object?>([
       _api.getTickets().then<Object?>((v) => v).catchError((Object e) => e),
       _api.getResidences().then<Object?>((v) => v).catchError((Object e) => e),
       _api.getDashboard().then<Object?>((v) => v).catchError((Object e) => e),
     ]);
+    if (_disposed) return;
     final t = results[0];
+    final r = results[1];
+    final d = results[2];
+    final newError =
+        t is List ? null : t.toString().replaceFirst('Exception: ', '');
+
+    String signature;
+    try {
+      signature = jsonEncode([
+        t is List ? t : null,
+        r is List ? r : null,
+        d is Map ? d : null,
+      ]);
+    } catch (_) {
+      signature = '${DateTime.now().microsecondsSinceEpoch}';
+    }
+    if (!loading && newError == error && signature == _signature) return;
+    _signature = signature;
+    error = newError;
+
     if (t is List) {
       tickets = _maps(t)
         ..sort((a, b) => (b['createdAt'] ?? '')
             .toString()
             .compareTo((a['createdAt'] ?? '').toString()));
-    } else {
-      error = t.toString().replaceFirst('Exception: ', '');
     }
-    final r = results[1];
     if (r is List) {
       residences = _maps(r)
         ..sort((a, b) => (a['name'] ?? '')
             .toString()
             .compareTo((b['name'] ?? '').toString()));
     }
-    final d = results[2];
     if (d is Map<String, dynamic>) dashboard = d;
     loading = false;
+    _invalidate();
     notifyListeners();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  // Index recalcules a chaque changement de donnees : les ecrans les lisent
+  // plusieurs fois par image, une recherche lineaire par ticket se sentait
+  // au defilement.
+  Map<String, Map<String, dynamic>>? _residenceIndex;
+  Map<String, List<Map<String, dynamic>>>? _ticketsByResidence;
+  List<Map<String, dynamic>>? _needsAction;
+
+  void _invalidate() {
+    _residenceIndex = null;
+    _ticketsByResidence = null;
+    _needsAction = null;
   }
 
   Future<List<Map<String, dynamic>>> residents({bool refresh = false}) async {
@@ -96,14 +151,22 @@ class AdminStore extends ChangeNotifier {
 
   int count(bool Function(Map t) test) => tickets.where(test).length;
 
-  List<Map<String, dynamic>> ticketsOf(String residenceId) =>
-      tickets.where((t) => TicketFields.residenceId(t) == residenceId).toList();
+  List<Map<String, dynamic>> ticketsOf(String residenceId) {
+    final index = _ticketsByResidence ??= () {
+      final m = <String, List<Map<String, dynamic>>>{};
+      for (final t in tickets) {
+        (m[TicketFields.residenceId(t)] ??= []).add(t);
+      }
+      return m;
+    }();
+    return List.of(index[residenceId] ?? const []);
+  }
 
   Map<String, dynamic>? residence(String id) {
-    for (final r in residences) {
-      if ((r['id'] ?? '').toString() == id) return r;
-    }
-    return null;
+    final index = _residenceIndex ??= {
+      for (final r in residences) (r['id'] ?? '').toString(): r,
+    };
+    return index[id];
   }
 
   /// Nom de residence d'un ticket : le ticket le porte rarement, la liste
@@ -118,7 +181,10 @@ class AdminStore extends ChangeNotifier {
   /// Tickets qui attendent une decision : nouveaux et sans intervenant, ou
   /// urgents et pas encore termines. Les plus urgents, puis les plus
   /// anciens, en tete : c'est l'ordre dans lequel on les traite.
-  List<Map<String, dynamic>> get needsAction {
+  List<Map<String, dynamic>> get needsAction =>
+      _needsAction ??= List.unmodifiable(_computeNeedsAction());
+
+  List<Map<String, dynamic>> _computeNeedsAction() {
     final list = tickets.where((t) {
       final stage = ticketStage(t['status']);
       if (!stage.isActive) return false;
@@ -156,6 +222,9 @@ class AdminStore extends ChangeNotifier {
           t,
     ];
     if (!found) tickets = [updated, ...tickets];
+    // La prochaine lecture du serveur doit etre comparee a cette version.
+    _signature = '';
+    _invalidate();
     notifyListeners();
   }
 
@@ -218,7 +287,9 @@ class AdminStore extends ChangeNotifier {
       options.add(AssigneeOption(
           'staff:$name', name, prof.isEmpty ? 'Intervenant' : prof));
     }
-    _assignees = options;
+    // Une liste vide vient le plus souvent d'un reseau coupe : on ne la
+    // garde pas, la prochaine ouverture du choix reessaiera.
+    if (options.isNotEmpty) _assignees = options;
     return options;
   }
 

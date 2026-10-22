@@ -1,4 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,10 +13,10 @@ import '../../services/gi_haptics.dart';
 import '../../theme/design_tokens.dart';
 import '../../theme/gi_colors.dart';
 import '../../theme/ticket_status.dart';
-import '../../widgets/gi_appear.dart';
 import '../../widgets/gi_card.dart';
 import '../../widgets/gi_pressable.dart';
 import '../../widgets/gi_primary_button.dart';
+import '../../widgets/gi_refresh.dart';
 import '../../widgets/gi_skeleton.dart';
 import '../chat_screen.dart';
 import 'admin_assignee_picker.dart';
@@ -71,6 +73,11 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
   String? _reason;
   String? _opening;
 
+  // Quitter avec un brouillon : un premier retour previent, un second
+  // dans les trois secondes abandonne les changements.
+  bool _leaveArmed = false;
+  Timer? _leaveTimer;
+
   AdminStore get _store => widget.store;
   String get _id => TicketFields.id(_ticket);
 
@@ -83,6 +90,24 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
     super.initState();
     _assigneeLabel = TicketFields.assignee(_ticket);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _leaveTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onBlockedPop(bool didPop, Object? _) {
+    if (didPop || _saving) return;
+    setState(() => _leaveArmed = true);
+    showAdminToast(context,
+        'Modifications non enregistrées — retour encore pour les abandonner',
+        error: true);
+    _leaveTimer?.cancel();
+    _leaveTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => _leaveArmed = false);
+    });
   }
 
   Future<void> _load() async {
@@ -121,6 +146,7 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
   // ─── Actions ──────────────────────────────────────────────
 
   Future<void> _pickAssignee() async {
+    if (_saving) return;
     final picked = await adminPush<AssigneeOption?>(
       context,
       AdminAssigneePicker(store: _store, current: _assignee),
@@ -338,53 +364,50 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
                 flex: 3,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < main.length; i++)
-                      GiAppear(index: i ~/ 2, child: main[i]),
-                  ],
+                  children: main,
                 ),
               ),
               const SizedBox(width: FigSpace.xl + 4),
-              SizedBox(
-                width: 360,
-                child: GiAppear(index: 1, child: _manageCard(c)),
-              ),
+              SizedBox(width: 360, child: _manageCard(c)),
             ],
           )
+        // Le contenu arrive avec la page, sans fondu differe : l'ecran ne
+        // glisse plus vide avant de se remplir.
         : Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var i = 0; i < main.length; i++)
-                GiAppear(index: i ~/ 2, child: main[i]),
-            ],
+            children: main,
           );
 
-    return Scaffold(
-      backgroundColor: c.scaffold,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            header,
-            const SizedBox(height: 18),
-            Expanded(
-              child: RefreshIndicator(
-                color: FigBrand.amber,
-                backgroundColor: c.card,
-                onRefresh: _load,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics()),
-                  padding: EdgeInsets.fromLTRB(
-                      FigSpace.pagePadding,
-                      0,
-                      FigSpace.pagePadding,
-                      MediaQuery.paddingOf(context).bottom + 32),
-                  child: AdminContent(child: body),
+    return PopScope(
+      canPop: !_dirty || _leaveArmed,
+      onPopInvokedWithResult: _onBlockedPop,
+      child: Scaffold(
+        backgroundColor: c.scaffold,
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              header,
+              const SizedBox(height: 18),
+              Expanded(
+                child: CustomScrollView(
+                  physics: giRefreshPhysics,
+                  slivers: [
+                    GiRefreshControl(onRefresh: _load),
+                    SliverPadding(
+                      padding: EdgeInsets.fromLTRB(
+                          FigSpace.pagePadding,
+                          0,
+                          FigSpace.pagePadding,
+                          MediaQuery.paddingOf(context).bottom + 32),
+                      sliver: SliverToBoxAdapter(
+                          child: AdminContent(child: body)),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -547,6 +570,7 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
                           children: [
                             Expanded(
                               child: _ghostButton(c, 'Annuler', () {
+                                if (_saving) return;
                                 setState(() {
                                   _stage = ticketStage(_ticket['status']);
                                   _assignee = AdminStore.assigneeValue(_ticket);
@@ -597,7 +621,7 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
       pressedScale: 0.94,
       haptic: false,
       onTap: () {
-        if (on) return;
+        if (on || _saving) return;
         GiHaptics.select();
         setState(() => _stage = s);
       },
@@ -1141,6 +1165,10 @@ class _AdminTicketScreenState extends State<AdminTicketScreen> {
               ? Image.network(url,
                   loadingBuilder: giImageLoading,
                   fit: BoxFit.cover,
+                  // Miniature : decodee a sa taille, pas a celle de la photo
+                  // prise au telephone (4000 px).
+                  cacheWidth: (w * MediaQuery.devicePixelRatioOf(context))
+                      .round(),
                   errorBuilder: (_, __, ___) =>
                       ColoredBox(color: c.innerBorder))
               : Container(

@@ -436,59 +436,54 @@ class AdminResidentScreen extends StatelessWidget {
             children: [
               const AdminPageHeader(back: true, title: 'Résident'),
               const SizedBox(height: FigSpace.xl),
-              GiAppear(
-                child: GiCard(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: FigBrand.amber.withValues(alpha: 0.14),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: FigBrand.amber.withValues(alpha: 0.5)),
-                        ),
-                        child: Text(ResidentFields.initials(name),
-                            style: FigText.titleMd
-                                .copyWith(color: FigBrand.amber)),
+              GiCard(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: FigBrand.amber.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: FigBrand.amber.withValues(alpha: 0.5)),
                       ),
-                      const SizedBox(width: FigSpace.xl),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(name,
-                                style: FigText.titleMd
-                                    .copyWith(fontSize: 19, color: c.textBody)),
-                            const SizedBox(height: 4),
-                            Text(
-                                '${active.length} ticket${active.length > 1 ? 's' : ''} en cours · ${tickets.length} au total',
-                                style:
-                                    FigText.body.copyWith(color: c.textMuted)),
-                          ],
-                        ),
+                      child: Text(ResidentFields.initials(name),
+                          style: FigText.titleMd
+                              .copyWith(color: FigBrand.amber)),
+                    ),
+                    const SizedBox(width: FigSpace.xl),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name,
+                              style: FigText.titleMd
+                                  .copyWith(fontSize: 19, color: c.textBody)),
+                          const SizedBox(height: 4),
+                          Text(
+                              '${active.length} ticket${active.length > 1 ? 's' : ''} en cours · ${tickets.length} au total',
+                              style:
+                                  FigText.body.copyWith(color: c.textMuted)),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               if (infos.isNotEmpty) ...[
                 const SizedBox(height: FigSpace.lg),
-                GiAppear(
-                  index: 1,
-                  child: GiCard(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < infos.length; i++) ...[
-                          if (i > 0) Divider(height: 1, color: c.innerBorder),
-                          infos[i],
-                        ],
+                GiCard(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < infos.length; i++) ...[
+                        if (i > 0) Divider(height: 1, color: c.innerBorder),
+                        infos[i],
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -506,13 +501,10 @@ class AdminResidentScreen extends StatelessWidget {
               else
                 for (var i = 0; i < tickets.length; i++) ...[
                   if (i > 0) const SizedBox(height: FigSpace.lg),
-                  GiAppear(
-                    index: (i + 2).clamp(0, 8),
-                    child: AdminTicketCard(
-                      ticket: tickets[i],
-                      residenceName: store.residenceNameOf(tickets[i]),
-                      onTap: () => openAdminTicket(context, store, tickets[i]),
-                    ),
+                  AdminTicketCard(
+                    ticket: tickets[i],
+                    residenceName: store.residenceNameOf(tickets[i]),
+                    onTap: () => openAdminTicket(context, store, tickets[i]),
                   ),
                 ],
             ],

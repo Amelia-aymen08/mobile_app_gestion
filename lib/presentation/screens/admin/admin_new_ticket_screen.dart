@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../theme/design_tokens.dart';
 import '../../theme/gi_colors.dart';
 import '../../theme/residence_images.dart';
-import '../../widgets/gi_appear.dart';
 import '../../widgets/gi_card.dart';
 import '../resident_create_ticket_screen.dart';
 import 'admin_store.dart';
@@ -46,12 +45,14 @@ class AdminNewTicketScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
     final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
-    final residences = [...store.residences]..sort((a, b) {
-        // La residence deja filtree passe en tete.
-        final ai = (a['id'] ?? '').toString() == residenceId ? 0 : 1;
-        final bi = (b['id'] ?? '').toString() == residenceId ? 0 : 1;
-        return ai.compareTo(bi);
-      });
+    // La residence deja filtree passe en tete, les autres restent dans
+    // l'ordre alphabetique (le tri de Dart n'est pas stable : un tri sur ce
+    // seul critere melangeait les noms).
+    bool chosen(Map r) => (r['id'] ?? '').toString() == residenceId;
+    final residences = [
+      ...store.residences.where(chosen),
+      ...store.residences.where((r) => !chosen(r)),
+    ];
 
     return Scaffold(
       backgroundColor: c.scaffold,
@@ -82,11 +83,8 @@ class AdminNewTicketScreen extends StatelessWidget {
               AdminGrid(
                 minTileWidth: 340,
                 children: [
-                  for (var i = 0; i < residences.length; i++)
-                    GiAppear(
-                      index: i.clamp(0, 8),
-                      child: _tile(context, c, residences[i]),
-                    ),
+                  // Pas de fondu differe : la liste arrive avec la page.
+                  for (final r in residences) _tile(context, c, r),
                 ],
               ),
             ],
@@ -114,7 +112,10 @@ class AdminNewTicketScreen extends StatelessWidget {
               width: 64,
               height: 64,
               child: asset != null
-                  ? Image.asset(asset, fit: BoxFit.cover)
+                  ? Image.asset(asset,
+                      fit: BoxFit.cover,
+                      cacheWidth:
+                          (64 * MediaQuery.devicePixelRatioOf(context)).round())
                   : ColoredBox(
                       color: FigBrand.amber.withValues(alpha: 0.12),
                       child: const Icon(Icons.apartment_rounded,

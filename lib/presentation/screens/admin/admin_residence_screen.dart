@@ -37,6 +37,7 @@ class _AdminResidenceScreenState extends State<AdminResidenceScreen> {
   final ApiService _api = ApiService();
   Map<String, dynamic> _details = const {};
   List<Map<String, dynamic>>? _residents;
+  bool _residentsFailed = false;
   AdminTicketFilter _filter = AdminTicketFilter.active;
 
   AdminStore get _store => widget.store;
@@ -65,6 +66,7 @@ class _AdminResidenceScreenState extends State<AdminResidenceScreen> {
         _details = results[0] as Map<String, dynamic>;
       }
       final all = results[1];
+      _residentsFailed = all is! List<Map<String, dynamic>>;
       _residents = all is List<Map<String, dynamic>>
           ? all.where(_livesHere).toList()
           : const [];
@@ -185,7 +187,8 @@ class _AdminResidenceScreenState extends State<AdminResidenceScreen> {
                         ],
                       ),
                       const SizedBox(height: FigSpace.xl),
-                      GiAppear(child: cover),
+                      // La photo arrive avec la page, sans fondu differe.
+                      cover,
                       const SizedBox(height: FigSpace.xl),
                       if (wide)
                         Row(
@@ -302,7 +305,7 @@ class _AdminResidenceScreenState extends State<AdminResidenceScreen> {
                           index: i.clamp(0, 6),
                           child: AdminTicketCard(
                             ticket: visible[i],
-                            residenceName: '',
+                            residenceName: _store.residenceNameOf(visible[i]),
                             showResidence: false,
                             onTap: () =>
                                 openAdminTicket(context, _store, visible[i]),
@@ -319,6 +322,16 @@ class _AdminResidenceScreenState extends State<AdminResidenceScreen> {
     if (list == null) {
       return const GiSkeletonList(
           count: 3, itemHeight: 76, padding: EdgeInsets.zero);
+    }
+    if (list.isEmpty && _residentsFailed) {
+      return GiCard(
+        child: AdminLoadError(
+            message: 'La liste des résidents n\'a pas pu être chargée.',
+            onRetry: () {
+              setState(() => _residents = null);
+              _loadExtras();
+            }),
+      );
     }
     if (list.isEmpty) {
       return const GiCard(

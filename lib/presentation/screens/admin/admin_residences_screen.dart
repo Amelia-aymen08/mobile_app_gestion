@@ -89,6 +89,13 @@ class _AdminResidencesScreenState extends State<AdminResidencesScreen> {
     final c = GiColors.of(context);
     final store = widget.store;
     final q = _search.text.trim().toLowerCase();
+    final load = {
+      for (final r in store.residences)
+        (r['id'] ?? '').toString(): store
+            .ticketsOf((r['id'] ?? '').toString())
+            .where((t) => ticketStage(t['status']).isActive)
+            .length,
+    };
     final list = store.residences
         .where((r) =>
             q.isEmpty ||
@@ -97,13 +104,8 @@ class _AdminResidencesScreenState extends State<AdminResidencesScreen> {
                 .contains(q))
         .toList()
       // Les residences qui ont le plus a traiter passent en tete.
-      ..sort((a, b) {
-        int load(Map r) => store
-            .ticketsOf((r['id'] ?? '').toString())
-            .where((t) => ticketStage(t['status']).isActive)
-            .length;
-        return load(b).compareTo(load(a));
-      });
+      ..sort((a, b) => (load[(b['id'] ?? '').toString()] ?? 0)
+          .compareTo(load[(a['id'] ?? '').toString()] ?? 0));
     final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
 
     return Scaffold(
@@ -138,6 +140,10 @@ class _AdminResidencesScreenState extends State<AdminResidencesScreen> {
                       if (store.loading)
                         const GiSkeletonList(
                             hero: true, count: 2, padding: EdgeInsets.zero)
+                      else if (store.error != null &&
+                          store.residences.isEmpty)
+                        AdminLoadError(
+                            message: store.error, onRetry: store.load)
                       else if (list.isEmpty)
                         AdminEmpty(
                           icon: Icons.apartment_rounded,

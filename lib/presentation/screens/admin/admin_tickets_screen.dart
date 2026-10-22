@@ -73,10 +73,20 @@ class AdminTicketsController extends ChangeNotifier {
   AdminTicketFilter filter = AdminTicketFilter.active;
   String residenceId = '';
 
+  /// Augmente a chaque ouverture depuis un autre ecran : la liste efface
+  /// alors sa recherche et remonte en haut, pour montrer exactement ce que
+  /// le chiffre touche annoncait.
+  int reveals = 0;
+
   void show(AdminTicketFilter f, {String residenceId = ''}) {
     filter = f;
     this.residenceId = residenceId;
     notifyListeners();
+  }
+
+  void reveal(AdminTicketFilter f, {String residenceId = ''}) {
+    reveals++;
+    show(f, residenceId: residenceId);
   }
 }
 
@@ -97,7 +107,11 @@ class AdminTicketsScreen extends StatefulWidget {
 
 class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
   final _search = TextEditingController();
+  final _scroll = ScrollController();
   bool _urgentFirst = false;
+  String _query = '';
+  late int _reveals = widget.controller.reveals;
+  final _appear = GiAppearWindow();
 
   AdminStore get _store => widget.store;
   AdminTicketsController get _ctrl => widget.controller;
@@ -105,11 +119,26 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
   @override
   void initState() {
     super.initState();
-    _search.addListener(() => setState(() {}));
+    // Seul le texte compte : deplacer le curseur ne refiltre plus la liste.
+    _search.addListener(() {
+      final q = _query;
+      if (q != _query) setState(() => _query = q);
+    });
+    _ctrl.addListener(_onReveal);
+  }
+
+  void _onReveal() {
+    if (_ctrl.reveals == _reveals) return;
+    _reveals = _ctrl.reveals;
+    if (_search.text.isNotEmpty) _search.clear();
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (_scroll.hasClients) _scroll.jumpTo(0);
   }
 
   @override
   void dispose() {
+    _ctrl.removeListener(_onReveal);
+    _scroll.dispose();
     _search.dispose();
     super.dispose();
   }
@@ -130,8 +159,17 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
   }
 
   Future<void> _newTicket() async {
-    final created = await adminPush<bool>(context,
-        AdminNewTicketScreen(store: _store, residenceId: _ctrl.residenceId));
+    // Residence deja connue (filtre pose, ou une seule residence) : on va
+    // droit au formulaire, sans redemander « pour quelle residence ? ».
+    final known = _ctrl.residenceId.isNotEmpty
+        ? _store.residence(_ctrl.residenceId)
+        : (_store.residences.length == 1 ? _store.residences.first : null);
+    final created = known != null
+        ? await openAdminTicketForm(context, known)
+        : await adminPush<bool>(
+            context,
+            AdminNewTicketScreen(
+                store: _store, residenceId: _ctrl.residenceId));
     if (created == true && mounted) {
       await _store.load();
       if (mounted) showAdminToast(context, 'Ticket créé');
@@ -155,9 +193,17 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
     final searched = byResidence.where((t) => _matchesQuery(t, q)).toList();
     final visible = searched.where(_ctrl.filter.test).toList();
     if (_urgentFirst) {
-      visible.sort((a, b) => ticketPriority(a['priority'])
-          .rank
-          .compareTo(ticketPriority(b['priority']).rank));
+      // Le tri de Dart n'est pas stable : sans departage, les tickets de
+      // meme urgence se melangeaient d'un rafraichissement a l'autre.
+      visible.sort((a, b) {
+        final p = ticketPriority(a['priority'])
+            .rank
+            .compareTo(ticketPriority(b['priority']).rank);
+        if (p != 0) return p;
+        return (b['createdAt'] ?? '')
+            .toString()
+            .compareTo((a['createdAt'] ?? '').toString());
+      });
     }
     final active = _store.count((t) => ticketStage(t['status']).isActive);
     final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
@@ -166,6 +212,7 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
       backgroundColor: c.scaffold,
       body: GiScrollBlur(
         child: CustomScrollView(
+          controller: _scroll,
           clipBehavior: Clip.none,
           physics: giRefreshPhysics,
           slivers: [
@@ -232,55 +279,59 @@ class _AdminTicketsScreenState extends State<AdminTicketsScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
                   FigSpace.pagePadding, 0, FigSpace.pagePadding, 150),
-              sliver: SliverToBoxAdapter(
-                child: AdminContent(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 260),
-                    switchInCurve: Curves.easeOut,
-                    child: KeyedSubtree(
-                      key: ValueKey(
-                          '${_store.loading}${_ctrl.filter}${_ctrl.residenceId}$_urgentFirst'),
-                      child: _store.loading
-                          ? const GiSkeletonList(
-                              padding: EdgeInsets.zero, itemHeight: 120)
-                          : visible.isEmpty
-                              ? AdminEmpty(
-                                  icon: q.isNotEmpty
-                                      ? Icons.search_off_rounded
-                                      : Icons.task_alt_rounded,
-                                  title: q.isNotEmpty
-                                      ? 'Aucun résultat'
-                                      : 'Rien ici',
-                                  message: q.isNotEmpty
-                                      ? 'Aucun ticket ne correspond à « ${_search.text} ».'
-                                      : 'Aucun ticket dans « ${_ctrl.filter.label} ».',
-                                )
-                              : AdminGrid(
-                                  minTileWidth: 360,
-                                  children: [
-                                    for (var i = 0; i < visible.length; i++)
-                                      GiAppear(
-                                        index: i.clamp(0, 8),
-                                        child: AdminTicketCard(
-                                          ticket: visible[i],
-                                          residenceName: _store
-                                              .residenceNameOf(visible[i]),
-                                          showResidence:
-                                              _ctrl.residenceId.isEmpty,
-                                          onTap: () => openAdminTicket(
-                                              context, _store, visible[i]),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                    ),
-                  ),
-                ),
-              ),
+              sliver: _list(visible, q),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _list(List<Map<String, dynamic>> visible, String q) {
+    Widget box(Widget child) => SliverToBoxAdapter(
+        child: AdminContent(
+            child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: child)));
+    if (_store.loading) {
+      return box(const GiSkeletonList(
+          key: ValueKey('loading'), padding: EdgeInsets.zero, itemHeight: 120));
+    }
+    if (_store.error != null && _store.tickets.isEmpty) {
+      return box(AdminLoadError(
+          key: const ValueKey('error'),
+          message: _store.error,
+          onRetry: _store.load));
+    }
+    if (visible.isEmpty) {
+      return box(AdminEmpty(
+        key: ValueKey('empty${_ctrl.filter}'),
+        icon: q.isNotEmpty ? Icons.search_off_rounded : Icons.task_alt_rounded,
+        title: q.isNotEmpty ? 'Aucun résultat' : 'Rien ici',
+        message: q.isNotEmpty
+            ? 'Aucun ticket ne correspond à « ${_search.text.trim()} ».'
+            : 'Aucun ticket dans « ${_ctrl.filter.label} ».',
+      ));
+    }
+    // Changer de filtre recree la liste : les cartes se reposent une a une.
+    // Seules celles de la premiere image s'animent : une carte construite
+    // plus tard, au defilement, doit etre la tout de suite, sans fondu.
+    final key = '${_ctrl.filter}${_ctrl.residenceId}$_urgentFirst';
+    _appear.reset(key);
+    return AdminSliverGrid(
+      key: ValueKey(key),
+      minTileWidth: 360,
+      itemCount: visible.length,
+      itemBuilder: (context, i) {
+        final card = AdminTicketCard(
+          key: ValueKey(TicketFields.id(visible[i])),
+          ticket: visible[i],
+          residenceName: _store.residenceNameOf(visible[i]),
+          showResidence: _ctrl.residenceId.isEmpty,
+          onTap: () => openAdminTicket(context, _store, visible[i]),
+        );
+        return _appear.wrap(i, card);
+      },
     );
   }
 

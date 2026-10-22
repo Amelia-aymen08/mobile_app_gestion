@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../data/api_service.dart';
+import '../providers/auth_provider.dart';
 import '../theme/design_tokens.dart';
 import '../theme/gi_colors.dart';
-import '../widgets/gi_appear.dart';
 import '../widgets/gi_card.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
@@ -49,12 +50,27 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   bool _loading = true;
   String _error = '';
   String _role = '';
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
-    _search.addListener(() => setState(() {}));
+    _search.addListener(() {
+      final q = _search.text.trim().toLowerCase();
+      if (q != _query) setState(() => _query = q);
+    });
     _load();
+  }
+
+  /// Le compte connecte : on ne lui propose pas de se supprimer lui-meme.
+  bool _isMe(Map u) {
+    final me = context.read<AuthProvider>().user;
+    if (me == null) return false;
+    final id = (me['id'] ?? '').toString();
+    final email = (me['email'] ?? '').toString().toLowerCase();
+    return (id.isNotEmpty && id == (u['id'] ?? '').toString()) ||
+        (email.isNotEmpty &&
+            email == (u['email'] ?? '').toString().toLowerCase());
   }
 
   @override
@@ -141,6 +157,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
   Future<void> _changePassword(Map u) async {
     final field = TextEditingController();
+    var sending = false;
     final saved = await showAdminSheet<bool>(
       context,
       title: 'Nouveau mot de passe',
@@ -157,17 +174,22 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               onChanged: (_) => setSheet(() {}),
             ),
             const SizedBox(height: FigSpace.xl),
+            // Meme regle que l'ecran « Changer le mot de passe » : 8
+            // caracteres. Le bouton s'allumait des 6, contre l'indication.
             GiPrimaryButton(
               label: 'Enregistrer',
-              onPressed: field.text.length < 6
+              isLoading: sending,
+              onPressed: field.text.length < 8
                   ? null
                   : () async {
+                      setSheet(() => sending = true);
                       try {
                         await _api.updateUserPassword(
                             u['id'].toString(), field.text);
                         if (sheet.mounted) Navigator.pop(sheet, true);
                       } catch (e) {
                         if (sheet.mounted) {
+                          setSheet(() => sending = false);
                           showAdminToast(sheet, _err(e), error: true);
                         }
                       }
@@ -235,10 +257,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         'Réinitialiser les appareils',
                         () => run(_resetDevices)),
                   ],
-                  Divider(height: 1, color: c.innerBorder),
-                  action(Icons.delete_outline_rounded, 'Supprimer le compte',
-                      () => run(_delete),
-                      color: FigAlert.error),
+                  if (!_isMe(u)) ...[
+                    Divider(height: 1, color: c.innerBorder),
+                    action(Icons.delete_outline_rounded, 'Supprimer le compte',
+                        () => run(_delete),
+                        color: FigAlert.error),
+                  ],
                 ],
               ),
             ),
@@ -252,7 +276,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
     final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
-    final q = _search.text.trim().toLowerCase();
+    final q = _query;
     final searched = _users
         .where((u) =>
             q.isEmpty ||
@@ -280,8 +304,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           slivers: [
             GiRefreshControl(onRefresh: _load),
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(FigSpace.pagePadding, top,
-                  FigSpace.pagePadding, MediaQuery.paddingOf(context).bottom + 40),
+              padding: EdgeInsets.fromLTRB(
+                  FigSpace.pagePadding, top, FigSpace.pagePadding, 0),
               sliver: SliverToBoxAdapter(
                 child: AdminContent(
                   maxWidth: 820,
@@ -333,10 +357,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         const GiSkeletonList(padding: EdgeInsets.zero)
                       else if (_error.isNotEmpty)
                         GiCard(
-                          child: AdminEmpty(
-                              icon: Icons.cloud_off_rounded,
-                              title: 'Chargement impossible',
-                              message: _error),
+                          child: AdminLoadError(
+                              message: _error,
+                              onRetry: () {
+                                setState(() => _loading = true);
+                                _load();
+                              }),
                         )
                       else if (list.isEmpty)
                         const GiCard(
@@ -344,30 +370,54 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                               icon: Icons.person_search_rounded,
                               title: 'Aucun compte',
                               message: 'Aucun compte ne correspond à ces filtres.'),
-                        )
-                      else
-                        GiAppear(
-                          child: GiCard(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Column(
-                              children: [
-                                for (var i = 0; i < list.length; i++) ...[
-                                  if (i > 0)
-                                    Divider(
-                                        height: 1,
-                                        indent: 66,
-                                        color: c.innerBorder),
-                                  _row(list[i]),
-                                ],
-                              ],
-                            ),
-                          ),
                         ),
                     ],
                   ),
                 ),
               ),
             ),
+            // Les comptes, residents compris, peuvent se compter par
+            // centaines : la liste ne batit que les lignes a l'ecran.
+            if (!_loading && _error.isEmpty && list.isNotEmpty)
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+                    FigSpace.pagePadding, MediaQuery.paddingOf(context).bottom + 40),
+                sliver: SliverList.builder(
+                  itemCount: list.length,
+                  itemBuilder: (context, i) => AdminContent(
+                    maxWidth: 820,
+                    child: _segment(
+                      first: i == 0,
+                      last: i == list.length - 1,
+                      child: _row(list[i]),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Un morceau de la carte qui regroupe les comptes : la carte entiere
+  /// n'existe plus d'un bloc, chaque ligne en dessine sa part.
+  Widget _segment(
+      {required bool first, required bool last, required Widget child}) {
+    final c = GiColors.of(context);
+    const r = Radius.circular(FigRadius.card);
+    final radius = BorderRadius.vertical(
+        top: first ? r : Radius.zero, bottom: last ? r : Radius.zero);
+    return Container(
+      padding: EdgeInsets.fromLTRB(1, first ? 1 : 0, 1, last ? 1 : 0),
+      decoration: BoxDecoration(color: c.cardBorder, borderRadius: radius),
+      child: Container(
+        padding: EdgeInsets.only(top: first ? 4 : 0, bottom: last ? 4 : 0),
+        decoration: BoxDecoration(color: c.card, borderRadius: radius),
+        child: Column(
+          children: [
+            if (!first) Divider(height: 1, indent: 66, color: c.innerBorder),
+            child,
           ],
         ),
       ),

@@ -35,6 +35,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String? _error;
   List<Map<String, dynamic>> _items = const [];
   String _filter = 'all';
+  final _appear = GiAppearWindow();
 
   @override
   void initState() {
@@ -43,8 +44,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _load() async {
+    // Le squelette ne remplace la liste qu'au premier chargement : tirer
+    // pour actualiser faisait disparaitre puis revenir toutes les cartes.
     setState(() {
-      _loading = true;
+      if (_items.isEmpty) _loading = true;
       _error = null;
     });
     try {
@@ -55,6 +58,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       setState(() {
         _items = items;
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
@@ -159,6 +163,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final t = AppL10n.of(context);
     final unread = _items.where((e) => e['isRead'] != true).length;
     final list = _filtered;
+    _appear.reset(_filter);
 
     return Scaffold(
       backgroundColor: c.scaffold,
@@ -282,8 +287,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   itemCount: list.length,
                                   separatorBuilder: (_, __) =>
                                       const SizedBox(height: FigSpace.lg),
-                                  itemBuilder: (_, i) => GiAppear(
-                                      index: i, child: _card(c, t, list[i])),
+                                  itemBuilder: (_, i) =>
+                                      _appear.wrap(i, _card(c, t, list[i])),
                                 ),
                         ),
                       ],

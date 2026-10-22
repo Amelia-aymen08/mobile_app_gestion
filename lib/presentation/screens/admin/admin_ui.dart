@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -20,6 +23,10 @@ import '../../widgets/gi_pressable.dart';
 /// Ouverture d'une page d'administration, avec le meme glissement sur toutes
 /// les plateformes. Le theme ne le fixe que pour iOS et Android : sur un
 /// ordinateur, dans le navigateur, Flutter retombait sur son zoom par defaut.
+///
+/// Sur iOS, la page se ferme aussi d'un glissement depuis le bord gauche,
+/// comme partout ailleurs sur l'iPhone : sans lui, il fallait viser le bouton
+/// retour en haut de l'ecran pour chaque ticket ouvert.
 class AdminRoute<T> extends MaterialPageRoute<T> {
   AdminRoute(Widget page) : super(builder: (_) => page);
 
@@ -27,11 +34,154 @@ class AdminRoute<T> extends MaterialPageRoute<T> {
   Duration get transitionDuration =>
       const GiPageTransitionsBuilder().transitionDuration;
 
+  bool get _swipeEnabled =>
+      !isFirst &&
+      !fullscreenDialog &&
+      !willHandlePopInternally &&
+      popDisposition != RoutePopDisposition.doNotPop &&
+      animation!.status == AnimationStatus.completed &&
+      secondaryAnimation!.status == AnimationStatus.dismissed &&
+      !(navigator?.userGestureInProgress ?? false);
+
   @override
   Widget buildTransitions(BuildContext context, Animation<double> animation,
-          Animation<double> secondaryAnimation, Widget child) =>
-      const GiPageTransitionsBuilder().buildTransitions(
-          this, context, animation, secondaryAnimation, child);
+      Animation<double> secondaryAnimation, Widget child) {
+    final ios = Theme.of(context).platform == TargetPlatform.iOS;
+    // Pendant le geste, la page suit le doigt : pas de courbe.
+    final transition = navigator?.userGestureInProgress ?? false
+        ? SlideTransition(
+            position: Tween(begin: Offset.zero, end: const Offset(-0.25, 0))
+                .animate(secondaryAnimation),
+            child: SlideTransition(
+              position: Tween(begin: const Offset(1, 0), end: Offset.zero)
+                  .animate(animation),
+              child: child,
+            ),
+          )
+        : const GiPageTransitionsBuilder().buildTransitions(
+            this, context, animation, secondaryAnimation, child);
+    if (!ios) return transition;
+    return _AdminBackSwipe(
+      enabled: () => _swipeEnabled,
+      controller: () => controller!,
+      navigator: () => navigator!,
+      child: transition,
+    );
+  }
+}
+
+/// Glissement retour depuis le bord, a la maniere d'iOS.
+class _AdminBackSwipe extends StatefulWidget {
+  final bool Function() enabled;
+  final AnimationController Function() controller;
+  final NavigatorState Function() navigator;
+  final Widget child;
+
+  const _AdminBackSwipe({
+    required this.enabled,
+    required this.controller,
+    required this.navigator,
+    required this.child,
+  });
+
+  @override
+  State<_AdminBackSwipe> createState() => _AdminBackSwipeState();
+}
+
+class _AdminBackSwipeState extends State<_AdminBackSwipe> {
+  static const _edge = 20.0;
+  late final HorizontalDragGestureRecognizer _drag =
+      HorizontalDragGestureRecognizer(debugOwner: this)
+        ..onStart = _start
+        ..onUpdate = _update
+        ..onEnd = _end
+        ..onCancel = _cancel;
+  bool _active = false;
+
+  @override
+  void dispose() {
+    if (_active) widget.navigator().didStopUserGesture();
+    _drag.dispose();
+    super.dispose();
+  }
+
+  double get _sign =>
+      Directionality.of(context) == TextDirection.rtl ? -1 : 1;
+
+  void _start(DragStartDetails _) {
+    _active = true;
+    widget.navigator().didStartUserGesture();
+  }
+
+  void _update(DragUpdateDetails d) {
+    if (!_active) return;
+    final width = context.size?.width ?? 1;
+    widget.controller().value -= _sign * d.primaryDelta! / width;
+  }
+
+  void _end(DragEndDetails d) {
+    if (!_active) return;
+    _active = false;
+    final width = context.size?.width ?? 1;
+    final velocity = _sign * d.velocity.pixelsPerSecond.dx / width;
+    final ctrl = widget.controller();
+    final nav = widget.navigator();
+    final close = velocity.abs() >= 1 ? velocity > 0 : ctrl.value < 0.5;
+    if (close) {
+      nav.pop();
+      if (ctrl.isAnimating) {
+        ctrl.animateBack(0,
+            duration: Duration(milliseconds: (240 * ctrl.value).round()),
+            curve: Curves.easeOutCubic);
+      }
+    } else {
+      ctrl.animateTo(1,
+          duration: Duration(milliseconds: (240 * (1 - ctrl.value)).round()),
+          curve: Curves.easeOutCubic);
+    }
+    if (ctrl.isAnimating) {
+      late AnimationStatusListener done;
+      done = (_) {
+        nav.didStopUserGesture();
+        ctrl.removeStatusListener(done);
+      };
+      ctrl.addStatusListener(done);
+    } else {
+      nav.didStopUserGesture();
+    }
+  }
+
+  void _cancel() {
+    if (!_active) return;
+    _end(DragEndDetails(primaryVelocity: 0));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.paddingOf(context);
+    final edge = _edge +
+        (Directionality.of(context) == TextDirection.rtl
+            ? padding.right
+            : padding.left);
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        widget.child,
+        PositionedDirectional(
+          start: 0,
+          width: edge,
+          top: 0,
+          bottom: 0,
+          child: Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (e) {
+              if (widget.enabled()) _drag.addPointer(e);
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 Future<T?> adminPush<T>(BuildContext context, Widget page) =>
@@ -114,6 +264,62 @@ class AdminGrid extends StatelessWidget {
       }
       return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch, children: rows);
+    });
+  }
+}
+
+/// [AdminGrid] paresseuse, pour les longues listes d'un `CustomScrollView` :
+/// seules les cartes a l'ecran sont construites. Avec cent tickets, la liste
+/// entiere etait batie — et reconstruite a chaque lettre tapee dans la
+/// recherche.
+class AdminSliverGrid extends StatelessWidget {
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+  final double minTileWidth;
+  final double spacing;
+  final double maxWidth;
+
+  const AdminSliverGrid({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.minTileWidth = 340,
+    this.spacing = FigSpace.lg,
+    this.maxWidth = 1180,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverLayoutBuilder(builder: (context, constraints) {
+      final width = math.min(constraints.crossAxisExtent, maxWidth);
+      final cols = adminColumns(width, min: minTileWidth);
+      final rows = (itemCount / cols).ceil();
+      return SliverPadding(
+        padding: EdgeInsets.symmetric(
+            horizontal: (constraints.crossAxisExtent - width) / 2),
+        sliver: SliverList.separated(
+          itemCount: rows,
+          separatorBuilder: (_, __) => SizedBox(height: spacing),
+          itemBuilder: (context, row) {
+            if (cols == 1) return itemBuilder(context, row);
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var j = 0; j < cols; j++) ...[
+                    if (j > 0) SizedBox(width: spacing),
+                    Expanded(
+                      child: row * cols + j < itemCount
+                          ? itemBuilder(context, row * cols + j)
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
+        ),
+      );
     });
   }
 }
@@ -356,6 +562,19 @@ class AdminCategoryTile extends StatelessWidget {
       );
 }
 
+/// « Residence · lieu » sans repetition : le lieu saisi par le resident
+/// commence souvent par le nom de sa residence (« Corail — Bloc B »), ce qui
+/// donnait « Corail · Corail · Bloc B ».
+String adminPlaceLabel(String residence, String location,
+    {bool includeResidence = true}) {
+  final r = residence.trim();
+  var l = location.trim();
+  if (r.isNotEmpty && l.toLowerCase().startsWith(r.toLowerCase())) {
+    l = l.substring(r.length).replaceFirst(RegExp(r'^[\s—–\-·,:/]+'), '');
+  }
+  return [if (includeResidence) r, l].where((s) => s.isNotEmpty).join(' · ');
+}
+
 /// Carte de ticket de l'administration.
 ///
 /// Tout ce qui decide de l'action tient sur la carte : de quoi il s'agit,
@@ -384,10 +603,8 @@ class AdminTicketCard extends StatelessWidget {
     final category = (ticket['category'] ?? '').toString();
     final location = (ticket['location'] ?? '').toString().trim();
     final assignee = TicketFields.assignee(ticket);
-    final place = [
-      if (showResidence && residenceName.isNotEmpty) residenceName,
-      if (location.isNotEmpty && location != residenceName) location,
-    ].join(' · ');
+    final place = adminPlaceLabel(residenceName, location,
+        includeResidence: showResidence);
 
     return GiCard(
       onTap: onTap,
@@ -832,11 +1049,18 @@ class AdminEmpty extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
+
+  /// Bouton facultatif sous le message — « Reessayer » apres une erreur.
+  final String? action;
+  final VoidCallback? onAction;
+
   const AdminEmpty(
       {super.key,
       required this.icon,
       required this.title,
-      required this.message});
+      required this.message,
+      this.action,
+      this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -863,8 +1087,44 @@ class AdminEmpty extends StatelessWidget {
           Text(message,
               textAlign: TextAlign.center,
               style: FigText.body.copyWith(height: 1.4, color: c.textMuted)),
+          if (action != null) ...[
+            const SizedBox(height: FigSpace.xl),
+            GiPressable(
+              pressedScale: 0.95,
+              onTap: onAction,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  color: FigBrand.amber,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Text(action!,
+                    style: FigText.bodyActive.copyWith(color: Colors.black)),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+/// Etat d'erreur commun : le serveur n'a pas repondu et il n'y a rien a
+/// montrer. Sans lui, une coupure reseau se lisait « Aucun ticket ».
+class AdminLoadError extends StatelessWidget {
+  final String? message;
+  final VoidCallback onRetry;
+  const AdminLoadError({super.key, this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) => AdminEmpty(
+        icon: Icons.cloud_off_rounded,
+        title: 'Connexion impossible',
+        message: (message == null || message!.isEmpty)
+            ? 'Vérifiez votre connexion puis réessayez.'
+            : message!,
+        action: 'Réessayer',
+        onAction: onRetry,
+      );
 }

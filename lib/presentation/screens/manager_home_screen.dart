@@ -51,10 +51,14 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   final ApiService _api = ApiService();
 
   int _tab = 0;
+  // Un onglet n'est construit qu'a sa premiere visite : l'ouverture de
+  // l'administration ne monte plus cinq pages d'un coup.
+  final Set<int> _visited = {0};
   int _unread = 0;
   int _pendingRegistrations = 0;
   int _pendingProperties = 0;
   Timer? _poll;
+  late final AppLifecycleListener _lifecycle;
 
   static const _tabTickets = 1,
       _tabNotices = 2,
@@ -70,8 +74,20 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
     // jour seule, sans tirer pour actualiser.
     _poll = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;
+      if (WidgetsBinding.instance.lifecycleState !=
+          AppLifecycleState.resumed) {
+        return;
+      }
       _store.load();
       _fetchUnread();
+    });
+    // De retour dans l'app, la liste est a jour tout de suite, sans attendre
+    // le prochain tour du minuteur.
+    _lifecycle = AppLifecycleListener(onResume: () {
+      if (!mounted) return;
+      _store.load();
+      _fetchUnread();
+      _fetchPending();
     });
     _fetchPending();
   }
@@ -79,6 +95,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   @override
   void dispose() {
     _poll?.cancel();
+    _lifecycle.dispose();
     _navMinimize.dispose();
     _tickets.dispose();
     _store.dispose();
@@ -97,8 +114,10 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
   Future<void> _fetchPending() async {
     if (!_store.isAdmin) return;
     try {
-      final r = await _api.getRegistrationRequests();
-      final p = await _api.getPropertyAddRequests(status: 'PENDING');
+      final (r, p) = await (
+        _api.getRegistrationRequests(),
+        _api.getPropertyAddRequests(status: 'PENDING'),
+      ).wait;
       if (!mounted) return;
       setState(() {
         _pendingRegistrations =
@@ -111,11 +130,14 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
   void _go(int tab) {
     if (tab == _tab) return;
-    setState(() => _tab = tab);
+    setState(() {
+      _tab = tab;
+      _visited.add(tab);
+    });
   }
 
   void _openTickets(AdminTicketFilter filter, {String residenceId = ''}) {
-    _tickets.show(filter, residenceId: residenceId);
+    _tickets.reveal(filter, residenceId: residenceId);
     _go(_tabTickets);
   }
 
@@ -201,6 +223,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
     final role = context.watch<AuthProvider>().userRole;
     final c = GiColors.of(context);
     final wide = isAdminWide(context);
+    final toAssign =
+        _store.loading ? 0 : _store.count(AdminTicketFilter.toAssign.test);
 
     final pages = [
       AdminDashboardScreen(
@@ -236,7 +260,9 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         for (var i = 0; i < pages.length; i++)
           IgnorePointer(
             ignoring: i != _tab,
-            child: AnimatedOpacity(
+            child: !_visited.contains(i)
+                ? const SizedBox.shrink()
+                : AnimatedOpacity(
               opacity: i == _tab ? 1 : 0,
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOut,
@@ -261,9 +287,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
               role: role,
               current: _tab,
               onTab: _go,
-              ticketsBadge: _store.loading
-                  ? 0
-                  : _store.count(AdminTicketFilter.toAssign.test),
+              ticketsBadge: toAssign,
               management: _management(withTabs: false),
               administration: _administration,
               account: _account,
@@ -298,9 +322,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
               asset: 'assets/figma/icons/nav_report.svg',
               activeAsset: 'assets/figma/icons/nav_report_fill.svg',
               label: 'Tickets',
-              badge: _store.loading
-                  ? 0
-                  : _store.count(AdminTicketFilter.toAssign.test)),
+              badge: toAssign),
           const GiNavItem(
               asset: 'assets/figma/icons/nav_notice.svg',
               activeAsset: 'assets/figma/icons/nav_notice_fill.svg',

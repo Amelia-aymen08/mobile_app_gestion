@@ -49,6 +49,9 @@ class AdminRequestCard extends StatelessWidget {
   final VoidCallback? onApprove;
   final VoidCallback? onReject;
 
+  /// Demande en cours d'envoi : les boutons laissent place a une attente.
+  final bool busy;
+
   const AdminRequestCard({
     super.key,
     required this.title,
@@ -59,6 +62,7 @@ class AdminRequestCard extends StatelessWidget {
     this.note,
     this.onApprove,
     this.onReject,
+    this.busy = false,
   });
 
   @override
@@ -140,7 +144,20 @@ class AdminRequestCard extends StatelessWidget {
                 style: FigText.body.copyWith(
                     fontStyle: FontStyle.italic, color: c.textMuted)),
           ],
-          if (pending && (onApprove != null || onReject != null)) ...[
+          if (pending && busy) ...[
+            const SizedBox(height: FigSpace.lg),
+            const SizedBox(
+              height: 46,
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: FigBrand.amber),
+                ),
+              ),
+            ),
+          ] else if (pending && (onApprove != null || onReject != null)) ...[
             const SizedBox(height: FigSpace.lg),
             Row(
               children: [
@@ -216,11 +233,19 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
   bool _loading = true;
   String _error = '';
   String _status = 'PENDING';
+  String _query = '';
+
+  // Demandes en cours d'envoi : un second appui sur « Valider » pendant
+  // l'attente envoyait la meme decision deux fois.
+  final Set<String> _busy = {};
 
   @override
   void initState() {
     super.initState();
-    _search.addListener(() => setState(() {}));
+    _search.addListener(() {
+      final q = _search.text.trim().toLowerCase();
+      if (q != _query) setState(() => _query = q);
+    });
     _loadResidences();
     _load();
   }
@@ -275,6 +300,8 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
       });
 
   Future<void> _approve(Map<String, dynamic> r) async {
+    final id = '${r['id']}';
+    if (_busy.contains(id)) return;
     final ok = await adminConfirm(
       context,
       title: 'Valider la demande ?',
@@ -282,6 +309,7 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
       confirmLabel: 'Valider',
     );
     if (ok == null || !mounted) return;
+    setState(() => _busy.add(id));
     try {
       await widget.approve(r);
       if (!mounted) return;
@@ -292,10 +320,14 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
         showAdminToast(context, e.toString().replaceAll('Exception: ', ''),
             error: true);
       }
+    } finally {
+      if (mounted) setState(() => _busy.remove(id));
     }
   }
 
   Future<void> _reject(Map<String, dynamic> r) async {
+    final id = '${r['id']}';
+    if (_busy.contains(id)) return;
     final reason = await adminConfirm(
       context,
       title: 'Rejeter la demande ?',
@@ -305,6 +337,7 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
       reasonHint: widget.askReason ? 'Facultatif — visible du demandeur' : null,
     );
     if (reason == null || !mounted) return;
+    setState(() => _busy.add(id));
     try {
       await widget.reject(r, reason);
       if (!mounted) return;
@@ -315,6 +348,8 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
         showAdminToast(context, e.toString().replaceAll('Exception: ', ''),
             error: true);
       }
+    } finally {
+      if (mounted) setState(() => _busy.remove(id));
     }
   }
 
@@ -322,7 +357,7 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
   Widget build(BuildContext context) {
     final c = GiColors.of(context);
     final top = MediaQuery.paddingOf(context).top > 0 ? 14.0 : 24.0;
-    final q = _search.text.trim().toLowerCase();
+    final q = _query;
     final searched = _items.where((r) {
       if (q.isEmpty) return true;
       final text = [
@@ -404,10 +439,12 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
                             padding: EdgeInsets.zero, itemHeight: 150)
                       else if (_error.isNotEmpty)
                         GiCard(
-                          child: AdminEmpty(
-                              icon: Icons.cloud_off_rounded,
-                              title: 'Chargement impossible',
-                              message: _error),
+                          child: AdminLoadError(
+                              message: _error,
+                              onRetry: () {
+                                setState(() => _loading = true);
+                                _load();
+                              }),
                         )
                       else if (list.isEmpty)
                         GiCard(
@@ -427,8 +464,10 @@ class _AdminRequestsPageState extends State<AdminRequestsPage> {
                         for (var i = 0; i < list.length; i++) ...[
                           if (i > 0) const SizedBox(height: FigSpace.lg),
                           GiAppear(
+                            key: ValueKey('${list[i]['id']}'),
                             index: i.clamp(0, 8),
                             child: AdminRequestCard(
+                              busy: _busy.contains('${list[i]['id']}'),
                               title: widget.titleOf(list[i]),
                               subtitle: widget.subtitleOf(list[i]),
                               icon: widget.icon,
