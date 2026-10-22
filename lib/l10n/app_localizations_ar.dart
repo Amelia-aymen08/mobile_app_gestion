@@ -895,6 +895,9 @@ class AppL10nAr extends AppL10n {
   String get amenitiesTitle => 'المرافق';
 
   @override
+  String get locationTitle => 'الموقع';
+
+  @override
   String get aboutTitle => 'نبذة';
 
   @override

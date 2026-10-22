@@ -270,6 +270,7 @@
   "openLabel": "Open",
   "residenceDetails": "My residence",
   "amenitiesTitle": "Amenities",
+  "locationTitle": "Location",
   "aboutTitle": "About",
   "memberCount": "{count} of {max} members",
   "householdHint": "Each member receives their login details by email. You can add up to {max} people.",

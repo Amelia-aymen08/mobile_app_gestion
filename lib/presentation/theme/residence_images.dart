@@ -22,7 +22,7 @@ const Map<String, String> _accentReplacements = {
   'ç': 'c',
 };
 
-String _normalizeResidenceKey(String value) {
+String normalizeResidenceKey(String value) {
   final lower = value.toLowerCase();
   final buffer = StringBuffer();
   for (final rune in lower.runes) {
@@ -37,7 +37,7 @@ String _normalizeResidenceKey(String value) {
 String? residenceImageAsset({String? id, String? name}) {
   for (final candidate in [id, name]) {
     if (candidate == null || candidate.trim().isEmpty) continue;
-    final asset = _residenceImageAssets[_normalizeResidenceKey(candidate)];
+    final asset = _residenceImageAssets[normalizeResidenceKey(candidate)];
     if (asset != null) return asset;
   }
   return null;

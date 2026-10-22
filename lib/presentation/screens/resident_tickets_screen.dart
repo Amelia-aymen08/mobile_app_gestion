@@ -10,6 +10,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/design_tokens.dart';
 import '../widgets/gi_appear.dart';
+import '../widgets/gi_bottom_nav.dart' show GiBottomVeil;
 import '../theme/gi_colors.dart';
 import '../theme/ticket_categories.dart';
 import '../widgets/gi_card.dart';
@@ -810,70 +811,101 @@ class _ReportDetailScreenState extends State<_ReportDetailScreen> {
         .whereType<Map>()
         .toList();
 
+    // Le bouton flotte au-dessus de la page, a la hauteur de la barre de
+    // navigation des onglets ; la liste passe dessous, fondue dans le voile.
+    const ctaHeight = 52.0;
+    const ctaZone = FigSpace.navbarBottom + ctaHeight;
+
     return Scaffold(
       backgroundColor: c.scaffold,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                  FigSpace.pagePadding,
-                  MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
-                  FigSpace.pagePadding,
-                  0),
-              child: _header(context, c, t),
-            ),
-            const SizedBox(height: 22),
-            Expanded(
-              child: RefreshIndicator(
-                color: FigBrand.amber,
-                backgroundColor: c.card,
-                onRefresh: _load,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(
-                      FigSpace.pagePadding, 0, FigSpace.pagePadding, 24),
-                  children: [
-                    _contentCard(c, t, status, category, priority, description),
-                    const SizedBox(height: FigSpace.lg),
-                    _pipelineCard(c, t, status),
-                    const SizedBox(height: FigSpace.lg),
-                    _factsCard(c, t),
-                    if (_infos.isNotEmpty) ...[
+      body: Stack(children: [
+        SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                    FigSpace.pagePadding,
+                    MediaQuery.paddingOf(context).top > 0 ? 22 : 32,
+                    FigSpace.pagePadding,
+                    0),
+                child: _header(context, c, t),
+              ),
+              const SizedBox(height: 22),
+              Expanded(
+                child: RefreshIndicator(
+                  color: FigBrand.amber,
+                  backgroundColor: c.card,
+                  onRefresh: _load,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
+                        FigSpace.pagePadding, ctaZone + 28),
+                    children: [
+                      _contentCard(
+                          c, t, status, category, priority, description),
                       const SizedBox(height: FigSpace.lg),
-                      _infoCard(c, t),
-                    ],
-                    const SizedBox(height: FigSpace.lg),
-                    _attachmentsCard(c, t),
-                    if (_loading || history.isNotEmpty) ...[
+                      _pipelineCard(c, t, status),
                       const SizedBox(height: FigSpace.lg),
-                      _historyCard(c, t, history),
+                      _factsCard(c, t),
+                      if (_infos.isNotEmpty) ...[
+                        const SizedBox(height: FigSpace.lg),
+                        _infoCard(c, t),
+                      ],
+                      const SizedBox(height: FigSpace.lg),
+                      _attachmentsCard(c, t),
+                      if (_loading || history.isNotEmpty) ...[
+                        const SizedBox(height: FigSpace.lg),
+                        _historyCard(c, t, history),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
+            ],
+          ),
+        ),
+        // Le meme voile que sous la barre des onglets : flou par paliers,
+        // il monte un peu au-dessus du bouton.
+        const Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(child: GiBottomVeil(height: ctaZone + 22)),
+        ),
+        Positioned(
+          left: FigSpace.pagePadding,
+          right: FigSpace.pagePadding,
+          bottom: FigSpace.navbarBottom,
+          child: DecoratedBox(
+            // Une ombre douce detache le bouton de la page qui defile.
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(FigRadius.cta),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(FigSpace.pagePadding, 0,
-                  FigSpace.pagePadding, FigSpace.xxl),
-              child: GiPrimaryButton(
-                label: t.reportChat,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChatScreen(
-                      ticketId: _id,
-                      title: widget.title,
-                      subtitle: widget.ref,
-                      status: (_ticket['status'] ?? '').toString(),
-                    ),
+            child: GiPrimaryButton(
+              label: t.reportChat,
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChatScreen(
+                    ticketId: _id,
+                    title: widget.title,
+                    subtitle: widget.ref,
+                    status: (_ticket['status'] ?? '').toString(),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ]),
     );
   }
 
