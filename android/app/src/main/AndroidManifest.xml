@@ -1,6 +1,17 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Ajoutees par open_filex, inutiles ici : les documents sont ouverts
+         depuis le dossier interne de l'app (getTemporaryDirectory), ce qui ne
+         demande aucune autorisation. Les photos jointes passent par le
+         selecteur systeme. Les retirer evite la declaration « acces aux
+         photos et videos » du Play Store et toute demande d'acces au
+         resident. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" tools:node="remove"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
     <application
         android:label="Gérance Immo Service"
         android:name="${applicationName}"
