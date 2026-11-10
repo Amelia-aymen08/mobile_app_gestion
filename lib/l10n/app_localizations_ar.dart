@@ -1093,4 +1093,38 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get splashSlogan => 'معًا نحمي مسكنك.';
+
+  @override
+  String get deleteAccount => 'حذف حسابي';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'هذا الإجراء نهائي. سيتم حذف اسمك وبريدك الإلكتروني وصورتك وأجهزتك وإشعاراتك.';
+
+  @override
+  String get deleteAccountHousehold =>
+      'إذا كنت المقيم الرئيسي، فسيتم أيضًا حذف حسابات أفراد أسرتك.';
+
+  @override
+  String get deleteAccountKept =>
+      'يحتفظ مسير الإقامة بسجل مسكنك (الملكية، الأعباء، البلاغات) دون اسمك.';
+
+  @override
+  String get deleteAccountPasswordHint => 'أكّد بكلمة المرور';
+
+  @override
+  String get deleteAccountConfirmTitle => 'حذف نهائي؟';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'لن تتمكن بعد الآن من تسجيل الدخول بهذا الحساب.';
+
+  @override
+  String get deleteAccountConfirm => 'حذف';
+
+  @override
+  String get deleteAccountDoneTitle => 'تم حذف الحساب';
+
+  @override
+  String get deleteAccountDoneBody => 'تم حذف حسابك وبياناتك الشخصية.';
 }

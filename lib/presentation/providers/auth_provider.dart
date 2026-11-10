@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:android_id/android_id.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/api_service.dart';
 
@@ -77,11 +79,46 @@ class AuthProvider with ChangeNotifier {
     return '$a-$b$c';
   }
 
+  /// Trousseau iOS : contrairement aux preferences, il survit a la
+  /// desinstallation de l'application.
+  static const _keychain = FlutterSecureStorage(
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
+  /// Nouvel identifiant d'appareil, stable d'une installation a l'autre :
+  /// le serveur limite le nombre d'appareils par compte, et un telephone
+  /// reinstalle ne doit pas consommer une nouvelle place.
+  /// - Android : ANDROID_ID du systeme (survit a la reinstallation).
+  /// - iOS : identifiant tire une fois et range dans le trousseau.
+  /// - Web / echec : identifiant aleatoire garde dans les preferences.
+  Future<String> _newDeviceId() async {
+    if (kIsWeb) return _generateDeviceId();
+    try {
+      if (Platform.isAndroid) {
+        final androidId = await const AndroidId().getId();
+        if (androidId != null && androidId.trim().isNotEmpty) {
+          return 'and-$androidId';
+        }
+      } else if (Platform.isIOS) {
+        final saved = await _keychain.read(key: 'device_id');
+        if (saved != null && saved.trim().isNotEmpty) return saved;
+        final id = _generateDeviceId();
+        await _keychain.write(key: 'device_id', value: id);
+        return id;
+      }
+    } catch (_) {
+      // Systeme indisponible : on retombe sur un identifiant aleatoire.
+    }
+    return _generateDeviceId();
+  }
+
   Future<Map<String, String>> _getDevicePayload() async {
     final prefs = await SharedPreferences.getInstance();
+    // Un identifiant deja enregistre est conserve : le serveur connait deja
+    // cet appareil sous ce nom, aucune place n'est perdue.
     var id = prefs.getString('device_id');
     if (id == null || id.trim().isEmpty) {
-      id = _generateDeviceId();
+      id = await _newDeviceId();
       await prefs.setString('device_id', id);
     }
     // AIDE AU TEST — a retirer avant la mise en production.
@@ -218,6 +255,13 @@ class AuthProvider with ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  /// Supprime le compte cote serveur puis ferme la session locale.
+  Future<void> deleteAccount(String password) async {
+    if (_token == null) throw Exception('Not authenticated');
+    await _apiService.deleteMyAccount(password: password);
+    await logout();
   }
 
   Future<void> changePassword(String currentPassword, String newPassword) async {

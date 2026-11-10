@@ -1096,4 +1096,39 @@ class AppL10nFr extends AppL10n {
 
   @override
   String get splashSlogan => 'Ensemble, protégeons votre habitat.';
+
+  @override
+  String get deleteAccount => 'Supprimer mon compte';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Cette action est définitive. Votre nom, votre e-mail, votre photo, vos appareils et vos notifications seront effacés.';
+
+  @override
+  String get deleteAccountHousehold =>
+      'Si vous êtes le résident principal, les comptes des membres de votre foyer seront aussi supprimés.';
+
+  @override
+  String get deleteAccountKept =>
+      'L\'historique de votre logement (propriété, charges, signalements) reste conservé par le gestionnaire de la résidence, sans votre nom.';
+
+  @override
+  String get deleteAccountPasswordHint => 'Confirmez avec votre mot de passe';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Supprimer définitivement ?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'Vous ne pourrez plus vous connecter avec ce compte.';
+
+  @override
+  String get deleteAccountConfirm => 'Supprimer';
+
+  @override
+  String get deleteAccountDoneTitle => 'Compte supprimé';
+
+  @override
+  String get deleteAccountDoneBody =>
+      'Votre compte et vos données personnelles ont été supprimés.';
 }

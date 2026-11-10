@@ -333,5 +333,15 @@
   "amountOwed": "Amount owed",
   "apartmentShortLabel": "Unit",
   "apartmentUpper": "APARTMENT",
-  "splashSlogan": "Together, let's protect your home."
+  "splashSlogan": "Together, let's protect your home.",
+  "deleteAccount": "Delete my account",
+  "deleteAccountSubtitle": "This cannot be undone. Your name, email, photo, devices and notifications will be erased.",
+  "deleteAccountHousehold": "If you are the main resident, your household members' accounts will be deleted too.",
+  "deleteAccountKept": "Your unit's history (ownership, charges, reports) is kept by the residence manager, without your name.",
+  "deleteAccountPasswordHint": "Confirm with your password",
+  "deleteAccountConfirmTitle": "Delete permanently?",
+  "deleteAccountConfirmBody": "You will no longer be able to sign in with this account.",
+  "deleteAccountConfirm": "Delete",
+  "deleteAccountDoneTitle": "Account deleted",
+  "deleteAccountDoneBody": "Your account and personal data have been deleted."
 }

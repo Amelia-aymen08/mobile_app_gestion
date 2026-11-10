@@ -5,6 +5,7 @@ import '../services/gi_haptics.dart';
 import '../widgets/gi_skeleton.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'residence_details_screen.dart';
+import 'delete_account_screen.dart';
 import 'documents_screen.dart';
 import '../widgets/gi_avatar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -1139,6 +1140,27 @@ class _ResidentHomeScreenState extends State<ResidentHomeScreen> {
                   Text(t.logout,
                       style: FigText.button.copyWith(color: FigAlert.error)),
                 ],
+              ),
+            ),
+          ),
+          // Exige par le Play Store et l'App Store : la suppression du compte
+          // doit etre accessible depuis l'application.
+          const SizedBox(height: FigSpace.lg),
+          Center(
+            child: GiPressable(
+              onTap: () => _push(const DeleteAccountScreen()),
+              pressedScale: 0.97,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: FigSpace.md, horizontal: FigSpace.lg),
+                child: Text(
+                  t.deleteAccount,
+                  style: FigText.label.copyWith(
+                    color: c.textMuted,
+                    decoration: TextDecoration.underline,
+                    decorationColor: c.textMuted,
+                  ),
+                ),
               ),
             ),
           ),

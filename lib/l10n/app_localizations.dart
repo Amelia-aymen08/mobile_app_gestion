@@ -2102,6 +2102,66 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Ensemble, protégeons votre habitat.'**
   String get splashSlogan;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer mon compte'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette action est définitive. Votre nom, votre e-mail, votre photo, vos appareils et vos notifications seront effacés.'**
+  String get deleteAccountSubtitle;
+
+  /// No description provided for @deleteAccountHousehold.
+  ///
+  /// In fr, this message translates to:
+  /// **'Si vous êtes le résident principal, les comptes des membres de votre foyer seront aussi supprimés.'**
+  String get deleteAccountHousehold;
+
+  /// No description provided for @deleteAccountKept.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'historique de votre logement (propriété, charges, signalements) reste conservé par le gestionnaire de la résidence, sans votre nom.'**
+  String get deleteAccountKept;
+
+  /// No description provided for @deleteAccountPasswordHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez avec votre mot de passe'**
+  String get deleteAccountPasswordHint;
+
+  /// No description provided for @deleteAccountConfirmTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer définitivement ?'**
+  String get deleteAccountConfirmTitle;
+
+  /// No description provided for @deleteAccountConfirmBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vous ne pourrez plus vous connecter avec ce compte.'**
+  String get deleteAccountConfirmBody;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountDoneTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Compte supprimé'**
+  String get deleteAccountDoneTitle;
+
+  /// No description provided for @deleteAccountDoneBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Votre compte et vos données personnelles ont été supprimés.'**
+  String get deleteAccountDoneBody;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -490,5 +490,15 @@
   "amountOwed": "Argent dû",
   "apartmentShortLabel": "Appart.",
   "apartmentUpper": "APPARTEMENT",
-  "splashSlogan": "Ensemble, protégeons votre habitat."
+  "splashSlogan": "Ensemble, protégeons votre habitat.",
+  "deleteAccount": "Supprimer mon compte",
+  "deleteAccountSubtitle": "Cette action est définitive. Votre nom, votre e-mail, votre photo, vos appareils et vos notifications seront effacés.",
+  "deleteAccountHousehold": "Si vous êtes le résident principal, les comptes des membres de votre foyer seront aussi supprimés.",
+  "deleteAccountKept": "L'historique de votre logement (propriété, charges, signalements) reste conservé par le gestionnaire de la résidence, sans votre nom.",
+  "deleteAccountPasswordHint": "Confirmez avec votre mot de passe",
+  "deleteAccountConfirmTitle": "Supprimer définitivement ?",
+  "deleteAccountConfirmBody": "Vous ne pourrez plus vous connecter avec ce compte.",
+  "deleteAccountConfirm": "Supprimer",
+  "deleteAccountDoneTitle": "Compte supprimé",
+  "deleteAccountDoneBody": "Votre compte et vos données personnelles ont été supprimés."
 }

@@ -1,0 +1,6 @@
+# Copier ce fichier en key.properties (meme dossier) et remplir les valeurs.
+# key.properties et le fichier .jks ne doivent JAMAIS etre commites.
+storePassword=MOT_DE_PASSE_DU_KEYSTORE
+keyPassword=MOT_DE_PASSE_DE_LA_CLE
+keyAlias=upload
+storeFile=E:/cles/gis-upload.jks

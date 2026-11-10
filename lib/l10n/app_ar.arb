@@ -333,5 +333,15 @@
   "amountOwed": "المبلغ المستحق",
   "apartmentShortLabel": "الشقة",
   "apartmentUpper": "الشقة",
-  "splashSlogan": "معًا نحمي مسكنك."
+  "splashSlogan": "معًا نحمي مسكنك.",
+  "deleteAccount": "حذف حسابي",
+  "deleteAccountSubtitle": "هذا الإجراء نهائي. سيتم حذف اسمك وبريدك الإلكتروني وصورتك وأجهزتك وإشعاراتك.",
+  "deleteAccountHousehold": "إذا كنت المقيم الرئيسي، فسيتم أيضًا حذف حسابات أفراد أسرتك.",
+  "deleteAccountKept": "يحتفظ مسير الإقامة بسجل مسكنك (الملكية، الأعباء، البلاغات) دون اسمك.",
+  "deleteAccountPasswordHint": "أكّد بكلمة المرور",
+  "deleteAccountConfirmTitle": "حذف نهائي؟",
+  "deleteAccountConfirmBody": "لن تتمكن بعد الآن من تسجيل الدخول بهذا الحساب.",
+  "deleteAccountConfirm": "حذف",
+  "deleteAccountDoneTitle": "تم حذف الحساب",
+  "deleteAccountDoneBody": "تم حذف حسابك وبياناتك الشخصية."
 }

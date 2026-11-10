@@ -75,7 +75,7 @@ class ApiService {
   void useClient(http.Client client) => _client = client;
   final String baseUrl = const String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://landing.aymenpromotion-dz.com/api',
+    defaultValue: 'https://api.gerance-immo-service.com/api',
   );
 
   /// Server root, i.e. [baseUrl] without the trailing /api.
@@ -278,6 +278,28 @@ class ApiService {
       } catch (_) {
         throw Exception('Impossible de changer le mot de passe');
       }
+    }
+  }
+
+  /// Suppression du compte par le resident lui-meme (exigee par le Play
+  /// Store et l'App Store). Le serveur verifie le mot de passe.
+  Future<void> deleteMyAccount({required String password}) async {
+    final response = await _client
+        .delete(
+          Uri.parse('$baseUrl/auth/me'),
+          headers: _headers,
+          body: jsonEncode({'password': password}),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      String message = 'Impossible de supprimer le compte';
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] != null) {
+          message = body['error'].toString();
+        }
+      } catch (_) {}
+      throw Exception(message);
     }
   }
 

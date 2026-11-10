@@ -1094,4 +1094,39 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get splashSlogan => 'Together, let\'s protect your home.';
+
+  @override
+  String get deleteAccount => 'Delete my account';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'This cannot be undone. Your name, email, photo, devices and notifications will be erased.';
+
+  @override
+  String get deleteAccountHousehold =>
+      'If you are the main resident, your household members\' accounts will be deleted too.';
+
+  @override
+  String get deleteAccountKept =>
+      'Your unit\'s history (ownership, charges, reports) is kept by the residence manager, without your name.';
+
+  @override
+  String get deleteAccountPasswordHint => 'Confirm with your password';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Delete permanently?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'You will no longer be able to sign in with this account.';
+
+  @override
+  String get deleteAccountConfirm => 'Delete';
+
+  @override
+  String get deleteAccountDoneTitle => 'Account deleted';
+
+  @override
+  String get deleteAccountDoneBody =>
+      'Your account and personal data have been deleted.';
 }

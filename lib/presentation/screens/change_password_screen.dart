@@ -11,8 +11,10 @@ import '../widgets/gi_alert_dialog.dart';
 import '../widgets/gi_pressable.dart';
 import '../widgets/gi_primary_button.dart';
 import '../widgets/gi_text_field.dart';
+import 'gestionnaire_tag_home_screen.dart';
 import 'intervenant_home_screen.dart';
 import 'manager_home_screen.dart';
+import 'recouvrement_home_screen.dart';
 import 'resident_home_screen.dart';
 
 /// Changement de mot de passe — frame Figma « Change Password LT » (0:3781)
@@ -116,8 +118,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   void _goHome(AuthProvider auth) {
     final role = auth.userRole;
     final Widget home = switch (role) {
+      // Meme routage que app_entry.dart et login_screen.dart : les trois
+      // doivent rester identiques a chaque ajout de role.
       'INTERVENANT' => const IntervenantHomeScreen(),
-      'ADMIN' || 'RESPONSABLE_ZONE' || 'MANAGER' => const ManagerHomeScreen(),
+      'RECOUVREMENT' => const RecouvrementHomeScreen(),
+      'GESTIONNAIRE_TAG' => const GestionnaireTagHomeScreen(),
+      'ADMIN' || 'RESPONSABLE_ZONE' || 'MANAGER' || 'HSE' =>
+        const ManagerHomeScreen(),
       _ => const ResidentHomeScreen(),
     };
     Navigator.pushReplacement(
