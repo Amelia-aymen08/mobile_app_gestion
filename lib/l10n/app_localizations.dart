@@ -2162,6 +2162,12 @@ abstract class AppL10n {
   /// In fr, this message translates to:
   /// **'Votre compte et vos données personnelles ont été supprimés.'**
   String get deleteAccountDoneBody;
+
+  /// No description provided for @networkError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Connexion au serveur impossible. Vérifiez votre connexion Internet et réessayez.'**
+  String get networkError;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

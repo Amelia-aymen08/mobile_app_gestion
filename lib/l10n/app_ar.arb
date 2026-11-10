@@ -343,5 +343,6 @@
   "deleteAccountConfirmBody": "لن تتمكن بعد الآن من تسجيل الدخول بهذا الحساب.",
   "deleteAccountConfirm": "حذف",
   "deleteAccountDoneTitle": "تم حذف الحساب",
-  "deleteAccountDoneBody": "تم حذف حسابك وبياناتك الشخصية."
+  "deleteAccountDoneBody": "تم حذف حسابك وبياناتك الشخصية.",
+  "networkError": "تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت وأعد المحاولة."
 }

@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart'; // Import for kDebugMode
 import 'package:http_parser/http_parser.dart';
+import 'http_client_stub.dart'
+    if (dart.library.io) 'http_client_io.dart';
 
 
 class ApiException implements Exception {
@@ -55,7 +58,58 @@ class _GuardedClient extends http.BaseClient {
   void close() => _inner.close();
 }
 
+/// Relance une requete quand la connexion au serveur n'a pas pu s'etablir.
+///
+/// Sur les reseaux mobiles (et certains trajets vers le serveur), une
+/// connexion sur plusieurs peut rester sans reponse. Sans relance, l'ecran
+/// attendait 20 secondes puis affichait « TimeoutException ». Ici chaque
+/// tentative de connexion est limitee a 5 s, et on reessaie jusqu'a 3 fois.
+/// Seuls les echecs de *connexion* sont relances : la requete n'a alors
+/// jamais atteint le serveur, aucun risque de creer un ticket en double.
+class _RetryOnConnectClient extends http.BaseClient {
+  _RetryOnConnectClient(this._inner);
+  final http.Client _inner;
+  static const _attempts = 3;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    // Le corps est lu une fois pour pouvoir etre renvoye a chaque tentative
+    // (finalize() fixe aussi l'en-tete multipart avec sa frontiere).
+    final body = await request.finalize().toBytes();
+    for (var attempt = 1;; attempt++) {
+      final copy = http.StreamedRequest(request.method, request.url)
+        ..headers.addAll(request.headers)
+        ..followRedirects = request.followRedirects
+        ..maxRedirects = request.maxRedirects
+        ..persistentConnection = request.persistentConnection
+        ..contentLength = body.length;
+      copy.sink.add(body);
+      unawaited(copy.sink.close());
+      try {
+        return await _inner.send(copy);
+      } catch (e) {
+        if (!isConnectFailure(e)) rethrow;
+        if (attempt >= _attempts) {
+          throw Exception(ApiService.networkErrorMessage);
+        }
+        await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+      }
+    }
+  }
+
+  @override
+  void close() => _inner.close();
+}
+
 class ApiService {
+  /// Message montre quand le serveur est injoignable. Traduit au demarrage
+  /// et a chaque changement de langue (voir main.dart).
+  static String networkErrorMessage =
+      'Connexion au serveur impossible. Vérifiez votre connexion Internet et réessayez.';
+
+  /// Delai depasse : meme message clair plutot que « TimeoutException ».
+  static Never _timedOut() => throw Exception(networkErrorMessage);
+
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
@@ -67,7 +121,8 @@ class ApiService {
   String? _token;
   void setToken(String? token) => _token = token;
 
-  http.Client _client = _GuardedClient(http.Client());
+  http.Client _client =
+      _GuardedClient(_RetryOnConnectClient(createBaseClient()));
 
   /// Remplace le client HTTP. Reserve aux tests, qui font repondre un faux
   /// serveur a la place du back-end ; l'application ne s'en sert jamais.
@@ -217,7 +272,7 @@ class ApiService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(payload),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -254,7 +309,7 @@ class ApiService {
             headers: _headers,
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 8), onTimeout: _timedOut);
     } catch (_) {
       // fire-and-forget: don't block logout if server is unreachable
     }
@@ -269,7 +324,7 @@ class ApiService {
           body: jsonEncode(
               {'currentPassword': currentPassword, 'newPassword': newPassword}),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -290,7 +345,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode({'password': password}),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       String message = 'Impossible de supprimer le compte';
       try {
@@ -310,7 +365,7 @@ class ApiService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'email': email}),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     try {
       final body = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -328,7 +383,7 @@ class ApiService {
   Future<Map<String, dynamic>> me() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/auth/me'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -361,7 +416,7 @@ class ApiService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(data),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     if (response.statusCode != 201) {
       if (kDebugMode) {
@@ -392,7 +447,7 @@ class ApiService {
 
     final response = await _client
         .get(uri, headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       String message = 'Erreur serveur (${response.statusCode})';
       try {
@@ -426,7 +481,7 @@ class ApiService {
     );
     final response = await _client
         .get(uri, headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -438,7 +493,7 @@ class ApiService {
     final response = await _client
         .post(Uri.parse('$baseUrl/property-add-requests/$id/approve'),
             headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       String msg = 'Erreur lors de la validation';
       try {
@@ -458,7 +513,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode({'reason': reason ?? ''}),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       String msg = 'Erreur lors du rejet';
       try {
@@ -490,7 +545,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode(payload),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     if (response.statusCode == 201) {
       final decoded = jsonDecode(response.body);
@@ -513,7 +568,7 @@ class ApiService {
       {bool trustServer = false}) async {
     final response = await _client
         .get(Uri.parse('$baseUrl/properties'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to load properties');
@@ -539,7 +594,7 @@ class ApiService {
         : Uri.parse('$baseUrl/residences');
     final response = await _client
         .get(uri, headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -549,7 +604,7 @@ class ApiService {
   Future<List<dynamic>> getIntervenants() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/users?role=INTERVENANT'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -560,7 +615,7 @@ class ApiService {
     final response = await _client
         .get(Uri.parse('$baseUrl/users?role=${Uri.encodeComponent(role)}'),
             headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -570,7 +625,7 @@ class ApiService {
   Future<List<dynamic>> getSubcontractors() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/subcontractors'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -580,7 +635,7 @@ class ApiService {
   Future<Map<String, dynamic>> getDashboard() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/dashboard'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
@@ -592,7 +647,7 @@ class ApiService {
   Future<List<dynamic>> getRegistrationRequests() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/registrations'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -604,7 +659,7 @@ class ApiService {
     final response = await _client
         .post(Uri.parse('$baseUrl/registrations/$id/approve'),
             headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -619,7 +674,7 @@ class ApiService {
   Future<void> rejectRequest(String id) async {
     final response = await _client
         .post(Uri.parse('$baseUrl/registrations/$id/reject'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -636,7 +691,7 @@ class ApiService {
   Future<List<dynamic>> getUsers() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/users'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -647,7 +702,7 @@ class ApiService {
   Future<List<dynamic>> getResidents() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/owners?onlyResidents=true'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -657,7 +712,7 @@ class ApiService {
   Future<void> deleteUser(String id) async {
     final response = await _client
         .delete(Uri.parse('$baseUrl/users/$id'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       throw Exception('Failed to delete user');
     }
@@ -670,7 +725,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode({'password': newPassword}),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       throw Exception('Failed to update password');
     }
@@ -680,7 +735,7 @@ class ApiService {
     final response = await _client
         .delete(Uri.parse('$baseUrl/users/$id/reset-devices'),
             headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       final body = _tryDecode(response.body);
       throw Exception(body['error'] ?? 'Erreur réinitialisation appareils');
@@ -701,7 +756,7 @@ class ApiService {
   Future<List<dynamic>> getTags() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/tags'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -734,7 +789,7 @@ class ApiService {
             if (notes != null) 'notes': notes,
           }),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 201) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -759,7 +814,7 @@ class ApiService {
 
     final response = await _client
         .get(uri, headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     // Si la liste est vide ou s'il y a une erreur 404 (pas de tickets), on renvoie une liste vide
     if (response.statusCode == 200) {
@@ -779,7 +834,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> getMaintenanceCategories() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/maintenance/categories'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
 
     if (response.statusCode != 200) {
       if (kDebugMode) {
@@ -816,7 +871,7 @@ class ApiService {
   Future<List<dynamic>> getTransactions() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/financial'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
@@ -829,7 +884,7 @@ class ApiService {
         .replace(queryParameters: {'email': email});
     final response = await _client
         .get(uri, headers: _headers)
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 15), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       return (data['status'] ?? '').toString();
@@ -840,7 +895,7 @@ class ApiService {
   Future<List<dynamic>> getMyCharges() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/financial/my-charges'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -857,7 +912,7 @@ class ApiService {
     final response = await _client
         .get(Uri.parse('$baseUrl/financial/my-charges-summary'),
             headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is Map
@@ -877,7 +932,7 @@ class ApiService {
       final response = await _client
           .get(Uri.parse('$baseUrl/notifications/unread-count'),
               headers: _headers)
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 10), onTimeout: _timedOut);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return data['count'] ?? 0;
@@ -891,7 +946,7 @@ class ApiService {
   Future<List<dynamic>> getNotifications() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/notifications'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -907,7 +962,7 @@ class ApiService {
   Future<void> markNotificationRead(String id) async {
     final response = await _client
         .put(Uri.parse('$baseUrl/notifications/$id/read'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -921,7 +976,7 @@ class ApiService {
   Future<void> markAllNotificationsRead() async {
     final response = await _client
         .put(Uri.parse('$baseUrl/notifications/read-all'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -941,7 +996,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode(payload),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -960,7 +1015,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode(data),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 201) {
       try {
         final body = jsonDecode(response.body);
@@ -980,7 +1035,7 @@ class ApiService {
           headers: _headers,
           body: jsonEncode(data),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       try {
         final body = jsonDecode(response.body);
@@ -1014,7 +1069,7 @@ class ApiService {
     );
 
     final streamed =
-        await _client.send(request).timeout(const Duration(seconds: 20));
+        await _client.send(request).timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode != 200) {
       try {
@@ -1032,7 +1087,7 @@ class ApiService {
   Future<List<dynamic>> getHouseholdMembers() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/household-members'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -1060,7 +1115,7 @@ class ApiService {
             if (photoDataUrl != null) 'photo': photoDataUrl,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 30), onTimeout: _timedOut);
     if (response.statusCode == 201) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1088,7 +1143,7 @@ class ApiService {
             if (photoDataUrl != null) 'photo': photoDataUrl,
           }),
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 30), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1102,7 +1157,7 @@ class ApiService {
     final response = await _client
         .post(Uri.parse('$baseUrl/household-members/$id/resend-access'),
             headers: _headers)
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 30), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return _tryDecode(response.body)['emailSent'] == true;
     }
@@ -1112,7 +1167,7 @@ class ApiService {
   Future<void> removeHouseholdMember(String id) async {
     final response = await _client
         .delete(Uri.parse('$baseUrl/household-members/$id'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       throw Exception(_tryDecode(response.body)['error'] ??
           'Erreur lors de la suppression');
@@ -1124,7 +1179,7 @@ class ApiService {
   Future<List<dynamic>> getAnnouncements() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/announcements'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -1136,7 +1191,7 @@ class ApiService {
   Future<void> markAnnouncementRead(String id) async {
     final response = await _client
         .post(Uri.parse('$baseUrl/announcements/$id/read'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode != 200) {
       throw Exception(_tryDecode(response.body)['error'] ?? 'Erreur');
     }
@@ -1145,7 +1200,7 @@ class ApiService {
   Future<List<dynamic>> getManagedAnnouncements() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/announcements/manage'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -1159,7 +1214,7 @@ class ApiService {
     final response = await _client
         .post(Uri.parse('$baseUrl/announcements'),
             headers: _headers, body: jsonEncode(payload))
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 201) {
       return Map<String, dynamic>.from(jsonDecode(response.body));
     }
@@ -1172,7 +1227,7 @@ class ApiService {
   Future<List<dynamic>> getTicketMessages(String ticketId) async {
     final response = await _client
         .get(Uri.parse('$baseUrl/messages/ticket/$ticketId'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -1195,7 +1250,7 @@ class ApiService {
             if (attachmentDataUrls != null) 'attachments': attachmentDataUrls,
           }),
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 201) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1209,7 +1264,7 @@ class ApiService {
     final response = await _client
         .put(Uri.parse('$baseUrl/auth/photo'),
             headers: _headers, body: jsonEncode({'photo': photoDataUrl}))
-        .timeout(const Duration(seconds: 40));
+        .timeout(const Duration(seconds: 40), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1220,7 +1275,7 @@ class ApiService {
   Future<Map<String, dynamic>> removeProfilePhoto() async {
     final response = await _client
         .delete(Uri.parse('$baseUrl/auth/photo'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1232,7 +1287,7 @@ class ApiService {
   Future<Map<String, dynamic>> getResidence(String id) async {
     final response = await _client
         .get(Uri.parse('$baseUrl/residences/$id'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1245,7 +1300,7 @@ class ApiService {
   Future<List<dynamic>> getResidentDocuments() async {
     final response = await _client
         .get(Uri.parse('$baseUrl/documents/resident'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       return decoded is List ? decoded : [];
@@ -1257,7 +1312,7 @@ class ApiService {
   Future<Uint8List> downloadResidentDocument(String id) async {
     final response = await _client
         .get(Uri.parse('$baseUrl/documents/$id/download'), headers: _headers)
-        .timeout(const Duration(seconds: 90));
+        .timeout(const Duration(seconds: 90), onTimeout: _timedOut);
     if (response.statusCode == 200) return response.bodyBytes;
     throw Exception(
         _tryDecode(response.body)['error'] ?? 'Téléchargement impossible');
@@ -1268,7 +1323,7 @@ class ApiService {
     final url = mediaUrl(pathOrUrl);
     if (url == null) throw Exception('Fichier introuvable');
     final response =
-        await _client.get(Uri.parse(url)).timeout(const Duration(seconds: 90));
+        await _client.get(Uri.parse(url)).timeout(const Duration(seconds: 90), onTimeout: _timedOut);
     if (response.statusCode == 200) return response.bodyBytes;
     throw Exception('Téléchargement impossible');
   }
@@ -1278,7 +1333,7 @@ class ApiService {
   Future<Map<String, dynamic>> getTicket(String id) async {
     final response = await _client
         .get(Uri.parse('$baseUrl/maintenance/$id'), headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }
@@ -1299,7 +1354,7 @@ class ApiService {
           filename: f.filename, contentType: MediaType.parse(f.mimeType)));
     }
     final streamed =
-        await _client.send(request).timeout(const Duration(seconds: 120));
+        await _client.send(request).timeout(const Duration(seconds: 120), onTimeout: _timedOut);
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode == 201) {
       final decoded = jsonDecode(response.body);
@@ -1316,7 +1371,7 @@ class ApiService {
     final response = await _client
         .get(Uri.parse('$baseUrl/maintenance/$ticketId/history'),
             headers: _headers)
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 20), onTimeout: _timedOut);
     if (response.statusCode == 200) {
       return Map<String, dynamic>.from(jsonDecode(response.body) as Map);
     }

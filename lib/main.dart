@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:provider/provider.dart';
 import 'presentation/widgets/gi_bottom_nav.dart' show glassFallback;
+import 'data/api_service.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/providers/auth_provider.dart';
 import 'presentation/providers/locale_provider.dart';
@@ -99,11 +100,16 @@ class GeranceImmoServiceApp extends StatelessWidget {
           // `translucent` laisse passer les appuis vers les widgets en dessous,
           // qui gagnent l'arbitrage des gestes : les boutons continuent donc de
           // repondre normalement.
-          builder: (context, child) => GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: _GiScaffoldFrame(child: child),
-          ),
+          builder: (context, child) {
+            // Message des erreurs reseau dans la langue choisie : la couche
+            // donnees n'a pas de contexte, elle le lit ici.
+            ApiService.networkErrorMessage = AppL10n.of(context).networkError;
+            return GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: _GiScaffoldFrame(child: child),
+            );
+          },
           home: const AppEntry(),
         ),
       ),

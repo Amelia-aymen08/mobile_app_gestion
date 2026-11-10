@@ -343,5 +343,6 @@
   "deleteAccountConfirmBody": "You will no longer be able to sign in with this account.",
   "deleteAccountConfirm": "Delete",
   "deleteAccountDoneTitle": "Account deleted",
-  "deleteAccountDoneBody": "Your account and personal data have been deleted."
+  "deleteAccountDoneBody": "Your account and personal data have been deleted.",
+  "networkError": "Can't reach the server. Check your internet connection and try again."
 }

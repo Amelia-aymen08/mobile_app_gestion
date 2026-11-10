@@ -1129,4 +1129,8 @@ class AppL10nEn extends AppL10n {
   @override
   String get deleteAccountDoneBody =>
       'Your account and personal data have been deleted.';
+
+  @override
+  String get networkError =>
+      'Can\'t reach the server. Check your internet connection and try again.';
 }

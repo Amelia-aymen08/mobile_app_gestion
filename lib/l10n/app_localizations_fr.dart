@@ -1131,4 +1131,8 @@ class AppL10nFr extends AppL10n {
   @override
   String get deleteAccountDoneBody =>
       'Votre compte et vos données personnelles ont été supprimés.';
+
+  @override
+  String get networkError =>
+      'Connexion au serveur impossible. Vérifiez votre connexion Internet et réessayez.';
 }

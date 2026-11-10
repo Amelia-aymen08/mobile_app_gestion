@@ -1127,4 +1127,8 @@ class AppL10nAr extends AppL10n {
 
   @override
   String get deleteAccountDoneBody => 'تم حذف حسابك وبياناتك الشخصية.';
+
+  @override
+  String get networkError =>
+      'تعذّر الاتصال بالخادم. تحقّق من اتصالك بالإنترنت وأعد المحاولة.';
 }

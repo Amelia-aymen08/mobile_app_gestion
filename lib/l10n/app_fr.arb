@@ -500,5 +500,6 @@
   "deleteAccountConfirmBody": "Vous ne pourrez plus vous connecter avec ce compte.",
   "deleteAccountConfirm": "Supprimer",
   "deleteAccountDoneTitle": "Compte supprimé",
-  "deleteAccountDoneBody": "Votre compte et vos données personnelles ont été supprimés."
+  "deleteAccountDoneBody": "Votre compte et vos données personnelles ont été supprimés.",
+  "networkError": "Connexion au serveur impossible. Vérifiez votre connexion Internet et réessayez."
 }
